@@ -1,0 +1,3 @@
+module = "prot"
+
+unpackfiles = {"*.dtx"}

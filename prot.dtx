@@ -1,0 +1,323 @@
+% \iffalse
+% prot package
+% Copyright 2021 Markus Kurtz
+%
+% If called with nonLaTeX or with \install=y or as a batch file
+% generate some nice files.  Otherwise produce documentation.
+%<*ignore>
+	{\def\x{LaTeX2e}\expandafter}%
+	\ifcase0% if \install=y or \processbatchFile is defined or \fmtname=LaTeX2e
+		\ifx\install y1\fi
+		\expandafter\ifx\csname processbatchFile\endcsname\relax\else1\fi
+		\ifx\fmtname\x\else1\fi
+	\else\csname fi\endcsname% ... go on after here
+%</ignore>
+%<*install>
+	\input docstrip.tex
+	\askforoverwritefalse
+	\keepsilent
+	\preamble
+	This is a prot file.
+	\endpreamble
+	\generate{
+		\file{prot.ins}{\from{prot.dtx}{install}}
+		\file{prot.drv}{\from{prot.dtx}{driver}}% for documentation
+		\file{prot.sty}{\from{prot.dtx}{package}}
+	}
+	\usedir{testfiles}
+	\generate{
+		\file{prot.lvt}{\from{prot.dtx}{test}}
+		\file{prot.lve}{\from{prot.dtx}{expect}}
+	}
+	\endbatchfile
+%</install>
+%<*ignore>
+	\fi % end the \ifcase and produce documentation
+%</ignore>
+%<*driver>
+	\documentclass{l3doc}
+	% Allow to write |\cs|
+	\MakeShortVerb{\|}
+	% Index via codeline
+	\CodelineIndex
+	\RecordChanges
+	\begin{document}
+		\DocInput{prot.dtx}
+\end{document}
+%</driver>
+%
+% \fi  end the \iffalse
+%
+% \title{prot}
+% \author{Markus Kurtz}
+% \maketitle
+% Dieses Paket dient dem Schreiben von Protokollen. Besonders erlaubt es, über die anwesenden Personen, Abstimmungsergebnisse, Aufgaben und Resultate Buch zu führen.
+
+% \section{Layout}
+% Wird großteils an \pkg{KoMa-Script} abgegeben.
+% Für vorläufige Protokolle (Paket-Option) werden Zeilennummern ausgegeben.
+% Lädt \pkg{hyperref} und setzt Titel und Autorin gemäß den Angaben.
+% Angaben zu Ort und Zeit der Sitzung werden ebenfalls für Titel im Dokument und in den PDF-Informationen genutzt.
+% Angaben zu Ort und Zeit der nächsten Sitzung werden am Ende ausgegeben.
+% Am Ende des Protokolls bzw.\@ vor dem Anhang erscheint zudem eine Signatur.
+% Es kann eine Begrüßungs- und Abschiedsfloskel ausgegeben werden.
+
+% \section{Personen}
+% Zu Beginn des Protokolls werden Personen mit dem Befehl \cs{neuePerson} angelegt, was typischerweise über \env{personenliste} geschieht.
+% Für jede Person legt \cs{neuePerson} basierend auf den Argumenten eine \meta{id} fest, definiert \cs{\meta{id}} als einfaches Makro, was \meta{name} zurückgibt und speichert einige Daten.
+
+% Zu Beginn des Dokuments kann dann eine Anwesenheitsliste oder -tabelle ausgegeben werden.
+% Hiefür werden die Personen innerhalb ihrer \meta{group} sortiert und mit ggf.\@ nötiger Zusatzinformation gemeinsam ausgegeben.
+
+% Später kann dann bei Abstimmungsergebnissen automatisch die Gesamtstimmzahl ermittelt werden und etwa mit |\erg*00| ein einstimmiges Abstimmungsergebnis ausgegeben werden.
+% Hierfür ist es natürlich nötig, auch speziell zu notieren, wann Stimmberechtigte Personen die Sitzung betreten und verlassen.
+
+% \section{Ergebnisübersicht}
+% Alle Ergebnisse werden in eine ausgelagerte Datei geschrieben und können wahlweise im Protokoll selbst erscheinen oder auch in einem Übersichtsdokument oder sonstwo.
+
+% \section{Textbausteine}
+% Der Freundlichkeit halber werden verschiedene Textbausteine etwa für Währungs- und Zeitangaben bereitgestellt sowie für Einschübe für Sitzungspausen oder andere Meta-Informationen.
+% Auch nützlich sind die Möglichkeiten, Befehle zu erstellen, die bei erstmaliger Verwendung eine Erklärung bereitstellen.
+
+% \StopEventually{\PrintIndex\PrintChanges}
+%
+% \setcounter{StandardModuleDepth}{1}
+%
+% \section{Implementation}
+%
+% This is a prot and fun implementation.
+% And here it starts.
+
+% Nutzt \pkg{pgfkeys} statt \pkg{l3keys} oder \pkg{xkeyval}, um Werte speichern zu können und weil \pkg{pgfkeys} einfach generell mehr kann und eine buntere Dokumentation besitzt :D
+%    \begin{macrocode}
+%<@@=prot>
+%<*test|expect>
+	\input{regression-test}
+	\RequirePackage{prot}
+	\RequirePackage{expl3}
+	\START
+	\ExplSyntaxOn
+%<*test>
+	\cs_set:Nn\prot_test:nn{\typeout{#1}}
+	\cs_set_eq:NN\prot_nontest:nn\use_i:nn
+%</test>
+%<*expect>
+	\cs_set:Nn\prot_test:nn{\typeout{#2}}
+	\cs_set_eq:NN\prot_nontest:nn\use_ii:nn
+%</expect>
+%</test|expect>
+%<*package>
+	\RequirePackage{expl3}
+	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
+	\RequirePackage{pgfkeys}
+%    \end{macrocode}
+% \begin{macro}{\prot_newperson_frontend:...}
+%   Erstellt \meta{id} und \meta{name} mittels \cs{@@_set_idname_via_shorty:nnnn} und verarbeitet Angaben zur Gruppenzugehörigkeit, Anwesenheit und Zusatzinformationen.
+%    \begin{macrocode}
+	\cs_new:Npn \prot_newperson_frontend:nnnnnnn #1#2#3#4 {
+		\@@_shorty:nnnn {#1} {#2} {#3} {#4}
+		\exp_args:Noo \prot_newperson:nnnnnnnn \l@@_id \l@@_name {#3} {#4}
+	}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_set_idname_via_shorty:nnnn}
+%   Nimmt |id, first, last, shorty|
+%   Legt basierend auf dem ersten Argument \marg{shorty} fest, wie der Name abgekürzt werden soll.
+%   Dazu nutzt es \pkg{l3str} und \pkg{l3tl}.
+%    \begin{macrocode}
+	\cs_new:Nn \@@_set_idname_via_shorty:nnnn {
+		\tl_if_blank:nTF {#4} {
+			\@@_set_idname:n {#2}
+		} {
+			\str_set:Nn \l@@_id {#2}
+			\tl_set:Nn \l@@_name {#2}
+			\str_case:onF { \tl_head:w #4 {}\q_stop } {
+				{=} { \tl_put_right:Nn \l@@_name { ~ #3 } }
+				{?} { \tl_put_right:Nx \l@@_name { ~ \tl_range:nnn {#4} {2} {-1} } }
+				{:} { \tl_set:Nx \l@@_name { \tl_range:nnn {#4} {2} {-1} } }
+				{!} { \@@_set_abbreviation:x { \tl_range:nne {#3} {1} { \tl_count:n {#4} } } }
+			} {
+				\@@_set_idname:n {#4}
+			}
+		}
+		\tl_if_blank:nF {#1} { \str_set:Nn \l@@_id {#1} }
+		\str_remove_all:Nn \l@@_id {~}
+		\str_remove_all:Nn \l@@_id {-}
+	}
+	\cs_generate_variant:Nn \tl_range:nnn { nne }
+
+	\cs_new:Nn \@@_set_idname:n {
+		\str_set:Nn \l@@_id {#1}
+		\tl_set:Nn \l@@_name {#1}
+	}
+
+	\cs_new:Nn \@@_set_abbreviation:n {
+		\str_put_right:Nn \l@@_id {#1}
+		\tl_put_right:Nn \l@@_name { \c_prot_nbsp #1 . }
+	}
+	\cs_generate_variant:Nn \@@_set_abbreviation:n { x }
+	\tl_const:Nn \c_prot_nbsp { \penalty10000\  }
+%</package>
+%<*test|expect>
+	\TEST { \@@_set_idname_via_shorty:nnnn } {
+%<*test>
+	\cs_new:Nn \@@_test_shorty:nnnnnn {
+		\@@_set_idname_via_shorty:nnnn {#3} { #1 } { #2 } {#4}
+		\TYPE { { \l@@_id } ~ { \l@@_name } }
+	}
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_shorty:nnnnnn { \TYPE { {#5} ~ {#6} } }
+%</expect>
+	\cs_new:Npn \@@_test_donald:nnnn { \@@_test_shorty:nnnnnn { Donald } { Knuth } }
+	\@@_test_donald:nnnn {} {} { Donald } { Donald }
+	\@@_test_donald:nnnn {} { = } { Donald } { Donald ~ Knuth }
+	\@@_test_donald:nnnn {} { ?Duck } { Donald } { Donald ~ Duck }
+	\@@_test_donald:nnnn {} { :Don } { Donald } { Don }
+	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \c_prot_nbsp K. }
+	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \c_prot_nbsp Kn. }
+	% The following is weird, but you asked for it :D
+	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \c_prot_nbsp Knuth. }
+	\@@_test_donald:nnnn {} { Don } { Don } { Don }
+	\@@_test_donald:nnnn { DK } { Don } { DK } { Don }
+	\cs_new:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
+	\@@_test_anna:nnnn {} {} { AnnaLena } { Anna-Lena }
+	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \c_prot_nbsp Rot . }
+	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \c_prot_nbsp Rot ~ G . }
+	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \c_prot_nbsp Rot ~ Grau- . }
+	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \c_prot_nbsp Rot ~ Grau-S . }
+	}
+%</test|expect>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_parse_attendance:nn, \@@_parse_group:n}
+%   Über das Anwesenheitsfeld wird die Anwesenheit als ein Single-Choice-Wert definiert,
+%   üblicherweise eins aus: x (anwesend), d (digital), e (entschuldigt), u (unentschuldigt).
+%   Zusätzlich können hier noch weitere Attribute festgelegt werden: p (Protokoll), s (Sitzungsleitung)
+%   beide setzen den Säumniswert für die Anwesenheit auf „x“ und rufen |\...| auf, was in der Person
+%   einen Schalter setzt und die Person in der Liste für Protokoll/Sitzungsleitung einträgt.
+%
+%   Verschiedene Anwesenheitsmarker können als Schlüssel unter \emph{/prot/attendance/} angelegt werden.
+%    \begin{macrocode}
+	\cs_new:Nn \@@_parse_attendance:nn {
+		\pgfqkeys {/prot/attendance} { value/.link=fallback, fallback=u, specials=, #2 }
+		\pgfqkeys { /prot/person/#1/attendance } {
+			value/.initial=, there/.initial=2, disp/.initial=,
+			/prot/attendance/use/\pgfkeysvalueof{/prot/attendance/value}
+		}
+	}
+	\pgfkeys { /prot/attendance/.cd
+		, value/.link = fallback
+		, fallback/.initial = u
+		, specials/.initial =
+		, x/.style = {value=x}, use/x/.style = {value=x, disp=x}
+		, e/.style = {value=e}, use/e/.style = {value=e, there=0, disp=e}
+		, u/.style = {value=u}, use/u/.style = {value=u, there=0, disp=u}
+		, d/.style = {value=d}, use/d/.style = {value=d, disp=\emph x}
+		, p/.style = {fallback=x, specials/.append=p}
+		, s/.style = {fallback=x, specials/.append=s}
+	}
+	\cs_new:Nn \@@_parse_group:nn {
+		\pgfkeys { /prot/group/.cd, value=, info=, #1 }
+		% In Gruppen abspeichern
+	}
+	\pgfkeys { /prot/group/.cd
+		, value/.initial =
+		, info/.initial =
+		, g/.style = {value/.append={{gast}}, info=#1}
+		% StuPa
+		, stupa/.style = {value/.append={{stupa}}, voter, move/.forward to=/prot/movevoter, info=#1}
+		, fsma/.style = {value/.append={{fsma}}, info=#1}
+		, reffs/.style = {value/.append={{reffs}}, info=#1}
+		% AStA
+		, refvor/.style = {value/.append={{refvor}}, move/.code=\prot_movefrom:n{refvor}, info=#1}
+	}
+%</package>
+%<*test|expect>
+	\TEST { \@@_parse_attendance:n } {
+%<*test>
+	\cs_new:Nn \@@_test_attendance:nn {
+		\@@_parse_attendance:n {#1}
+		\pgfkeys { /prot/attendance/value/.show }
+	}
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_attendance:nn { \show #2 }
+%</expect>
+	\@@_test_attendance:nn { x } { x }
+	\@@_test_attendance:nn { x e } { e }
+	}
+%</test|expect>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\prot_newperson:nnnnnnnn}  \prot_newperson_frontend:... produces input for that one by parsing the \meta{shortname} argument.
+%   Nimmt \marg{id}, \marg{name}, \marg{first_name}, \marg{last_name}, \marg{group}, \marg{attendance}, \marg{special}, \marg{voter}.
+%   Zuvor müssen diese bereits befüllt werden.
+%   Dabei werden \marg{id} und \marg{name} von \prot_newperson_fancy:... und \marg{group} und \marg{voter} protokollspezifisch festgelegt.
+%   \item Der Anzeigename \meta{name} wird anhand des \meta{shortname}-Arguments festgelegt.
+%   \item Die \meta{id} wird falls vorhanden und nichtleer durch das \meta{id}-Argument und andernfalls gleich zu \meta{name} festgelegt.
+%   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
+%   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
+%
+%   Zuerst wird mittels \pkg{pgfkeys} unter \texttt{/prot/names/\meta{name}} die \meta{id} hinterlegt, und dabei geschaut, ob \meta{name} bereits verwendet wird,
+%       um einen Fehler inklusive Verweis auf die andere Person zu generieren.
+%   \end{enumerate}
+%    \begin{macrocode}
+%<*package>
+	\cs_new:Nn\prot_newperson:nnnnnnnn{
+		\cs_if_exists:cTF{#1}{
+			\pgfkeysifdefined{/prot/person/#1}
+				{ \msg_error_text:n{prot/id} }
+				{ \msg_error_text:n{prot/id} }
+
+		}{
+			\cs_new:cpn{#1}{#2\@\xspace}
+			\pgfkeysifdefined{/prot/names/#2}
+				{ \msg_error_text:n{/prot/names} }
+				{ \pgfkeyssetvalue{/prot/names/#2}{#1} }
+%    \end{macrocode}
+%   Danach werden unter \texttt{/prot/person/\meta{id}/} verschiedene Schlüssel befüllt
+%   (oder vielleicht auch nicht alle, wenn aus anderen bestimmbar):
+%   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|, |special|, |voter|.
+%    \begin{macrocode}
+			\pgfkeyssetvalue{/prot/person/#1/name}{#2}
+			\pgfkeyssetvalue{/prot/person/#1/name/first}{#3}
+			\pgfkeyssetvalue{/prot/person/#1/name/last}{#4}
+			\@@_parse_attendance:nn {#1} {#6}
+			\@@_parse_attendance:nn {#1} {#5}
+			\pgfkeyssetvalue{/prot/person/#1/special}{#7}
+			\pgfkeyssetvalue{/prot/person/#1/voter}{#8}
+		}
+	}
+	\cs_generate_variant:Nn \prot_newperson:nnnnnnnn { oo }
+%    \end{macrocode}
+% \end{macro}
+
+%   Womöglich sollte auch noch unter \texttt{prot/group/} hinterlegt werden, wer zu welcher Gruppe gehört, insbesondere wenn eine Gruppe kollektiv stimmberechtigt ist.
+\\
+% \begin{macro}{\prot_moves:Nn}
+%   Momentane Anwesenheit von |#2|=\meta{id} auf |#1| setzen. Falls Anwesenheit momentan |2| für unbestimmt ist und die Person kommt, speichere dies mittels \cs{prot_addlate:n}.
+%    \begin{macrocode}
+	\cs_new:Nn \prot_moves:Nn {
+		\int_set:Nn \l_tmpa_int { \pgfkeysvalueof{/prot/person/#2/there} }
+		\int_compare:nNnTF {#1} \l_tmpa_int
+			{ \msg_error_text:n { #1-again } }
+			{ \pgfkeys { /prot/person/#2/move = #1 }
+		\bool_lazy_and:nnT { \int_compare_p:nNn \l_tmpa_int=2 } { \int_compare_p:nNn {#1}=1 }
+			{ \prot_addlate:n {#2} }
+		\pgfkeyset {/prot/person/#2/there} {#1}
+	}
+	\cs_new:Nn \prot_addlate {} %TODO
+%    \end{macrocode}
+
+% And the end.
+%    \begin{macrocode}
+%</package>
+%<*test|expect>
+	\ExplSyntaxOff
+	\END
+%</test|expect>
+%    \end{macrocode}
+%
+% \Finale
+\endinput
