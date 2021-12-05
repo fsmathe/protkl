@@ -52,7 +52,6 @@
 % \author{Markus Kurtz}
 % \maketitle
 % Dieses Paket dient dem Schreiben von Protokollen. Besonders erlaubt es, über die anwesenden Personen, Abstimmungsergebnisse, Aufgaben und Resultate Buch zu führen.
-
 % \section{Layout}
 % Wird großteils an \pkg{KoMa-Script} abgegeben.
 % Für vorläufige Protokolle (Paket-Option) werden Zeilennummern ausgegeben.
@@ -61,24 +60,18 @@
 % Angaben zu Ort und Zeit der nächsten Sitzung werden am Ende ausgegeben.
 % Am Ende des Protokolls bzw.\@ vor dem Anhang erscheint zudem eine Signatur.
 % Es kann eine Begrüßungs- und Abschiedsfloskel ausgegeben werden.
-
 % \section{Personen}
 % Zu Beginn des Protokolls werden Personen mit dem Befehl \cs{neuePerson} angelegt, was typischerweise über \env{personenliste} geschieht.
 % Für jede Person legt \cs{neuePerson} basierend auf den Argumenten eine \meta{id} fest, definiert \cs{\meta{id}} als einfaches Makro, was \meta{name} zurückgibt und speichert einige Daten.
-
 % Zu Beginn des Dokuments kann dann eine Anwesenheitsliste oder -tabelle ausgegeben werden.
 % Hiefür werden die Personen innerhalb ihrer \meta{group} sortiert und mit ggf.\@ nötiger Zusatzinformation gemeinsam ausgegeben.
-
 % Später kann dann bei Abstimmungsergebnissen automatisch die Gesamtstimmzahl ermittelt werden und etwa mit |\erg*00| ein einstimmiges Abstimmungsergebnis ausgegeben werden.
 % Hierfür ist es natürlich nötig, auch speziell zu notieren, wann Stimmberechtigte Personen die Sitzung betreten und verlassen.
-
 % \section{Ergebnisübersicht}
 % Alle Ergebnisse werden in eine ausgelagerte Datei geschrieben und können wahlweise im Protokoll selbst erscheinen oder auch in einem Übersichtsdokument oder sonstwo.
-
 % \section{Textbausteine}
 % Der Freundlichkeit halber werden verschiedene Textbausteine etwa für Währungs- und Zeitangaben bereitgestellt sowie für Einschübe für Sitzungspausen oder andere Meta-Informationen.
 % Auch nützlich sind die Möglichkeiten, Befehle zu erstellen, die bei erstmaliger Verwendung eine Erklärung bereitstellen.
-
 % \StopEventually{\PrintIndex\PrintChanges}
 %
 % \setcounter{StandardModuleDepth}{1}
@@ -87,7 +80,6 @@
 %
 % This is a prot and fun implementation.
 % And here it starts.
-
 % Nutzt \pkg{pgfkeys} statt \pkg{l3keys} oder \pkg{xkeyval}, um Werte speichern zu können und weil \pkg{pgfkeys} einfach generell mehr kann und eine buntere Dokumentation besitzt :D
 %    \begin{macrocode}
 %<@@=prot>
@@ -97,13 +89,14 @@
 	\RequirePackage{expl3}
 	\START
 	\ExplSyntaxOn
+	\keys_set:nn { sys } { check-declarations, log-functions }
 %<*test>
-	\cs_set:Nn\prot_test:nn{\typeout{#1}}
-	\cs_set_eq:NN\prot_nontest:nn\use_i:nn
+	\cs_set:Nn\@@_test:nn{\typeout{#1}}
+	\cs_set_eq:NN\@@_nontest:nn\use_i:nn
 %</test>
 %<*expect>
-	\cs_set:Nn\prot_test:nn{\typeout{#2}}
-	\cs_set_eq:NN\prot_nontest:nn\use_ii:nn
+	\cs_set:Nn\@@_test:nn{\typeout{#2}}
+	\cs_set_eq:NN\@@_nontest:nn\use_ii:nn
 %</expect>
 %</test|expect>
 %<*package>
@@ -114,9 +107,11 @@
 % \begin{macro}{\prot_newperson_frontend:...}
 %   Erstellt \meta{id} und \meta{name} mittels \cs{@@_set_idname_via_shorty:nnnn} und verarbeitet Angaben zur Gruppenzugehörigkeit, Anwesenheit und Zusatzinformationen.
 %    \begin{macrocode}
+	\str_new:N \l@@_id_str
+	\tl_new:N \l@@_name_tl
 	\cs_new:Npn \prot_newperson_frontend:nnnnnnn #1#2#3#4 {
 		\@@_shorty:nnnn {#1} {#2} {#3} {#4}
-		\exp_args:Noo \prot_newperson:nnnnnnnn \l@@_id \l@@_name {#3} {#4}
+		\exp_args:NVV \prot_newperson:nnnnnnnn \l@@_id_str \l@@_name_tl {#3} {#4}
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -129,31 +124,29 @@
 		\tl_if_blank:nTF {#4} {
 			\@@_set_idname:n {#2}
 		} {
-			\str_set:Nn \l@@_id {#2}
-			\tl_set:Nn \l@@_name {#2}
+			\str_set:Nn \l@@_id_str {#2}
+			\tl_set:Nn \l@@_name_tl {#2}
 			\str_case:onF { \tl_head:w #4 {}\q_stop } {
-				{=} { \tl_put_right:Nn \l@@_name { ~ #3 } }
-				{?} { \tl_put_right:Nx \l@@_name { ~ \tl_range:nnn {#4} {2} {-1} } }
-				{:} { \tl_set:Nx \l@@_name { \tl_range:nnn {#4} {2} {-1} } }
+				{=} { \tl_put_right:Nn \l@@_name_tl { ~ #3 } }
+				{?} { \tl_put_right:Nx \l@@_name_tl { ~ \tl_range:nnn {#4} {2} {-1} } }
+				{:} { \tl_set:Nx \l@@_name_tl { \tl_range:nnn {#4} {2} {-1} } }
 				{!} { \@@_set_abbreviation:x { \tl_range:nne {#3} {1} { \tl_count:n {#4} } } }
 			} {
 				\@@_set_idname:n {#4}
 			}
 		}
-		\tl_if_blank:nF {#1} { \str_set:Nn \l@@_id {#1} }
-		\str_remove_all:Nn \l@@_id {~}
-		\str_remove_all:Nn \l@@_id {-}
+		\tl_if_blank:nF {#1} { \str_set:Nn \l@@_id_str {#1} }
+		\str_remove_all:Nn \l@@_id_str {~}
+		\str_remove_all:Nn \l@@_id_str {-}
 	}
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
-
 	\cs_new:Nn \@@_set_idname:n {
-		\str_set:Nn \l@@_id {#1}
-		\tl_set:Nn \l@@_name {#1}
+		\str_set:Nn \l@@_id_str {#1}
+		\tl_set:Nn \l@@_name_tl {#1}
 	}
-
 	\cs_new:Nn \@@_set_abbreviation:n {
-		\str_put_right:Nn \l@@_id {#1}
-		\tl_put_right:Nn \l@@_name { \c_prot_nbsp #1 . }
+		\str_put_right:Nn \l@@_id_str {#1}
+		\tl_put_right:Nn \l@@_name_tl { \c_prot_nbsp #1 . }
 	}
 	\cs_generate_variant:Nn \@@_set_abbreviation:n { x }
 	\tl_const:Nn \c_prot_nbsp { \penalty10000\  }
@@ -163,7 +156,7 @@
 %<*test>
 	\cs_new:Nn \@@_test_shorty:nnnnnn {
 		\@@_set_idname_via_shorty:nnnn {#3} { #1 } { #2 } {#4}
-		\TYPE { { \l@@_id } ~ { \l@@_name } }
+		\TYPE { { \l@@_id_str } ~ { \l@@_name_tl } }
 	}
 %</test>
 %<*expect>
@@ -190,7 +183,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\@@_parse_attendance:nn, \@@_parse_group:n}
+% \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n, \@@_apply_group:n}
 %   Über das Anwesenheitsfeld wird die Anwesenheit als ein Single-Choice-Wert definiert,
 %   üblicherweise eins aus: x (anwesend), d (digital), e (entschuldigt), u (unentschuldigt).
 %   Zusätzlich können hier noch weitere Attribute festgelegt werden: p (Protokoll), s (Sitzungsleitung)
@@ -198,11 +191,19 @@
 %   einen Schalter setzt und die Person in der Liste für Protokoll/Sitzungsleitung einträgt.
 %
 %   Verschiedene Anwesenheitsmarker können als Schlüssel unter \emph{/prot/attendance/} angelegt werden.
+%   Jede Gruppe ist implementiert als Menge an Personen. Zudem ist unter
+%   \texttt{/prot/person/\meta{id}/group} die primäre Gruppe hinterlegt, wobei spätere Angaben vorherige überschreiben.
+%
+%   TODO: Implementiere mehrere Zeilen für eine Person.
+%
 %    \begin{macrocode}
-	\cs_new:Nn \@@_parse_attendance:nn {
-		\pgfqkeys {/prot/attendance} { value/.link=fallback, fallback=u, specials=, #2 }
-		\pgfqkeys { /prot/person/#1/attendance } {
-			value/.initial=, there/.initial=2, disp/.initial=,
+%<*package>
+	\cs_new:Nn \@@_parse_attendance:n {
+		\pgfqkeys { /prot/attendance } { value/.link=/prot/attendance/fallback, fallback=u, specials=, #1 }
+	}
+	\cs_new:Nn \@@_set_attendance:n {
+		\pgfqkeys { /prot/person/#1 } {
+			attendance/.initial=, there/.initial=2, attendance/disp/.link=/prot/person/#1/attendance,
 			/prot/attendance/use/\pgfkeysvalueof{/prot/attendance/value}
 		}
 	}
@@ -210,43 +211,188 @@
 		, value/.link = fallback
 		, fallback/.initial = u
 		, specials/.initial =
-		, x/.style = {value=x}, use/x/.style = {value=x, disp=x}
-		, e/.style = {value=e}, use/e/.style = {value=e, there=0, disp=e}
-		, u/.style = {value=u}, use/u/.style = {value=u, there=0, disp=u}
-		, d/.style = {value=d}, use/d/.style = {value=d, disp=\emph x}
+		, x/.style = {value=x}, use/x/.style = {attendance=x, there=1}
+		, e/.style = {value=e}, use/e/.style = {attendance=e, there=0}
+		, u/.style = {value=u}, use/u/.style = {attendance=u, there=0}
+		, d/.style = {value=d}, use/d/.style = {attendance=d, there=1, attendance/disp=\emph x}
 		, p/.style = {fallback=x, specials/.append=p}
 		, s/.style = {fallback=x, specials/.append=s}
 	}
-	\cs_new:Nn \@@_parse_group:nn {
-		\pgfkeys { /prot/group/.cd, value=, info=, #1 }
-		% In Gruppen abspeichern
-	}
-	\pgfkeys { /prot/group/.cd
-		, value/.initial =
-		, info/.initial =
-		, g/.style = {value/.append={{gast}}, info=#1}
-		% StuPa
-		, stupa/.style = {value/.append={{stupa}}, voter, move/.forward to=/prot/movevoter, info=#1}
-		, fsma/.style = {value/.append={{fsma}}, info=#1}
-		, reffs/.style = {value/.append={{reffs}}, info=#1}
-		% AStA
-		, refvor/.style = {value/.append={{refvor}}, move/.code=\prot_movefrom:n{refvor}, info=#1}
-	}
 %</package>
 %<*test|expect>
-	\TEST { \@@_parse_attendance:n } {
+\TEST { \@@_parse_attendance:n } {
 %<*test>
-	\cs_new:Nn \@@_test_attendance:nn {
+	\cs_new:Nn \@@_test_attendance_i:nn {
 		\@@_parse_attendance:n {#1}
-		\pgfkeys { /prot/attendance/value/.show }
+		\pgfkeys { /prot/attendance/value/.get=\l_tmpa_tl } \TYPE {\l_tmpa_tl}
+	}
+	\cs_new:Nn \@@_test_attendance:nnnnn {
+		\@@_parse_attendance:n {#1}
+		\@@_set_attendance:n {Donald}
+		\pgfkeys { /prot/person/Donald/attendance/.get=\l_tmpa_tl } \TYPE {attendance = \l_tmpa_tl}
+		\pgfkeys { /prot/person/Donald/there/.get=\l_tmpa_tl } \TYPE {there = \l_tmpa_tl}
+		\pgfkeys { /prot/person/Donald/attendance/disp/.get=\l_tmpa_tl } \TYPE { disp = #4 \l_tmpa_tl }
 	}
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_attendance:nn { \show #2 }
+	\cs_new:Nn \@@_test_attendance_i:nn { \TYPE {#2} }
+	\cs_new:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#2} \TYPE {there=#3} \TYPE {disp=#5} }
 %</expect>
-	\@@_test_attendance:nn { x } { x }
-	\@@_test_attendance:nn { x e } { e }
+	\@@_test_attendance_i:nn { x } { x }
+	\@@_test_attendance_i:nn { p } { x }
+	\@@_test_attendance_i:nn { u } { u }
+	\@@_test_attendance_i:nn { d } { d }
+	\@@_test_attendance_i:nn { x, e } { e }
+	\@@_test_attendance_i:nn { e, x } { x }
+	\@@_test_attendance:nnnnn { x } x 1 {} { x }
+	\@@_test_attendance:nnnnn { p } x 1 {} { x }
+	\@@_test_attendance:nnnnn { u } u 0 {} { u }
+	\@@_test_attendance:nnnnn { d } d 1 {\exp_not:V} { \exp_not:N\emph x }
+	\@@_test_attendance:nnnnn { x, e } e 0 {} { e }
+	\@@_test_attendance:nnnnn { e, x } x 1 {} { x }
+}
+%</test|expect>
+%<*package>
+	\cs_new:Nn \@@_apply_group:n {
+		\pgfkeys { /prot/person/\l@@_id_str/.cd, group/.initial=, info/.initial=, aftermove/.code=, /prot/group/.cd, #1 }
+		% In Gruppen abspeichern
 	}
+	\pgfkeys {
+		, /prot/voter/.style = {
+			aftermove/.code = { \@@_movevoter:n ##1 }
+		}
+		, /prot/groupvoter/.style = {
+			, aftermove/.code = { \@@_movefrom:nn {#1} ##1 }
+		}
+		, /prot/group/.code = {
+			\pgfkeysalso { group = #1 }
+			\seq_gput_right:cV { g_prot_group_#1_seq } \l@@_id_str
+		}
+		, /prot/group/.cd
+		, g/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=gast, info=#1 }
+		% StuPa
+		, stupa/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=stupa, /prot/voter, info=#1 }
+		, fsma/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=fsma, info=#1 }
+		, reffs/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=reffs, info=#1 }
+		% AStA
+		, refvor/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=refvor, /prot/groupvoter=refvor, info=#1 }
+	}
+	\seq_new:N \g_prot_group_gast_seq
+	\seq_new:N \g_prot_group_stupa_seq
+	\seq_new:N \g_prot_group_fsma_seq
+	\seq_new:N \g_prot_group_reffs_seq
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+	\int_new:N \g_prot_voters_int
+	\cs_new:Nn \@@_movevoter:n {
+		\str_case_e:nnF {#1} {
+			0 { \int_gdecr:N \g_prot_voters_int }
+			1 { \int_gincr:N \g_prot_voters_int }
+		} {
+			\msg_error_text:n { movevoter }
+		}
+	}
+	\cs_new:Nn \@@_movefrom:nn {
+		\pgfkeysalso{id/.get=\l@@_id_str}
+		\str_case_e:nnF {#2} {
+			0 \@@_leavefrom:cV
+			1 \@@_enterfrom:cV
+		} {
+			\msg_error_text:n { wrong-move } \use_none:nn
+		}
+		{ g_prot_votergroup_#1_seq } \l@@_id_str
+	}
+	\cs_new:Nn \@@_leavefrom:Nn {
+		\seq_if_in:NnTF #1 {#2} {
+			\seq_gremove_all:Nn #1 {#2}
+			\seq_if_empty:NT #1 {
+				\int_gdecr:N \g_prot_voters_int
+			}
+		} {
+			\msg_error_text:n { out-of-nothing }
+		}
+	}
+	\cs_new:Nn \@@_enterfrom:Nn {
+		\seq_if_in:NnTF #1 {#2} {
+			\msg_error_text:n { out-of-nothing }
+		} {
+			\seq_if_empty:NT #1 {
+				\int_gincr:N \g_prot_voters_int
+			}
+			\seq_gput_right:Nn #1 {#2}
+		}
+	}
+	\cs_generate_variant:Nn \@@_leavefrom:Nn {cV}
+	\cs_generate_variant:Nn \@@_enterfrom:Nn {cV}
+%</package>
+%<*test|expect>
+\TEST { \@@_apply_group:n } {
+	\setcounter{errorcontextlines}{100}
+	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
+	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
+%<*test>
+	\cs_new:Nn \@@_test_group:nnnnnnn {
+		\str_set:Nn \l@@_id_str {#1}
+		\pgfkeys { /prot/person/#1/id/.initial = #1 }
+		\pgfkeys { /prot/person/#1/there/.initial = #2 }
+		\@@_apply_group:n {#3}
+		\pgfkeys { /prot/person/#1/group/.get=\l_tmpa_tl }
+		\TYPE { value = \l_tmpa_tl }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
+		\@@_inimove:n {#1}
+		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
+	}
+	\cs_new:Nn \@@_test_move:nnnnn {
+		\pgfkeys { /prot/person/#1/move = #2 }
+		\pgfkeys { /prot/person/#1/there/.get=\l_tmpa_tl }
+		\TYPE { there = \l_tmpa_tl }
+		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
+	}
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_group:nnnnnnn {
+		\TYPE { value = #4 }
+		\TYPE { \quark_if_nil:nF {#5} { g_prot_group_#4_seq = #5 } }
+		\TYPE { \#voters = #6 }
+		\TYPE { \quark_if_nil:nF {#7} { g_prot_votergroup_#4_seq = #7 } }
+	}
+	\cs_new:Nn \@@_test_move:nnnnn {
+		\TYPE { there = #2 }
+		\TYPE { \#voters = #4 }
+		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
+	}
+%</expect>
+	\@@_test_group:nnnnnnn { Donald  } 0 { g }      { gast }  { Donald } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { gast }  { Donald , Donald } 0 { \q_nil }
+	\SEPARATOR
+	\@@_test_group:nnnnnnn { Anna    } 0 { stupa }  { stupa } { Anna } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Bea     } 1 { stupa }  { stupa } { Anna , Bea } 1 { \q_nil }
+	\@@_test_group:nnnnnnn { Charlie } 1 { stupa }  { stupa } { Anna , Bea , Charlie } 2 { \q_nil }
+	\@@_test_group:nnnnnnn { Dora    } 1 { stupa }  { stupa } { Anna , Bea , Charlie , Dora } 3 { \q_nil }
+	\SEPARATOR
+	\@@_nontest:nn { \@@_makelate:n { Bea } } { }
+	\@@_test_move:nnnnn    { Donald  } 0 { } 2 { }
+	\@@_test_move:nnnnn    { Bea     } 1 { } 3 { }
+	\@@_test_move:nnnnn    { Charlie } 0 { } 2 { }
+	\@@_test_move:nnnnn    { Bea     } 0 { } 1 { }
+	\@@_test_move:nnnnn    { Dora    } 0 { } 0 { }
+	\SEPARATOR
+	\@@_test_group:nnnnnnn { Emilie } 0 { refvor }  { refvor } { Emilie } 0 { }
+	\@@_test_group:nnnnnnn { Fynn   } 1 { refvor }  { refvor } { Emilie , Fynn } 1 { Fynn }
+	\@@_test_group:nnnnnnn { Gerda  } 1 { refvor }  { refvor } { Emilie , Fynn , Gerda } 1 { Fynn , Gerda }
+	\@@_test_group:nnnnnnn { Heidi  } 1 { refvor }  { refvor } { Emilie , Fynn , Gerda , Heidi } 1 { Fynn , Gerda , Heidi }
+	\SEPARATOR
+	\@@_nontest:nn { \@@_makelate:n { Gerda } }
+	\@@_nontest:nn { \@@_makelate:n { Heidi } }
+	\@@_test_move:nnnnn    { Donald } 1 { refvor } 1 { Fynn }
+	\@@_test_move:nnnnn    { Heidi  } 1 { refvor } 1 { Fynn , Heidi }
+	\@@_test_move:nnnnn    { Fynn   } 0 { refvor } 1 { Heidi }
+	\@@_test_move:nnnnn    { Gerda  } 1 { refvor } 1 { Heidi , Gerda }
+	\@@_test_move:nnnnn    { Gerda  } 0 { refvor } 1 { Heidi }
+	\@@_test_move:nnnnn    { Heidi  } 0 { refvor } 0 { }
+}
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
@@ -269,7 +415,6 @@
 			\pgfkeysifdefined{/prot/person/#1}
 				{ \msg_error_text:n{prot/id} }
 				{ \msg_error_text:n{prot/id} }
-
 		}{
 			\cs_new:cpn{#1}{#2\@\xspace}
 			\pgfkeysifdefined{/prot/names/#2}
@@ -280,36 +425,67 @@
 %   (oder vielleicht auch nicht alle, wenn aus anderen bestimmbar):
 %   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|, |special|, |voter|.
 %    \begin{macrocode}
+			\pgfkeyssetvalue{/prot/person/#1/id}{#1}
 			\pgfkeyssetvalue{/prot/person/#1/name}{#2}
 			\pgfkeyssetvalue{/prot/person/#1/name/first}{#3}
 			\pgfkeyssetvalue{/prot/person/#1/name/last}{#4}
-			\@@_parse_attendance:nn {#1} {#6}
-			\@@_parse_attendance:nn {#1} {#5}
+			\@@_parse_attendance:n {#6}
+			\@@_set_attendance:n {#1}
+			\@@_apply_group:n {#5}
+			\@@_inimove:n {#1}
 			\pgfkeyssetvalue{/prot/person/#1/special}{#7}
 			\pgfkeyssetvalue{/prot/person/#1/voter}{#8}
 		}
 	}
-	\cs_generate_variant:Nn \prot_newperson:nnnnnnnn { oo }
 %    \end{macrocode}
 % \end{macro}
-
 %   Womöglich sollte auch noch unter \texttt{prot/group/} hinterlegt werden, wer zu welcher Gruppe gehört, insbesondere wenn eine Gruppe kollektiv stimmberechtigt ist.
-\\
-% \begin{macro}{\prot_moves:Nn}
-%   Momentane Anwesenheit von |#2|=\meta{id} auf |#1| setzen. Falls Anwesenheit momentan |2| für unbestimmt ist und die Person kommt, speichere dies mittels \cs{prot_addlate:n}.
+% \begin{macro}{\@@_move:nn}
+%   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
+%   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
+%   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
+%   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
+%   Momentane Anwesenheit von #1=\meta{id} auf |#2| setzen.
+%   Ruft hauptsächlich |attendance/move| auf, was beim ersten Aufruf in die |.aux|-Datei schreibt und bei späteren Aufrufen auf Konsistenz prüft.
+%   Nutzt |forcemove| ohne Tests, |firstmove| und |latermove| sowie – als Hook – |aftermove|.
+%   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
 %    \begin{macrocode}
-	\cs_new:Nn \prot_moves:Nn {
-		\int_set:Nn \l_tmpa_int { \pgfkeysvalueof{/prot/person/#2/there} }
-		\int_compare:nNnTF {#1} \l_tmpa_int
-			{ \msg_error_text:n { #1-again } }
-			{ \pgfkeys { /prot/person/#2/move = #1 }
-		\bool_lazy_and:nnT { \int_compare_p:nNn \l_tmpa_int=2 } { \int_compare_p:nNn {#1}=1 }
-			{ \prot_addlate:n {#2} }
-		\pgfkeyset {/prot/person/#2/there} {#1}
+	\cs_new:Nn \@@_inimove:n {
+		\tl_set:Nx \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
+		\tl_if_eq:NnTF \l_tmpa_tl 1 {
+			\pgfkeys { /prot/person/#1/move/.code = {\@@_move:nN {#1} {##1} } }
+			\@@_forcemove:nN {#1} 1
+		} {
+			\pgfkeys { /prot/person/#1/move/.code = {\msg_error_text:n {not-there-move} } }
+		}
 	}
-	\cs_new:Nn \prot_addlate {} %TODO
+	\cs_new:Nn \@@_forcemove:nN {
+		\pgfkeys { /prot/person/#1/.cd
+			, there = #2
+			, aftermove = #2
+		}
+	}
+	\cs_new:Nn \@@_move:nN {
+		\@@_firstmove:nN {#1} {#2}
+		\pgfkeys { /prot/person/#1/move/.code = {\@@_latermove:nN {#1} {##1} } }
+	}
+	\cs_new:Nn \@@_firstmove:nN {
+		\tl_if_eq:NnT {#2} 1 { \@@_addlate:n {#1} }
+		\@@_forcemove:nN {#1} {#2}
+	}
+	\cs_new:Nn \@@_latermove:nN {
+		\tl_set:Nn \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
+		\tl_if_eq:NnTF \l_tmpa_tl {#2}
+			{ \msg_error_text:n { #2-again } }
+			{ \@@_forcemove:nN {#1} {#2} }
+	}
+	\cs_new:Nn \@@_addlate:n {
+		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
+	}
+	\cs_new:Nn \@@_makelate:n {
+		\@@_forcemove:nN {#1} 0
+	}
 %    \end{macrocode}
-
 % And the end.
 %    \begin{macrocode}
 %</package>
