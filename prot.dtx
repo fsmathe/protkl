@@ -43,7 +43,7 @@
 	\RecordChanges
 	\begin{document}
 		\DocInput{prot.dtx}
-\end{document}
+	\end{document}
 %</driver>
 %
 % \fi  end the \iffalse
@@ -81,6 +81,9 @@
 % This is a prot and fun implementation.
 % And here it starts.
 % Nutzt \pkg{pgfkeys} statt \pkg{l3keys} oder \pkg{xkeyval}, um Werte speichern zu können und weil \pkg{pgfkeys} einfach generell mehr kann und eine buntere Dokumentation besitzt :D
+% Vielleicht ist das aber auch ein bisschen blöd, da verschiedene Programmierstile zu mischen.
+% TODO: nutze \pkg{l3keys} sowie |:c|-Argumente der Form |prot_person_/Donald/name|. Die sind dann auch global und nicht lokal wie bei \pkg{pgfkeys}.
+% TODO: Setze Macros als protected sowie nopar.
 %    \begin{macrocode}
 %<@@=prot>
 %<*test|expect>
@@ -91,12 +94,12 @@
 	\ExplSyntaxOn
 	\keys_set:nn { sys } { check-declarations, log-functions }
 %<*test>
-	\cs_set:Nn\@@_test:nn{\typeout{#1}}
-	\cs_set_eq:NN\@@_nontest:nn\use_i:nn
+	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
+	\cs_new_eq:NN \@@_nontest:nn \use_i:nn
 %</test>
 %<*expect>
-	\cs_set:Nn\@@_test:nn{\typeout{#2}}
-	\cs_set_eq:NN\@@_nontest:nn\use_ii:nn
+	\cs_new:Nn \@@_test:nn { \TYPE {#2} }
+	\cs_new_eq:NN \@@_nontest:nn \use_ii:nn
 %</expect>
 %</test|expect>
 %<*package>
@@ -104,14 +107,52 @@
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
 	\RequirePackage{pgfkeys}
 %    \end{macrocode}
-% \begin{macro}{\prot_newperson_frontend:...}
+% \begin{environment}{persontable}
+%   Liest gesamte Tabelle ein.
+%   TODO: Momentan darf die letzte Zeile nicht beendet werden; \SplitList ist da pingelig. Außerdem stirbt das Ganze sehr unschön, wenn eine Zeile nicht lang genug ist, da \cs{SplitArgument} dann |-NoValue-| am Ende hinzufügt, statt einer nützlichen Fehlerausgabe. → Implementiere eigenen Argumentprozessor.
+%    \begin{macrocode}
+	\NewDocumentEnvironment { persontable } { > { \SplitList { \\ } } b } {
+		\ProcessList {#1} { \__prot_persontable_line:w }
+	} { }
+	\NewDocumentCommand \readPersonTable { > { \SplitList { \\ } } m } {
+		\ProcessList {#1} { \__prot_persontable_line:w }
+	} { }
+	\NewDocumentCommand { \__prot_persontable_line:w } { > { \SplitArgument { 5 } { & } } m }
+		{ \prot_newperson_frontend:nnnnnn #1 }
+%</package>
+%    \end{macrocode}
+%    \begin{macrocode}
+%<*test|expect>
+	\TEST { persontable } {
+	\cs_new:Nn \@@_test_type:nnnnnn { \TYPE { #1 | #2 | #3 | #4 | #5 | #6 } }
+%<*test>
+	\group_begin:
+		\cs_set_eq:NN \prot_newperson_frontend:nnnnnn \@@_test_type:nnnnnn
+		\begin{persontable}
+			a & b & c & d & e & f \\
+			q & w & e & r & t & z \\
+			& Anna & - &  & foo={~bar~} & ~joah~
+		\end{persontable}
+	\group_end:
+%</test>
+%<*expect>
+	\@@_test_type:nnnnnn { a }{ b }{ c }{ d }{ e }{ f }
+	\@@_test_type:nnnnnn { q }{ w }{ e }{ r }{ t }{ z }
+	\@@_test_type:nnnnnn { }{ Anna }{ - }{  }{ foo={~bar~} }{ joah }
+%</expect>
+	}
+%</test|expect>
+%    \end{macrocode}
+% \end{environment}
+% \begin{macro}{\prot_newperson_frontend:nnnnnn}
 %   Erstellt \meta{id} und \meta{name} mittels \cs{@@_set_idname_via_shorty:nnnn} und verarbeitet Angaben zur Gruppenzugehörigkeit, Anwesenheit und Zusatzinformationen.
 %    \begin{macrocode}
+%<*package>
 	\str_new:N \l@@_id_str
 	\tl_new:N \l@@_name_tl
-	\cs_new:Npn \prot_newperson_frontend:nnnnnnn #1#2#3#4 {
-		\@@_shorty:nnnn {#1} {#2} {#3} {#4}
-		\exp_args:NVV \prot_newperson:nnnnnnnn \l@@_id_str \l@@_name_tl {#3} {#4}
+	\cs_new:Npn \prot_newperson_frontend:nnnnnn #1#2#3#4 {
+		\@@_set_idname_via_shorty:nnnn {#1} {#2} {#3} {#4}
+		\exp_args:NVV \prot_newperson:nnnnnn \l@@_id_str \l@@_name_tl {#3} {#4}
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -139,18 +180,20 @@
 		\str_remove_all:Nn \l@@_id_str {~}
 		\str_remove_all:Nn \l@@_id_str {-}
 	}
-	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_new:Nn \@@_set_idname:n {
 		\str_set:Nn \l@@_id_str {#1}
 		\tl_set:Nn \l@@_name_tl {#1}
 	}
 	\cs_new:Nn \@@_set_abbreviation:n {
 		\str_put_right:Nn \l@@_id_str {#1}
-		\tl_put_right:Nn \l@@_name_tl { \c_prot_nbsp #1 . }
+		\tl_put_right:Nn \l@@_name_tl { \prot_nbsp: #1 . }
 	}
 	\cs_generate_variant:Nn \@@_set_abbreviation:n { x }
-	\tl_const:Nn \c_prot_nbsp { \penalty10000\  }
+	\cs_new:Nn \prot_nbsp: { \penalty10000\  }
 %</package>
+%    \end{macrocode}
+%   Some tests:
+%    \begin{macrocode}
 %<*test|expect>
 	\TEST { \@@_set_idname_via_shorty:nnnn } {
 %<*test>
@@ -167,23 +210,66 @@
 	\@@_test_donald:nnnn {} { = } { Donald } { Donald ~ Knuth }
 	\@@_test_donald:nnnn {} { ?Duck } { Donald } { Donald ~ Duck }
 	\@@_test_donald:nnnn {} { :Don } { Donald } { Don }
-	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \c_prot_nbsp K. }
-	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \c_prot_nbsp Kn. }
+	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \prot_nbsp: K. }
+	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \prot_nbsp: Kn. }
 	% The following is weird, but you asked for it :D
-	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \c_prot_nbsp Knuth. }
+	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \prot_nbsp: Knuth. }
 	\@@_test_donald:nnnn {} { Don } { Don } { Don }
 	\@@_test_donald:nnnn { DK } { Don } { DK } { Don }
 	\cs_new:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
 	\@@_test_anna:nnnn {} {} { AnnaLena } { Anna-Lena }
-	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \c_prot_nbsp Rot . }
-	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \c_prot_nbsp Rot ~ G . }
-	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \c_prot_nbsp Rot ~ Grau- . }
-	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \c_prot_nbsp Rot ~ Grau-S . }
+	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \prot_nbsp: Rot . }
+	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \prot_nbsp: Rot ~ G . }
+	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \prot_nbsp: Rot ~ Grau- . }
+	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \prot_nbsp: Rot ~ Grau-S . }
 	}
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n, \@@_apply_group:n}
+% \begin{macro}{\prot_newperson:nnnnnn}
+%   Nimmt \marg{id}, \marg{name}, \marg{first_name}, \marg{last_name}, \marg{group}, \marg{attendance}, \marg{special}, \marg{voter}.
+%   Zuvor müssen diese bereits befüllt werden.
+%   Dabei werden \marg{id} und \marg{name} von \prot_newperson_frontend:nnnnnn und \marg{group} und \marg{voter} protokollspezifisch festgelegt.
+%   \item Der Anzeigename \meta{name} wird anhand des \meta{shortname}-Arguments festgelegt.
+%   \item Die \meta{id} wird falls vorhanden und nichtleer durch das \meta{id}-Argument und andernfalls gleich zu \meta{name} festgelegt.
+%   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
+%   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
+%
+%   Zuerst wird mittels \pkg{pgfkeys} unter \texttt{/prot/names/\meta{name}} die \meta{id} hinterlegt, und dabei geschaut, ob \meta{name} bereits verwendet wird,
+%       um einen Fehler inklusive Verweis auf die andere Person zu generieren.
+%    \begin{macrocode}
+%<*package>
+	\cs_new:Nn\prot_newperson:nnnnnn {
+		\cs_if_exist:cTF{#1}{
+			\pgfkeysifdefined{/prot/person/#1}
+				{ \msg_error:nnn {prot} {id-exists} {#1} }
+				{ \msg_error:nnn {prot} {id-iscsname} {#1} }
+		}{
+			\tl_const:cn {#1} { #2\@\xspace }
+			\cs_set_eq:NN \@@_prot_nbsp: \prot_nbsp:
+			\cs_set:Nn \prot_nbsp: {~}
+			\pgfkeysifdefined{/prot/name/#2}
+				{ \msg_error:nnn {prot} {name-exists} {#1} }
+				{ \pgfkeyssetvalue{/prot/name/#2}{#1} }
+			\cs_set_eq:NN \prot_nbsp: \@@_prot_nbsp:
+%    \end{macrocode}
+%   Danach werden unter \texttt{/prot/person/\meta{id}/} verschiedene Schlüssel befüllt:
+%   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|.
+%    \begin{macrocode}
+			\pgfkeyssetvalue{/prot/person/#1/id}{#1}
+			\pgfkeyssetvalue{/prot/person/#1/name}{#2}
+			\pgfkeyssetvalue{/prot/person/#1/name/first}{#3}
+			\pgfkeyssetvalue{/prot/person/#1/name/last}{#4}
+			\@@_parse_attendance:n {#6}
+			\@@_set_attendance:n {#1}
+			\@@_apply_group:n {#5}
+			\@@_initialize_move:n {#1}
+		}
+	}
+%</package>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n}
 %   Über das Anwesenheitsfeld wird die Anwesenheit als ein Single-Choice-Wert definiert,
 %   üblicherweise eins aus: x (anwesend), d (digital), e (entschuldigt), u (unentschuldigt).
 %   Zusätzlich können hier noch weitere Attribute festgelegt werden: p (Protokoll), s (Sitzungsleitung)
@@ -219,8 +305,11 @@
 		, s/.style = {fallback=x, specials/.append=s}
 	}
 %</package>
+%    \end{macrocode}
+%   Testing Attendance parsing and setting.
+%    \begin{macrocode}
 %<*test|expect>
-\TEST { \@@_parse_attendance:n } {
+\TEST { \@@_parse_attendance:n , \@@_set_attendance:n } {
 %<*test>
 	\cs_new:Nn \@@_test_attendance_i:nn {
 		\@@_parse_attendance:n {#1}
@@ -252,6 +341,10 @@
 	\@@_test_attendance:nnnnn { e, x } x 1 {} { x }
 }
 %</test|expect>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_apply_group:n}
+%    \begin{macrocode}
 %<*package>
 	\cs_new:Nn \@@_apply_group:n {
 		\pgfkeys { /prot/person/\l@@_id_str/.cd, group/.initial=, info/.initial=, aftermove/.code=, /prot/group/.cd, #1 }
@@ -259,10 +352,10 @@
 	}
 	\pgfkeys {
 		, /prot/voter/.style = {
-			aftermove/.code = { \@@_movevoter:n ##1 }
+			aftermove/.code = { \@@_move_voter:n ##1 }
 		}
 		, /prot/groupvoter/.style = {
-			, aftermove/.code = { \@@_movefrom:nn {#1} ##1 }
+			, aftermove/.code = { \@@_move_groupvoter:nn {#1} ##1 }
 		}
 		, /prot/group/.code = {
 			\pgfkeysalso { group = #1 }
@@ -284,37 +377,37 @@
 	\seq_new:N \g_prot_group_refvor_seq
 	\seq_new:N \g_prot_votergroup_refvor_seq
 	\int_new:N \g_prot_voters_int
-	\cs_new:Nn \@@_movevoter:n {
+	\cs_new:Nn \@@_move_voter:n {
 		\str_case_e:nnF {#1} {
 			0 { \int_gdecr:N \g_prot_voters_int }
 			1 { \int_gincr:N \g_prot_voters_int }
 		} {
-			\msg_error_text:n { movevoter }
+			\msg_error:nnn { prot } { move / wrong-vote } {#1}
 		}
 	}
-	\cs_new:Nn \@@_movefrom:nn {
+	\cs_new:Nn \@@_move_groupvoter:nn {
 		\pgfkeysalso{id/.get=\l@@_id_str}
 		\str_case_e:nnF {#2} {
-			0 \@@_leavefrom:cV
-			1 \@@_enterfrom:cV
+			0 \@@_leave_groupvoter:cV
+			1 \@@_enter_groupvoter:cV
 		} {
-			\msg_error_text:n { wrong-move } \use_none:nn
+			\msg_error_text:nnn { prot } { move / wrong-vote } {#2} \use_none:nn
 		}
 		{ g_prot_votergroup_#1_seq } \l@@_id_str
 	}
-	\cs_new:Nn \@@_leavefrom:Nn {
+	\cs_new:Nn \@@_leave_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
 			\seq_gremove_all:Nn #1 {#2}
 			\seq_if_empty:NT #1 {
 				\int_gdecr:N \g_prot_voters_int
 			}
 		} {
-			\msg_error_text:n { out-of-nothing }
+			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
 		}
 	}
-	\cs_new:Nn \@@_enterfrom:Nn {
+	\cs_new:Nn \@@_enter_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
-			\msg_error_text:n { out-of-nothing }
+			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
 		} {
 			\seq_if_empty:NT #1 {
 				\int_gincr:N \g_prot_voters_int
@@ -322,11 +415,171 @@
 			\seq_gput_right:Nn #1 {#2}
 		}
 	}
-	\cs_generate_variant:Nn \@@_leavefrom:Nn {cV}
-	\cs_generate_variant:Nn \@@_enterfrom:Nn {cV}
+	\cs_generate_variant:Nn \@@_leave_groupvoter:Nn {cV}
+	\cs_generate_variant:Nn \@@_enter_groupvoter:Nn {cV}
 %</package>
+%    \end{macrocode}
+%   For tests see at the very end.
+% \end{macro}
+% \begin{macro}{\prot_move:nn, \@@_initialize_move:n}
+%   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
+%   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
+%   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
+%   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
+%
+%   \cs{prot_move:nn} setzt momentane Anwesenheit von #1=\meta{id} auf |#2|.
+%   Ruft dazu lediglich |/prot/person/#1/move| auf, was beim ersten Aufruf ggf. in die |.aux|-Datei schreibt und bei späteren Aufrufen auf Konsistenz prüft.
+%   Nutzt |forcemove| ohne Tests, |firstmove| und |latermove| sowie – als Hook – |aftermove|.
+%   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
+%    \begin{macrocode}
+%<*package>
+	\cs_new:Nn \prot_move:nn {
+		\pgfkeys { /prot/person/#1/move = #2 }
+	}
+	\cs_new:Nn \@@_initialize_move:n {
+		\tl_set:Nx \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
+		\tl_if_eq:NnTF \l_tmpa_tl 1 {
+			\pgfkeys { /prot/person/#1/move/.code = {\@@_initialmove:nN {#1} {##1} } }
+			\@@_forcemove:nN {#1} 1
+		} {
+			\pgfkeys { /prot/person/#1/move/.code = {\msg_error:nnn { prot } { move / not-there } {#1} } }
+		}
+	}
+	\cs_new:Nn \@@_forcemove:nN {
+		\pgfkeys { /prot/person/#1/.cd
+			, there = #2
+			, aftermove = #2
+		}
+	}
+	\cs_new:Nn \@@_initialmove:nN {
+		\@@_firstmove:nN {#1} {#2}
+		\pgfkeys { /prot/person/#1/move/.code = {\@@_latermove:nN {#1} {##1} } }
+	}
+	\cs_new:Nn \@@_firstmove:nN {
+		\tl_if_eq:NnT {#2} 1 { \@@_addlate:n {#1} }
+		\@@_forcemove:nN {#1} {#2}
+	}
+	\cs_new:Nn \@@_latermove:nN {
+		\tl_set:Nn \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
+		\tl_if_eq:NnTF \l_tmpa_tl {#2}
+			{ \msg_error:nnn { prot } { move / #2-again } {#1} }
+			{ \@@_forcemove:nN {#1} {#2} }
+	}
+	\cs_new:Nn \@@_addlate:n {
+		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
+	}
+	\cs_new:Nn \@@_makelate:n {
+		\@@_forcemove:nN {#1} 0
+	}
+%</package>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\prot_voting:n, \prot_simple_voting:n}
+%   Nimmt eine tokenlist als Argument und lässt ein Ergebnis im Input Stream.
+%   \cs{prot_simple_voting:n} tut dies direkt, wohingegen \cs{prot_voting:n} noch etwas mehr erledigt:`
+%   Enthält die tokenlist nur Zahlen, gebe das Ergebnis aus und überprüfe zudem, ob die Summe der Zahlen gleich der momentanen Anzahl Stimmberechtigter ist.
+%   Enthält die tokenlist einen Stern und sonst nur Zahlen, so ersetze den Stern so durch eine Zahl, dass die Summe wie im vorigen Satz passt.
+%   In allen anderen Fällen gibt es einen Fehler.
+%    \begin{macrocode}
+%<*package>
+	\int_new:N \l@@_votes_int
+	\int_new:N \l@@_votes_stars_int
+	\seq_new:N \l@@_result_seq
+	\tl_const:Nn \c_prot_vote_sep_tl { \exp_not:N\, / \exp_not:N\, }
+	\cs_new:Nn \prot_voting:n {
+		\int_zero:N \l@@_votes_int
+		\int_zero:N \l@@_votes_stars_int
+		\seq_clear:N \l@@_result_seq
+		\tl_map_inline:nn {#1} {
+			\str_if_eq:nnTF {##1} * {
+				\int_incr:N \l@@_votes_stars_int
+				\seq_put_right:Nn \l@@_result_seq { \int_eval:n { \g_prot_voters_int - \l@@_votes_int } }
+			} {
+				\int_add:Nn \l@@_votes_int {##1}
+				\seq_put_right:Nn \l@@_result_seq {##1}
+			}
+		}
+		\bool_if:nT {
+			\int_compare_p:nNn \l@@_votes_stars_int = 0
+			&& ! \int_compare_p:nNn \l@@_votes_int = \g_prot_voters_int
+		} {
+			\msg_warning:nnxxx { prot } { voting / wrong-count }
+				{ \seq_use:Nn \l@@_result_seq + }
+				{ \int_use:N \l@@_votes_int }
+				{ \int_use:N \g_prot_voters_int }
+		}
+		\int_compare:nNnTF \l@@_votes_stars_int < 2
+			{ \@@_simple_seq_voting:N \l@@_result_seq }
+			{ \msg_error:nnn { prot } { voting / super-stars } {#1} }
+	}
+	\cs_new:Nn \@@_simple_seq_voting:N { ( \seq_use:Nn #1 \c_prot_vote_sep_tl ) }
+	\cs_new:Nn \prot_simple_voting:n { ( \@@_tl_use:nn {#1} \c_prot_vote_sep_tl ) }
+%</package>
+%    \end{macrocode}
+% Tests:
+%    \begin{macrocode}
 %<*test|expect>
-\TEST { \@@_apply_group:n } {
+	\group_begin:
+	\TEST { \prot_voting:n } {
+%<*test>
+	\cs_set_eq:NN \@@_test_simple_seq_voting:N \@@_simple_seq_voting:N
+	\cs_set:Nn \@@_simple_seq_voting:N { \exp_args:Nx \TYPE { \@@_test_simple_seq_voting:N \l@@_result_seq } }
+	\cs_new:Nn \@@_test_voting:nn { \prot_voting:n {#1} }
+	\cs_new:Nn \@@_test_voting:nnn { \@@_test_voting:nn {#1} {} }
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_voting:nn { \TYPE { \prot_simple_voting:n {#2} } }
+	\cs_new:Nn \@@_test_voting:nnn { #3 \@@_test_voting:nn {} {#2} }
+%</expect>
+	\@@_test:nn { \prot_simple_voting:n {abc} } { ( a \c_prot_vote_sep_tl b \c_prot_vote_sep_tl c ) }
+	\@@_test:nn { \prot_simple_voting:n {a} } { ( a ) }
+	\@@_test:nn { \prot_simple_voting:n {} } { ( ) }
+	\int_gset:Nn \g_prot_voters_int { 21 }
+	\@@_test_voting:nn { 0123456 } { 0123456 }
+	\@@_test_voting:nn { 012345* } { 0123456 }
+	\@@_test_voting:nn { 0123*56 } { 0123456 }
+	\@@_test_voting:nn { 0*23456 } { 0123456 }
+	\@@_test_voting:nn { *123456 } { 0123456 }
+	\@@_test_voting:nn { 5{10}* } { 5{10}6 }
+	\@@_test_voting:nn { *1 } { {20}1 }
+	\@@_test_voting:nn { * } { {21} }
+	\@@_test_voting:nnn{ 1123456 } { 1123456 } { \msg_warning:nnnnn { prot } { voting / wrong-count } { 1+1+2+3+4+5+6 } { 22 } { 21 } }
+	\@@_nontest:nn { \prot_voting:n { *12345* } } { \msg_error:nnn { prot } { voting / super-stars } { *12345* } }
+	\int_gzero:N \g_prot_voters_int
+	}
+	\group_end:
+%</test|expect>
+%    \end{macrocode}
+% \end{macro}
+% Zusätzliche Kernel-Funktionen:
+%    \begin{macrocode}
+%<*package>
+	\cs_new:Nn \@@_tl_use:nn {
+		\tl_head:n {#1} \exp_args:Ne \tl_map_tokens:nn { \tl_tail:n {#1} } { \use:nn {#2} }
+	}
+	\cs_generate_variant:Nn \tl_range:nnn { nne }
+%</package>
+%    \end{macrocode}
+% Fehlermeldungen:
+%    \begin{macrocode}
+%<*package>
+	\msg_new:nnnn { prot } { malformed-id } { Die~ID~'#1'~ist~böse. } { Ids~dürfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute. }
+	\msg_new:nnn  { prot } { id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
+	\msg_new:nnn  { prot } { id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
+	\msg_new:nnnn { prot } { name-exists } { Der~Name~'#1'~ist~bereits~an~jemand~anderen~vergeben. } { Dies~könnte~Teile~der~Bevölkerung~verwirren. }
+	\msg_new:nnnn { prot } { move / wrong-vote } { Programmierfehler:~Illegale~Bewegung~'#1'. } { Eigentlich~sollten~nur~'0'~und~'1'~vorkommen. }
+	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~Person~'#2'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
+	\msg_new:nnnn { prot } { move / not-there } { Person~'#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
+	\msg_new:nnnn { prot } { move / 0-again } { Person~'#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
+	\msg_new:nnnn { prot } { move / 1-again } { Person~'#1'~kommt~zwei~mal~hintereinander. } { Vielleicht~ging~sie~zwischendrin~wieder? }
+	\msg_new:nnnn { prot } { voting / wrong-count } { Von~#3~anwesenden~Stimmberechtigten~haben~#1=#2~abgestimmt. } { Falls~das~so~richtig~ist,~nutze~die~\exp_not:N\Erg-Funktion. }
+	\msg_new:nnnn { prot } { voting / super-stars } { Das~Abstimmungsergebnis~'#1'~enthält~zu~viele~Sterne. } { Es~kann~nur~einen~*S*t*a*r*~geben. }
+%</package>
+%    \end{macrocode}
+% Integration Tests:
+%    \begin{macrocode}
+%<*test|expect>
+\TEST { \@@_apply_group:n, \prot_move:n } {
 	\setcounter{errorcontextlines}{100}
 	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
 	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
@@ -339,16 +592,24 @@
 		\pgfkeys { /prot/person/#1/group/.get=\l_tmpa_tl }
 		\TYPE { value = \l_tmpa_tl }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
-		\@@_inimove:n {#1}
+		\@@_initialize_move:n {#1}
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
 	}
 	\cs_new:Nn \@@_test_move:nnnnn {
-		\pgfkeys { /prot/person/#1/move = #2 }
+		\prot_move:nn {#1} {#2}
 		\pgfkeys { /prot/person/#1/there/.get=\l_tmpa_tl }
 		\TYPE { there = \l_tmpa_tl }
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
+	}
+	\cs_new:Nn \@@_test_show_key:nnn {
+		\pgfkeys { /prot/person/#1/#2/.get=\l_tmpa_tl }
+		\TYPE { #2 = \l_tmpa_tl }
+	}
+	\cs_new:Nn \@@_test_show_name:nn {
+		\pgfkeys { /prot/name/#1/.get=\l_tmpa_tl }
+		\TYPE { #1 = \l_tmpa_tl }
 	}
 %</test>
 %<*expect>
@@ -363,7 +624,16 @@
 		\TYPE { \#voters = #4 }
 		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
 	}
+	\cs_new:Nn \@@_test_show_key:nnn { \TYPE { #2 = #3 } }
+	\cs_new:Nn \@@_test_show_name:nn { \TYPE { #1 = #2 } }
 %</expect>
+	\cs_new:Nn \@@_test_show_person:nnnnn {
+		\@@_test_show_key:nnn {#1} { id         } {#1}
+		\@@_test_show_key:nnn {#1} { name       } {#2}
+		\@@_test_show_key:nnn {#1} { group      } {#3}
+		\@@_test_show_key:nnn {#1} { attendance } {#4}
+		\@@_test_show_key:nnn {#1} { there      } {#5}
+	}
 	\@@_test_group:nnnnnnn { Donald  } 0 { g }      { gast }  { Donald } 0 { \q_nil }
 	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { gast }  { Donald , Donald } 0 { \q_nil }
 	\SEPARATOR
@@ -393,102 +663,35 @@
 	\@@_test_move:nnnnn    { Gerda  } 0 { refvor } 1 { Heidi }
 	\@@_test_move:nnnnn    { Heidi  } 0 { refvor } 0 { }
 }
+\TEST { persontable } {
+%<*test>
+% Unpassende Ids noch nicht getestet
+% Doppelte Namen noch nicht getestet
+\readPersonTable
+{ Nat & Nathan  & Weise    & !!   & stupa & x
+\\ NW & Nathan  & Waise    & !!   & stupa & e
+\\    & Ada     & Lovelace &      & stupa & x
+\\    & Eva     & Daus     & Eve  & g     & x
+}
+%</test>
+%<*expect>
+\tl_const:Nn \Nat {}
+\tl_const:Nn \NW  {}
+\tl_const:Nn \Ada {}
+\tl_const:Nn \Eve {}
+%</expect>
+	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } 1
+	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } 0
+	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } 1
+	\@@_test_show_person:nnnnn { Eve } { Eve } { gast  } { x } 1
+	\@@_test_show_name:nn { Nathan~We. } { Nat }
+	\@@_test_show_name:nn { Ada } { Ada }
+	\@@_test_show_name:nn { Eve } { Eve }
+}
 %</test|expect>
-%    \end{macrocode}
-% \end{macro}
-% \begin{macro}{\prot_newperson:nnnnnnnn}  \prot_newperson_frontend:... produces input for that one by parsing the \meta{shortname} argument.
-%   Nimmt \marg{id}, \marg{name}, \marg{first_name}, \marg{last_name}, \marg{group}, \marg{attendance}, \marg{special}, \marg{voter}.
-%   Zuvor müssen diese bereits befüllt werden.
-%   Dabei werden \marg{id} und \marg{name} von \prot_newperson_fancy:... und \marg{group} und \marg{voter} protokollspezifisch festgelegt.
-%   \item Der Anzeigename \meta{name} wird anhand des \meta{shortname}-Arguments festgelegt.
-%   \item Die \meta{id} wird falls vorhanden und nichtleer durch das \meta{id}-Argument und andernfalls gleich zu \meta{name} festgelegt.
-%   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
-%   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
-%
-%   Zuerst wird mittels \pkg{pgfkeys} unter \texttt{/prot/names/\meta{name}} die \meta{id} hinterlegt, und dabei geschaut, ob \meta{name} bereits verwendet wird,
-%       um einen Fehler inklusive Verweis auf die andere Person zu generieren.
-%   \end{enumerate}
-%    \begin{macrocode}
-%<*package>
-	\cs_new:Nn\prot_newperson:nnnnnnnn{
-		\cs_if_exists:cTF{#1}{
-			\pgfkeysifdefined{/prot/person/#1}
-				{ \msg_error_text:n{prot/id} }
-				{ \msg_error_text:n{prot/id} }
-		}{
-			\cs_new:cpn{#1}{#2\@\xspace}
-			\pgfkeysifdefined{/prot/names/#2}
-				{ \msg_error_text:n{/prot/names} }
-				{ \pgfkeyssetvalue{/prot/names/#2}{#1} }
-%    \end{macrocode}
-%   Danach werden unter \texttt{/prot/person/\meta{id}/} verschiedene Schlüssel befüllt
-%   (oder vielleicht auch nicht alle, wenn aus anderen bestimmbar):
-%   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|, |special|, |voter|.
-%    \begin{macrocode}
-			\pgfkeyssetvalue{/prot/person/#1/id}{#1}
-			\pgfkeyssetvalue{/prot/person/#1/name}{#2}
-			\pgfkeyssetvalue{/prot/person/#1/name/first}{#3}
-			\pgfkeyssetvalue{/prot/person/#1/name/last}{#4}
-			\@@_parse_attendance:n {#6}
-			\@@_set_attendance:n {#1}
-			\@@_apply_group:n {#5}
-			\@@_inimove:n {#1}
-			\pgfkeyssetvalue{/prot/person/#1/special}{#7}
-			\pgfkeyssetvalue{/prot/person/#1/voter}{#8}
-		}
-	}
-%    \end{macrocode}
-% \end{macro}
-%   Womöglich sollte auch noch unter \texttt{prot/group/} hinterlegt werden, wer zu welcher Gruppe gehört, insbesondere wenn eine Gruppe kollektiv stimmberechtigt ist.
-% \begin{macro}{\@@_move:nn}
-%   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
-%   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
-%   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
-%   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
-%   Momentane Anwesenheit von #1=\meta{id} auf |#2| setzen.
-%   Ruft hauptsächlich |attendance/move| auf, was beim ersten Aufruf in die |.aux|-Datei schreibt und bei späteren Aufrufen auf Konsistenz prüft.
-%   Nutzt |forcemove| ohne Tests, |firstmove| und |latermove| sowie – als Hook – |aftermove|.
-%   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
-%    \begin{macrocode}
-	\cs_new:Nn \@@_inimove:n {
-		\tl_set:Nx \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
-		\tl_if_eq:NnTF \l_tmpa_tl 1 {
-			\pgfkeys { /prot/person/#1/move/.code = {\@@_move:nN {#1} {##1} } }
-			\@@_forcemove:nN {#1} 1
-		} {
-			\pgfkeys { /prot/person/#1/move/.code = {\msg_error_text:n {not-there-move} } }
-		}
-	}
-	\cs_new:Nn \@@_forcemove:nN {
-		\pgfkeys { /prot/person/#1/.cd
-			, there = #2
-			, aftermove = #2
-		}
-	}
-	\cs_new:Nn \@@_move:nN {
-		\@@_firstmove:nN {#1} {#2}
-		\pgfkeys { /prot/person/#1/move/.code = {\@@_latermove:nN {#1} {##1} } }
-	}
-	\cs_new:Nn \@@_firstmove:nN {
-		\tl_if_eq:NnT {#2} 1 { \@@_addlate:n {#1} }
-		\@@_forcemove:nN {#1} {#2}
-	}
-	\cs_new:Nn \@@_latermove:nN {
-		\tl_set:Nn \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
-		\tl_if_eq:NnTF \l_tmpa_tl {#2}
-			{ \msg_error_text:n { #2-again } }
-			{ \@@_forcemove:nN {#1} {#2} }
-	}
-	\cs_new:Nn \@@_addlate:n {
-		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
-	}
-	\cs_new:Nn \@@_makelate:n {
-		\@@_forcemove:nN {#1} 0
-	}
 %    \end{macrocode}
 % And the end.
 %    \begin{macrocode}
-%</package>
 %<*test|expect>
 	\ExplSyntaxOff
 	\END
@@ -497,3 +700,4 @@
 %
 % \Finale
 \endinput
+% vim: sw=4 ts=4 noet fdm=marker foldmarker=\\begin,\\end foldcolumn=3
