@@ -78,11 +78,8 @@
 %
 % \section{Implementation}
 %
-% This is a prot and fun implementation.
-% And here it starts.
-% Nutzt \pkg{pgfkeys} statt \pkg{l3keys} oder \pkg{xkeyval}, um Werte speichern zu können und weil \pkg{pgfkeys} einfach generell mehr kann und eine buntere Dokumentation besitzt :D
-% Vielleicht ist das aber auch ein bisschen blöd, da verschiedene Programmierstile zu mischen.
-% TODO: nutze \pkg{l3keys} sowie |:c|-Argumente der Form |prot_person_/Donald/name|. Die sind dann auch global und nicht lokal wie bei \pkg{pgfkeys}.
+% Variablen und Konstanten für Person \meta{id} werden unter \texttt{\meta{g_/c_/}prot_person_/\meta{id}/_\meta{var}\meta{_typ/:signatur}} gespeichert.
+% Dies erscheint mir ein plausibles Design zu sein, insbesondere unterstützt \LaTeX3 dies nativ mittels |:c|-Argumenten.
 % TODO: Setze Macros als protected sowie nopar.
 %    \begin{macrocode}
 %<@@=prot>
@@ -92,20 +89,21 @@
 	\RequirePackage{expl3}
 	\START
 	\ExplSyntaxOn
-	\keys_set:nn { sys } { check-declarations, log-functions }
+	\keys_set:nn { sys } { check-declarations }
+	\debug_on:n { check-expressions }
+	%\keys_set:nn { sys } { log-functions }
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
-	\cs_new_eq:NN \@@_nontest:nn \use_i:nn
+	\cs_new:Nn \@@_nontest:nn {#1}
 %</test>
 %<*expect>
 	\cs_new:Nn \@@_test:nn { \TYPE {#2} }
-	\cs_new_eq:NN \@@_nontest:nn \use_ii:nn
+	\cs_new:Nn \@@_nontest:nn {#2}
 %</expect>
 %</test|expect>
 %<*package>
 	\RequirePackage{expl3}
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
-	\RequirePackage{pgfkeys}
 %    \end{macrocode}
 % \begin{environment}{persontable}
 %   Liest gesamte Tabelle ein.
@@ -235,37 +233,39 @@
 %   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
 %   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
 %
-%   Zuerst wird mittels \pkg{pgfkeys} unter \texttt{/prot/names/\meta{name}} die \meta{id} hinterlegt, und dabei geschaut, ob \meta{name} bereits verwendet wird,
-%       um einen Fehler inklusive Verweis auf die andere Person zu generieren.
+%   Zuerst wird unter \texttt{c_prot_names_/\meta{name}_str} die \meta{id} hinterlegt bzw\@. gemeckert, falls \meta{name} bereits belegt ist.
+%   TODO: Der name-exists-Fehler könnte besser sein.
 %    \begin{macrocode}
 %<*package>
 	\cs_new:Nn\prot_newperson:nnnnnn {
-		\cs_if_exist:cTF{#1}{
-			\pgfkeysifdefined{/prot/person/#1}
-				{ \msg_error:nnn {prot} {id-exists} {#1} }
-				{ \msg_error:nnn {prot} {id-iscsname} {#1} }
-		}{
+		\cs_if_exist:cTF {#1} {
+			\cs_if_exist:cTF { c_prot_person_/#1/id_str }
+				{ \msg_error:nnn { prot } { id-exists } {#1} }
+				{ \msg_error:nnn { prot } { id-iscsname } {#1} }
+		} {
 			\tl_const:cn {#1} { #2\@\xspace }
-			\cs_set_eq:NN \@@_prot_nbsp: \prot_nbsp:
+			\group_begin:
 			\cs_set:Nn \prot_nbsp: {~}
-			\pgfkeysifdefined{/prot/name/#2}
-				{ \msg_error:nnn {prot} {name-exists} {#1} }
-				{ \pgfkeyssetvalue{/prot/name/#2}{#1} }
-			\cs_set_eq:NN \prot_nbsp: \@@_prot_nbsp:
+			\cs_if_exist:cTF { c_prot_name_/#2/_str }
+				{ \msg_error:nnn { prot } { name-exists } {#1} }
+				{ \str_const:cn { c_prot_name_/#2/_str } {#1} }
+			\group_end:
 %    \end{macrocode}
-%   Danach werden unter \texttt{/prot/person/\meta{id}/} verschiedene Schlüssel befüllt:
+%   Danach werden unter \texttt{g_prot_person_/\meta{id}/} verschiedene Schlüssel befüllt:
 %   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|.
 %    \begin{macrocode}
-			\pgfkeyssetvalue{/prot/person/#1/id}{#1}
-			\pgfkeyssetvalue{/prot/person/#1/name}{#2}
-			\pgfkeyssetvalue{/prot/person/#1/name/first}{#3}
-			\pgfkeyssetvalue{/prot/person/#1/name/last}{#4}
+			\str_set:Nn \l@@_person_str { prot_person_/#1 }
+			\str_const:cn { c_\l@@_person_str/id_str } {#1}
+			\tl_const:cn { c_\l@@_person_str/name_tl } {#2}
+			\tl_const:cn { c_\l@@_person_str/name/first_tl } {#3}
+			\tl_const:cn { c_\l@@_person_str/name/last_tl } {#4}
 			\@@_parse_attendance:n {#6}
-			\@@_set_attendance:n {#1}
+			\@@_set_attendance:
 			\@@_apply_group:n {#5}
-			\@@_initialize_move:n {#1}
+			\@@_initialize_move:
 		}
 	}
+	\str_new:N \l@@_person_str
 %</package>
 %    \end{macrocode}
 % \end{macro}
@@ -281,64 +281,70 @@
 %   \texttt{/prot/person/\meta{id}/group} die primäre Gruppe hinterlegt, wobei spätere Angaben vorherige überschreiben.
 %
 %   TODO: Implementiere mehrere Zeilen für eine Person.
-%
+%   TODO: Momentan wird der attendance-Schlüssel gar nicht genutzt. specials ebenso.
 %    \begin{macrocode}
 %<*package>
 	\cs_new:Nn \@@_parse_attendance:n {
-		\pgfqkeys { /prot/attendance } { value/.link=/prot/attendance/fallback, fallback=u, specials=, #1 }
+		\str_new:c { g_\l@@_person_str/specials_str }
+		\keys_set:nn { prot / attendance } { value =, fallback = u, #1 }
+		\str_if_empty:NT \l@@_attendance_str { \str_set_eq:NN \l@@_attendance_str \l@@_attendance_fallback_str }
 	}
-	\cs_new:Nn \@@_set_attendance:n {
-		\pgfqkeys { /prot/person/#1 } {
-			attendance/.initial=, there/.initial=2, attendance/disp/.link=/prot/person/#1/attendance,
-			/prot/attendance/use/\pgfkeysvalueof{/prot/attendance/value}
-		}
+	\cs_new:Nn \@@_set_attendance: {
+		\bool_new:c { g_\l@@_person_str/there_bool }
+		\keys_set:nV { prot / attendance / use } \l@@_attendance_str
+		\@@_provide:Ncn \tl_const:cv { c_\l@@_person_str/attendance/disp_tl } { c_\l@@_person_str/attendance_str }
 	}
-	\pgfkeys { /prot/attendance/.cd
-		, value/.link = fallback
-		, fallback/.initial = u
-		, specials/.initial =
-		, x/.style = {value=x}, use/x/.style = {attendance=x, there=1}
-		, e/.style = {value=e}, use/e/.style = {attendance=e, there=0}
-		, u/.style = {value=u}, use/u/.style = {attendance=u, there=0}
-		, d/.style = {value=d}, use/d/.style = {attendance=d, there=1, attendance/disp=\emph x}
-		, p/.style = {fallback=x, specials/.append=p}
-		, s/.style = {fallback=x, specials/.append=s}
+	\keys_define:nn { prot / attendance } {
+		, value .str_set:N = \l@@_attendance_str
+		, fallback .str_set:N = \l@@_attendance_fallback_str
+		, specials .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+		, attendance .code:n = { \str_const:cn { c_ \l@@_person_str / attendance_str } {#1} }
+		, attendance/disp .code:n = { \tl_const:cn { c_ \l@@_person_str / attendance/disp_tl } { \exp_not:n{#1} } }
+		, there .code:n = { \bool_gset:cn { g_ \l@@_person_str / there_bool } { \int_compare_p:nNn {#1} > 0 } }
+		, x .meta:n = { value = x }, use/x .meta:n = { attendance = x, there = 1 }
+		, e .meta:n = { value = e }, use/e .meta:n = { attendance = e, there = 0 }
+		, u .meta:n = { value = u }, use/u .meta:n = { attendance = u, there = 0 }
+		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
+		, p .meta:n = { fallback = x, specials = p }
+		, s .meta:n = { fallback = x, specials = s }
 	}
 %</package>
 %    \end{macrocode}
 %   Testing Attendance parsing and setting.
 %    \begin{macrocode}
 %<*test|expect>
-\TEST { \@@_parse_attendance:n , \@@_set_attendance:n } {
+\TEST { \@@_parse_attendance:n , \@@_set_attendance: } {
 %<*test>
-	\cs_new:Nn \@@_test_attendance_i:nn {
-		\@@_parse_attendance:n {#1}
-		\pgfkeys { /prot/attendance/value/.get=\l_tmpa_tl } \TYPE {\l_tmpa_tl}
+	\cs_new:Nn \@@_test_attendance_i:nnn {
+		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\@@_parse_attendance:n {#2}
+		\TYPE { \l@@_attendance_str }
 	}
 	\cs_new:Nn \@@_test_attendance:nnnnn {
-		\@@_parse_attendance:n {#1}
-		\@@_set_attendance:n {Donald}
-		\pgfkeys { /prot/person/Donald/attendance/.get=\l_tmpa_tl } \TYPE {attendance = \l_tmpa_tl}
-		\pgfkeys { /prot/person/Donald/there/.get=\l_tmpa_tl } \TYPE {there = \l_tmpa_tl}
-		\pgfkeys { /prot/person/Donald/attendance/disp/.get=\l_tmpa_tl } \TYPE { disp = #4 \l_tmpa_tl }
+		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\@@_parse_attendance:n {#2}
+		\@@_set_attendance:
+		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+		\TYPE { disp = \tl_use:c { c_prot_person_/#1/attendance/disp_tl } }
 	}
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_attendance_i:nn { \TYPE {#2} }
-	\cs_new:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#2} \TYPE {there=#3} \TYPE {disp=#5} }
+	\cs_new:Nn \@@_test_attendance_i:nnn { \TYPE {#3} }
+	\cs_new:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#3} \TYPE {there=#4} \TYPE {disp=#5} }
 %</expect>
-	\@@_test_attendance_i:nn { x } { x }
-	\@@_test_attendance_i:nn { p } { x }
-	\@@_test_attendance_i:nn { u } { u }
-	\@@_test_attendance_i:nn { d } { d }
-	\@@_test_attendance_i:nn { x, e } { e }
-	\@@_test_attendance_i:nn { e, x } { x }
-	\@@_test_attendance:nnnnn { x } x 1 {} { x }
-	\@@_test_attendance:nnnnn { p } x 1 {} { x }
-	\@@_test_attendance:nnnnn { u } u 0 {} { u }
-	\@@_test_attendance:nnnnn { d } d 1 {\exp_not:V} { \exp_not:N\emph x }
-	\@@_test_attendance:nnnnn { x, e } e 0 {} { e }
-	\@@_test_attendance:nnnnn { e, x } x 1 {} { x }
+	\@@_test_attendance_i:nnn A { x } { x }
+	\@@_test_attendance_i:nnn B { p } { x }
+	\@@_test_attendance_i:nnn C { u } { u }
+	\@@_test_attendance_i:nnn D { d } { d }
+	\@@_test_attendance_i:nnn E { x, e } { e }
+	\@@_test_attendance_i:nnn F { e, x } { x }
+	\@@_test_attendance:nnnnn G { x } x { true } { x }
+	\@@_test_attendance:nnnnn H { p } x { true } { x }
+	\@@_test_attendance:nnnnn I { u } u { false } { u }
+	\@@_test_attendance:nnnnn J { d } d { true } { \exp_not:N\emph x }
+	\@@_test_attendance:nnnnn K { x, e } e { false } { e }
+	\@@_test_attendance:nnnnn L { e, x } x { true } { x }
 }
 %</test|expect>
 %    \end{macrocode}
@@ -347,28 +353,26 @@
 %    \begin{macrocode}
 %<*package>
 	\cs_new:Nn \@@_apply_group:n {
-		\pgfkeys { /prot/person/\l@@_id_str/.cd, group/.initial=, info/.initial=, aftermove/.code=, /prot/group/.cd, #1 }
-		% In Gruppen abspeichern
+		\str_new:c { g_\l@@_person_str / group_str }
+		\keys_set:nn { prot / group } {#1}
+		\@@_provide:Ncn \cs_new:cn { \l@@_person_str / aftermove:N } { }
 	}
-	\pgfkeys {
-		, /prot/voter/.style = {
-			aftermove/.code = { \@@_move_voter:n ##1 }
-		}
-		, /prot/groupvoter/.style = {
-			, aftermove/.code = { \@@_move_groupvoter:nn {#1} ##1 }
-		}
-		, /prot/group/.code = {
-			\pgfkeysalso { group = #1 }
+	\keys_define:nn { prot / group } {
+		, voter .code:n = { \cs_new:cpn { \l@@_person_str / aftermove:N } { \@@_move_voter:N } }
+		, groupvoter .code:n = { \@@_make_groupvoter:Vn \l@@_id_str {#1} }
+		, group .code:n = {
+			\str_gset:cn { g_ \l@@_person_str / group_str } {#1}
 			\seq_gput_right:cV { g_prot_group_#1_seq } \l@@_id_str
 		}
-		, /prot/group/.cd
-		, g/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=gast, info=#1 }
+		, votergroup .meta:n = { group = #1, groupvoter = #1 }
+		, info .code:n = { \tl_const:cn { \l@@_person_str / info_tl } {#1} }
+		, g .meta:n = { group = gast, info = #1 }
 		% StuPa
-		, stupa/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=stupa, /prot/voter, info=#1 }
-		, fsma/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=fsma, info=#1 }
-		, reffs/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=reffs, info=#1 }
+		, stupa .meta:n = { group = stupa, voter }
+		, fsma .meta:n = { group = fsma }
+		, reffs .meta:n = { group = reffs }
 		% AStA
-		, refvor/.code = \pgfkeys { /prot/person/\l@@_id_str/.cd, /prot/group=refvor, /prot/groupvoter=refvor, info=#1 }
+		, refvor .meta:n = { votergroup = refvor }
 	}
 	\seq_new:N \g_prot_group_gast_seq
 	\seq_new:N \g_prot_group_stupa_seq
@@ -377,23 +381,20 @@
 	\seq_new:N \g_prot_group_refvor_seq
 	\seq_new:N \g_prot_votergroup_refvor_seq
 	\int_new:N \g_prot_voters_int
-	\cs_new:Nn \@@_move_voter:n {
-		\str_case_e:nnF {#1} {
-			0 { \int_gdecr:N \g_prot_voters_int }
-			1 { \int_gincr:N \g_prot_voters_int }
-		} {
-			\msg_error:nnn { prot } { move / wrong-vote } {#1}
-		}
+	\cs_new:Nn \@@_move_voter:N {
+		\bool_if:NTF {#1}
+			{ \int_gincr:N \g_prot_voters_int }
+			{ \int_gdecr:N \g_prot_voters_int }
 	}
-	\cs_new:Nn \@@_move_groupvoter:nn {
-		\pgfkeysalso{id/.get=\l@@_id_str}
-		\str_case_e:nnF {#2} {
-			0 \@@_leave_groupvoter:cV
-			1 \@@_enter_groupvoter:cV
-		} {
-			\msg_error_text:nnn { prot } { move / wrong-vote } {#2} \use_none:nn
-		}
-		{ g_prot_votergroup_#1_seq } \l@@_id_str
+	\cs_new:Nn \@@_make_groupvoter:nn {
+		\cs_new:cpn { prot_person_/ #1 / aftermove:N } { \@@_move_groupvoter:nnN {#1} {#2} }
+	}
+	\cs_generate_variant:Nn \@@_make_groupvoter:nn { Vn }
+	\cs_new:Nn \@@_move_groupvoter:nnN {
+		\bool_if:NTF #3
+			\@@_enter_groupvoter:cn
+			\@@_leave_groupvoter:cn
+		{ g_prot_votergroup_#2_seq } {#1}
 	}
 	\cs_new:Nn \@@_leave_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
@@ -415,61 +416,54 @@
 			\seq_gput_right:Nn #1 {#2}
 		}
 	}
-	\cs_generate_variant:Nn \@@_leave_groupvoter:Nn {cV}
-	\cs_generate_variant:Nn \@@_enter_groupvoter:Nn {cV}
+	\cs_generate_variant:Nn \@@_leave_groupvoter:Nn { c }
+	\cs_generate_variant:Nn \@@_enter_groupvoter:Nn { c }
 %</package>
 %    \end{macrocode}
 %   For tests see at the very end.
 % \end{macro}
-% \begin{macro}{\prot_move:nn, \@@_initialize_move:n}
+% \begin{macro}{\prot_move:nN, \@@_initialize_move:}
 %   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
 %   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
 %   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
 %   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
 %
-%   \cs{prot_move:nn} setzt momentane Anwesenheit von #1=\meta{id} auf |#2|.
+%   \cs{prot_move:nN} setzt momentane Anwesenheit von #1=\meta{id} auf |#2|.
 %   Ruft dazu lediglich |/prot/person/#1/move| auf, was beim ersten Aufruf ggf. in die |.aux|-Datei schreibt und bei späteren Aufrufen auf Konsistenz prüft.
 %   Nutzt |forcemove| ohne Tests, |firstmove| und |latermove| sowie – als Hook – |aftermove|.
 %   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
 %    \begin{macrocode}
 %<*package>
-	\cs_new:Nn \prot_move:nn {
-		\pgfkeys { /prot/person/#1/move = #2 }
-	}
-	\cs_new:Nn \@@_initialize_move:n {
-		\tl_set:Nx \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
-		\tl_if_eq:NnTF \l_tmpa_tl 1 {
-			\pgfkeys { /prot/person/#1/move/.code = {\@@_initialmove:nN {#1} {##1} } }
-			\@@_forcemove:nN {#1} 1
+	\cs_new:Nn \prot_move:nN {
+		\tl_case:cnF { g_prot_person_/#1/moves_tl } {
+			- { \msg_error:nnn { prot } { move / not-there } {#1} }
+			0 {
+				\tl_gset:cn { g_prot_person_/#1/moves_tl } {1}
+				\bool_if:NT #2 { \@@_addlate:n {#1} }
+				\@@_forcemove:nN {#1} #2
+			}
 		} {
-			\pgfkeys { /prot/person/#1/move/.code = {\msg_error:nnn { prot } { move / not-there } {#1} } }
+			\bool_xor:nnTF { \bool_if_p:c { g_prot_person_/#1/there_bool } } {#2} {
+				\@@_forcemove:nN {#1} #2
+			} { \exp_args:Nnx \msg_error:nnn { prot } { move / \bool_to_str:n {#2} - again } {#1} }
 		}
+	}
+	\cs_new:Nn \@@_initialize_move: {
+		\tl_new:c { g_\l@@_person_str/moves_tl }
+		\tl_gset:cn { g_\l@@_person_str/moves_tl } 0
+		\bool_if:cTF { g_\l@@_person_str/there_bool }
+			{ \use:c { \l@@_person_str/aftermove:N } \c_true_bool }
+			{ \tl_gset:cn { g_\l@@_person_str/moves_tl } - }
 	}
 	\cs_new:Nn \@@_forcemove:nN {
-		\pgfkeys { /prot/person/#1/.cd
-			, there = #2
-			, aftermove = #2
-		}
-	}
-	\cs_new:Nn \@@_initialmove:nN {
-		\@@_firstmove:nN {#1} {#2}
-		\pgfkeys { /prot/person/#1/move/.code = {\@@_latermove:nN {#1} {##1} } }
-	}
-	\cs_new:Nn \@@_firstmove:nN {
-		\tl_if_eq:NnT {#2} 1 { \@@_addlate:n {#1} }
-		\@@_forcemove:nN {#1} {#2}
-	}
-	\cs_new:Nn \@@_latermove:nN {
-		\tl_set:Nn \l_tmpa_tl { \pgfkeysvalueof{/prot/person/#1/there} }
-		\tl_if_eq:NnTF \l_tmpa_tl {#2}
-			{ \msg_error:nnn { prot } { move / #2-again } {#1} }
-			{ \@@_forcemove:nN {#1} {#2} }
+		\bool_gset_eq:cN { g_prot_person_/#1/there_bool } #2
+		\use:c { prot_person_/#1/aftermove:N } #2
 	}
 	\cs_new:Nn \@@_addlate:n {
 		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
 	}
 	\cs_new:Nn \@@_makelate:n {
-		\@@_forcemove:nN {#1} 0
+		\@@_forcemove:nN {#1} \c_false_bool
 	}
 %</package>
 %    \end{macrocode}
@@ -557,7 +551,10 @@
 	\cs_new:Nn \@@_tl_use:nn {
 		\tl_head:n {#1} \exp_args:Ne \tl_map_tokens:nn { \tl_tail:n {#1} } { \use:nn {#2} }
 	}
+	\cs_new:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
+	\cs_new:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
+	\cs_generate_variant:Nn \tl_const:Nn { cv }
 %</package>
 %    \end{macrocode}
 % Fehlermeldungen:
@@ -567,11 +564,10 @@
 	\msg_new:nnn  { prot } { id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
 	\msg_new:nnn  { prot } { id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
 	\msg_new:nnnn { prot } { name-exists } { Der~Name~'#1'~ist~bereits~an~jemand~anderen~vergeben. } { Dies~könnte~Teile~der~Bevölkerung~verwirren. }
-	\msg_new:nnnn { prot } { move / wrong-vote } { Programmierfehler:~Illegale~Bewegung~'#1'. } { Eigentlich~sollten~nur~'0'~und~'1'~vorkommen. }
-	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~Person~'#2'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
-	\msg_new:nnnn { prot } { move / not-there } { Person~'#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
-	\msg_new:nnnn { prot } { move / 0-again } { Person~'#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
-	\msg_new:nnnn { prot } { move / 1-again } { Person~'#1'~kommt~zwei~mal~hintereinander. } { Vielleicht~ging~sie~zwischendrin~wieder? }
+	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~'#1'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
+	\msg_new:nnnn { prot } { move / not-there } { '#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
+	\msg_new:nnnn { prot } { move / 0-again } { '#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
+	\msg_new:nnnn { prot } { move / 1-again } { '#1'~kommt~zwei~mal~hintereinander. } { Vielleicht~ging~sie~zwischendrin~wieder? }
 	\msg_new:nnnn { prot } { voting / wrong-count } { Von~#3~anwesenden~Stimmberechtigten~haben~#1=#2~abgestimmt. } { Falls~das~so~richtig~ist,~nutze~die~\exp_not:N\Erg-Funktion. }
 	\msg_new:nnnn { prot } { voting / super-stars } { Das~Abstimmungsergebnis~'#1'~enthält~zu~viele~Sterne. } { Es~kann~nur~einen~*S*t*a*r*~geben. }
 %</package>
@@ -586,56 +582,59 @@
 %<*test>
 	\cs_new:Nn \@@_test_group:nnnnnnn {
 		\str_set:Nn \l@@_id_str {#1}
-		\pgfkeys { /prot/person/#1/id/.initial = #1 }
-		\pgfkeys { /prot/person/#1/there/.initial = #2 }
+		\str_set:Nn \l@@_person_str { prot_person_/#1 }
+		\cs_if_exist:cF { c_prot_person_/#1/id_str } {
+			\str_const:cn { c_prot_person_/#1/id_str } {#1}
+			\bool_new:c  { g_prot_person_/#1/there_bool }
+		}
+		\bool_gset:cn { g_prot_person_/#1/there_bool } { ! \str_if_eq_p:nn {#2} 0 }
 		\@@_apply_group:n {#3}
-		\pgfkeys { /prot/person/#1/group/.get=\l_tmpa_tl }
-		\TYPE { value = \l_tmpa_tl }
+		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
-		\@@_initialize_move:n {#1}
+		\@@_initialize_move:
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
 	}
-	\cs_new:Nn \@@_test_move:nnnnn {
-		\prot_move:nn {#1} {#2}
-		\pgfkeys { /prot/person/#1/there/.get=\l_tmpa_tl }
-		\TYPE { there = \l_tmpa_tl }
+	\cs_new:Nn \@@_test_move:nNnnn {
+		\prot_move:nN {#1} {#2}
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
 	}
-	\cs_new:Nn \@@_test_show_key:nnn {
-		\pgfkeys { /prot/person/#1/#2/.get=\l_tmpa_tl }
-		\TYPE { #2 = \l_tmpa_tl }
-	}
 	\cs_new:Nn \@@_test_show_name:nn {
-		\pgfkeys { /prot/name/#1/.get=\l_tmpa_tl }
-		\TYPE { #1 = \l_tmpa_tl }
+		\TYPE { #1 = \str_use:c { c_prot_name_/#1/_str } }
+	}
+	\cs_new:Nn \@@_test_show_person:nnnnn {
+		\TYPE { id = \str_use:c { c_prot_person_/#1/id_str } }
+		\TYPE { name = \str_use:c { c_prot_person_/#1/name_tl } }
+		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
+		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
 	}
 %</test>
 %<*expect>
 	\cs_new:Nn \@@_test_group:nnnnnnn {
-		\TYPE { value = #4 }
+		\TYPE { group = #4 }
 		\TYPE { \quark_if_nil:nF {#5} { g_prot_group_#4_seq = #5 } }
 		\TYPE { \#voters = #6 }
 		\TYPE { \quark_if_nil:nF {#7} { g_prot_votergroup_#4_seq = #7 } }
 	}
-	\cs_new:Nn \@@_test_move:nnnnn {
-		\TYPE { there = #2 }
+	\cs_new:Nn \@@_test_move:nNnnn {
+		\TYPE { there = \bool_to_str:N #2 }
 		\TYPE { \#voters = #4 }
 		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
 	}
-	\cs_new:Nn \@@_test_show_key:nnn { \TYPE { #2 = #3 } }
 	\cs_new:Nn \@@_test_show_name:nn { \TYPE { #1 = #2 } }
-%</expect>
 	\cs_new:Nn \@@_test_show_person:nnnnn {
-		\@@_test_show_key:nnn {#1} { id         } {#1}
-		\@@_test_show_key:nnn {#1} { name       } {#2}
-		\@@_test_show_key:nnn {#1} { group      } {#3}
-		\@@_test_show_key:nnn {#1} { attendance } {#4}
-		\@@_test_show_key:nnn {#1} { there      } {#5}
+		\TYPE { id = #1 }
+		\TYPE { name = #2 }
+		\TYPE { group = #3 }
+		\TYPE { attendance = #4 }
+		\TYPE { there = #5 }
 	}
-	\@@_test_group:nnnnnnn { Donald  } 0 { g }      { gast }  { Donald } 0 { \q_nil }
-	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { gast }  { Donald , Donald } 0 { \q_nil }
+%</expect>
+	\@@_test_group:nnnnnnn { Donaldy } 0 { g }      { gast }  { Donaldy } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { gast }  { Donaldy , Donald } 0 { \q_nil }
 	\SEPARATOR
 	\@@_test_group:nnnnnnn { Anna    } 0 { stupa }  { stupa } { Anna } 0 { \q_nil }
 	\@@_test_group:nnnnnnn { Bea     } 1 { stupa }  { stupa } { Anna , Bea } 1 { \q_nil }
@@ -643,11 +642,11 @@
 	\@@_test_group:nnnnnnn { Dora    } 1 { stupa }  { stupa } { Anna , Bea , Charlie , Dora } 3 { \q_nil }
 	\SEPARATOR
 	\@@_nontest:nn { \@@_makelate:n { Bea } } { }
-	\@@_test_move:nnnnn    { Donald  } 0 { } 2 { }
-	\@@_test_move:nnnnn    { Bea     } 1 { } 3 { }
-	\@@_test_move:nnnnn    { Charlie } 0 { } 2 { }
-	\@@_test_move:nnnnn    { Bea     } 0 { } 1 { }
-	\@@_test_move:nnnnn    { Dora    } 0 { } 0 { }
+	\@@_test_move:nNnnn    { Donald  } \c_false_bool { } 2 { }
+	\@@_test_move:nNnnn    { Bea     } \c_true_bool  { } 3 { }
+	\@@_test_move:nNnnn    { Charlie } \c_false_bool { } 2 { }
+	\@@_test_move:nNnnn    { Bea     } \c_false_bool { } 1 { }
+	\@@_test_move:nNnnn    { Dora    } \c_false_bool { } 0 { }
 	\SEPARATOR
 	\@@_test_group:nnnnnnn { Emilie } 0 { refvor }  { refvor } { Emilie } 0 { }
 	\@@_test_group:nnnnnnn { Fynn   } 1 { refvor }  { refvor } { Emilie , Fynn } 1 { Fynn }
@@ -656,34 +655,28 @@
 	\SEPARATOR
 	\@@_nontest:nn { \@@_makelate:n { Gerda } }
 	\@@_nontest:nn { \@@_makelate:n { Heidi } }
-	\@@_test_move:nnnnn    { Donald } 1 { refvor } 1 { Fynn }
-	\@@_test_move:nnnnn    { Heidi  } 1 { refvor } 1 { Fynn , Heidi }
-	\@@_test_move:nnnnn    { Fynn   } 0 { refvor } 1 { Heidi }
-	\@@_test_move:nnnnn    { Gerda  } 1 { refvor } 1 { Heidi , Gerda }
-	\@@_test_move:nnnnn    { Gerda  } 0 { refvor } 1 { Heidi }
-	\@@_test_move:nnnnn    { Heidi  } 0 { refvor } 0 { }
+	\@@_test_move:nNnnn    { Donald } \c_true_bool  { refvor } 1 { Fynn }
+	\@@_test_move:nNnnn    { Heidi  } \c_true_bool  { refvor } 1 { Fynn , Heidi }
+	\@@_test_move:nNnnn    { Fynn   } \c_false_bool { refvor } 1 { Heidi }
+	\@@_test_move:nNnnn    { Gerda  } \c_true_bool  { refvor } 1 { Heidi , Gerda }
+	\@@_test_move:nNnnn    { Gerda  } \c_false_bool { refvor } 1 { Heidi }
+	\@@_test_move:nNnnn    { Heidi  } \c_false_bool { refvor } 0 { }
 }
 \TEST { persontable } {
 %<*test>
 % Unpassende Ids noch nicht getestet
 % Doppelte Namen noch nicht getestet
-\readPersonTable
-{ Nat & Nathan  & Weise    & !!   & stupa & x
+\begin{persontable}
+Nat & Nathan  & Weise    & !!   & stupa & x
 \\ NW & Nathan  & Waise    & !!   & stupa & e
 \\    & Ada     & Lovelace &      & stupa & x
 \\    & Eva     & Daus     & Eve  & g     & x
-}
+\end{persontable}
 %</test>
-%<*expect>
-\tl_const:Nn \Nat {}
-\tl_const:Nn \NW  {}
-\tl_const:Nn \Ada {}
-\tl_const:Nn \Eve {}
-%</expect>
-	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } 1
-	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } 0
-	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } 1
-	\@@_test_show_person:nnnnn { Eve } { Eve } { gast  } { x } 1
+	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } { true }
+	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } { false }
+	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } { true }
+	\@@_test_show_person:nnnnn { Eve } { Eve } { gast  } { x } { true }
 	\@@_test_show_name:nn { Nathan~We. } { Nat }
 	\@@_test_show_name:nn { Ada } { Ada }
 	\@@_test_show_name:nn { Eve } { Eve }
