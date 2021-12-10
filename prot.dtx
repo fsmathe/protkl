@@ -107,16 +107,23 @@
 %    \end{macrocode}
 % \begin{environment}{persontable}
 %   Liest gesamte Tabelle ein.
-%   TODO: Momentan darf die letzte Zeile nicht beendet werden; \SplitList ist da pingelig. Außerdem stirbt das Ganze sehr unschön, wenn eine Zeile nicht lang genug ist, da \cs{SplitArgument} dann |-NoValue-| am Ende hinzufügt, statt einer nützlichen Fehlerausgabe. → Implementiere eigenen Argumentprozessor.
 %    \begin{macrocode}
-	\NewDocumentEnvironment { persontable } { > { \SplitList { \\ } } b } {
-		\ProcessList {#1} { \__prot_persontable_line:w }
+	\NewDocumentEnvironment { persontable } { b } {
+		\seq_set_split:Nnn \l@@_persontable_seq \\ {#1}
+		\seq_remove_all:Nn \l@@_persontable_seq { }
+		\seq_map_inline:Nn \l@@_persontable_seq {
+			\seq_set_split:Nnn \l@@_personrow_seq & {##1}
+			\int_compare:nNnTF { \seq_count:N \l@@_personrow_seq } = 6 {
+				\exp_last_unbraced:Nx \prot_newperson_frontend:nnnnnn { \@@_seq_to_tl:N \l@@_personrow_seq }
+			} {
+				\msg_error:nnxx { prot } { persontable / col-count }
+					{ \seq_use:Nn \l@@_personrow_seq { ~\&~ } }
+					{ \seq_count:N \l@@_personrow_seq }
+			}
+		}
 	} { }
-	\NewDocumentCommand \readPersonTable { > { \SplitList { \\ } } m } {
-		\ProcessList {#1} { \__prot_persontable_line:w }
-	} { }
-	\NewDocumentCommand { \__prot_persontable_line:w } { > { \SplitArgument { 5 } { & } } m }
-		{ \prot_newperson_frontend:nnnnnn #1 }
+	\seq_new:N \l@@_persontable_seq
+	\seq_new:N \l@@_personrow_seq
 %</package>
 %    \end{macrocode}
 %    \begin{macrocode}
@@ -129,7 +136,7 @@
 		\begin{persontable}
 			a & b & c & d & e & f \\
 			q & w & e & r & t & z \\
-			& Anna & - &  & foo={~bar~} & ~joah~
+			& Anna & - &  & foo={~bar~} & ~joah~ \\
 		\end{persontable}
 	\group_end:
 %</test>
@@ -233,37 +240,37 @@
 %   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
 %   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
 %
-%   Zuerst wird unter \texttt{c_prot_names_/\meta{name}_str} die \meta{id} hinterlegt bzw\@. gemeckert, falls \meta{name} bereits belegt ist.
-%   TODO: Der name-exists-Fehler könnte besser sein.
+%   Zuerst wird in \cs{g@@_names_prop} die \meta{id} hinterlegt bzw\@. gemeckert, falls \meta{name} bereits belegt ist.
 %    \begin{macrocode}
 %<*package>
+	\prop_new:N \g@@_names_prop
+	\str_new:N \l@@_samename_id_str
 	\cs_new:Nn\prot_newperson:nnnnnn {
-		\cs_if_exist:cTF {#1} {
-			\cs_if_exist:cTF { c_prot_person_/#1/id_str }
-				{ \msg_error:nnn { prot } { id-exists } {#1} }
-				{ \msg_error:nnn { prot } { id-iscsname } {#1} }
-		} {
-			\tl_const:cn {#1} { #2\@\xspace }
-			\group_begin:
-			\cs_set:Nn \prot_nbsp: {~}
-			\cs_if_exist:cTF { c_prot_name_/#2/_str }
-				{ \msg_error:nnn { prot } { name-exists } {#1} }
-				{ \str_const:cn { c_prot_name_/#2/_str } {#1} }
-			\group_end:
+		\@@_tl_if_alphabetic:nTF {#1} {
+			\cs_if_exist:cTF {#1} {
+				\cs_if_exist:cTF { c_prot_person_/#1/id_str }
+					{ \msg_error:nnn { prot } { person / id-exists } {#1} }
+					{ \msg_error:nnn { prot } { person / id-iscsname } {#1} }
+			} {
+				\tl_const:cn {#1} { #2\@\xspace }
+				\prop_get:NnNTF \g@@_names_prop {#2} \l@@_samename_id_str
+					{ \msg_error:nnnnV { prot } { person / name-exists } {#2} {#1} \l@@_samename_id_str }
+					{ \prop_gput:Nnn \g@@_names_prop {#2} {#1} }
 %    \end{macrocode}
 %   Danach werden unter \texttt{g_prot_person_/\meta{id}/} verschiedene Schlüssel befüllt:
 %   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|.
 %    \begin{macrocode}
-			\str_set:Nn \l@@_person_str { prot_person_/#1 }
-			\str_const:cn { c_\l@@_person_str/id_str } {#1}
-			\tl_const:cn { c_\l@@_person_str/name_tl } {#2}
-			\tl_const:cn { c_\l@@_person_str/name/first_tl } {#3}
-			\tl_const:cn { c_\l@@_person_str/name/last_tl } {#4}
-			\@@_parse_attendance:n {#6}
-			\@@_set_attendance:
-			\@@_apply_group:n {#5}
-			\@@_initialize_move:
-		}
+				\str_set:Nn \l@@_person_str { prot_person_/#1 }
+				\str_const:cn { c_\l@@_person_str/id_str } {#1}
+				\tl_const:cn { c_\l@@_person_str/name_tl } {#2}
+				\tl_const:cn { c_\l@@_person_str/name/first_tl } {#3}
+				\tl_const:cn { c_\l@@_person_str/name/last_tl } {#4}
+				\@@_parse_attendance:n {#6}
+				\@@_set_attendance:
+				\@@_apply_group:n {#5}
+				\@@_initialize_move:
+			}
+		} { \msg_error:nnn { prot } { person / malformed-id } {#1} }
 	}
 	\str_new:N \l@@_person_str
 %</package>
@@ -551,19 +558,25 @@
 	\cs_new:Nn \@@_tl_use:nn {
 		\tl_head:n {#1} \exp_args:Ne \tl_map_tokens:nn { \tl_tail:n {#1} } { \use:nn {#2} }
 	}
+	\cs_new:Nn \@@_seq_to_tl:N { \seq_map_function:NN #1 \@@_exp_not_braced:n }
+	\cs_new:Nn \@@_exp_not_braced:n { \exp_not:n { {#1} } }
+	\regex_const:Nn \c@@_alph_regex { \A[A-Za-z]*\Z }
+	\cs_new:Npn \@@_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
 	\cs_new:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
 	\cs_new:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_generate_variant:Nn \tl_const:Nn { cv }
+	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
 %</package>
 %    \end{macrocode}
 % Fehlermeldungen:
 %    \begin{macrocode}
 %<*package>
-	\msg_new:nnnn { prot } { malformed-id } { Die~ID~'#1'~ist~böse. } { Ids~dürfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute. }
-	\msg_new:nnn  { prot } { id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
-	\msg_new:nnn  { prot } { id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
-	\msg_new:nnnn { prot } { name-exists } { Der~Name~'#1'~ist~bereits~an~jemand~anderen~vergeben. } { Dies~könnte~Teile~der~Bevölkerung~verwirren. }
+	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthält~#2~statt~6~Spalten. } { In~jeder~Spalte~müssen~genau~5~\&-Zeichen~stehen. }
+	\msg_new:nnnn { prot } { person / malformed-id } { Die~ID~'#1'~ist~böse. } { Ids~dürfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute~oder~sonstigen~Schnickschnack. }
+	\msg_new:nnn  { prot } { person / id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
+	\msg_new:nnn  { prot } { person / id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
+	\msg_new:nnnn { prot } { person / name-exists } { Der~Name~'#1'~für~'#2'~ist~bereits~an~'#3'~vergeben. } { Dies~könnte~Teile~der~Bevölkerung~verwirren. }
 	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~'#1'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
 	\msg_new:nnnn { prot } { move / not-there } { '#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
 	\msg_new:nnnn { prot } { move / 0-again } { '#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
@@ -602,11 +615,11 @@
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
 	}
 	\cs_new:Nn \@@_test_show_name:nn {
-		\TYPE { #1 = \str_use:c { c_prot_name_/#1/_str } }
+		\TYPE { \exp_not:n {#1} = \prop_item:Nn \g@@_names_prop {#1} }
 	}
 	\cs_new:Nn \@@_test_show_person:nnnnn {
 		\TYPE { id = \str_use:c { c_prot_person_/#1/id_str } }
-		\TYPE { name = \str_use:c { c_prot_person_/#1/name_tl } }
+		\TYPE { name = \exp_not:v { c_prot_person_/#1/name_tl } }
 		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
 		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
 		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
@@ -624,10 +637,10 @@
 		\TYPE { \#voters = #4 }
 		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
 	}
-	\cs_new:Nn \@@_test_show_name:nn { \TYPE { #1 = #2 } }
+	\cs_new:Nn \@@_test_show_name:nn { \TYPE { \exp_not:n {#1} = #2 } }
 	\cs_new:Nn \@@_test_show_person:nnnnn {
 		\TYPE { id = #1 }
-		\TYPE { name = #2 }
+		\TYPE { name = \exp_not:n{#2} }
 		\TYPE { group = #3 }
 		\TYPE { attendance = #4 }
 		\TYPE { there = #5 }
@@ -664,22 +677,36 @@
 }
 \TEST { persontable } {
 %<*test>
-% Unpassende Ids noch nicht getestet
-% Doppelte Namen noch nicht getestet
 \begin{persontable}
-Nat & Nathan  & Weise    & !!   & stupa & x
-\\ NW & Nathan  & Waise    & !!   & stupa & e
-\\    & Ada     & Lovelace &      & stupa & x
-\\    & Eva     & Daus     & Eve  & g     & x
+\\ Nat & Nathan  & Weise    & !!   & stupa & x
+\\ NW  & Nathan  & Waise    & !!   & stupa & e
+\\     & Ada     & Lovelace &      & stupa & x
+\\     & Eva     & Daus     & Eve  & g     & x
+\\ Ron & Rönja   & Daus     &      & g     & x
+\\
+\\     & Evä     & Daus     &      & g     & x
+\\     & Roman   & Leser    &      & g     & x
+\\     & Ada     & Love     &      & stupa & x
+\\ Eva & Eva     & Daus     & Eve  & g     & x
+\\     & Nathan  & Weise    & !!   & stupa & u
 \end{persontable}
 %</test>
+%<*expect>
+	\msg_error:nnn { prot } { person / malformed-id } { Evä }
+	\msg_error:nnn { prot } { person / id-iscsname } { Roman }
+	\msg_error:nnn { prot } { person / id-exists } { Ada }
+	\msg_error:nnnnn { prot } { person / name-exists } { Eve } { Eva } { Eve }
+	\msg_error:nnnnn { prot } { person / name-exists } { Nathan\prot_nbsp: We. } { NathanWe } { Nat }
+%</expect>
 	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } { true }
 	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } { false }
 	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } { true }
 	\@@_test_show_person:nnnnn { Eve } { Eve } { gast  } { x } { true }
-	\@@_test_show_name:nn { Nathan~We. } { Nat }
+	\@@_test_show_person:nnnnn { Ron } { Rönja } { gast  } { x } { true }
+	\@@_test_show_name:nn { Nathan\prot_nbsp: We. } { Nat }
 	\@@_test_show_name:nn { Ada } { Ada }
 	\@@_test_show_name:nn { Eve } { Eve }
+	\@@_test_show_name:nn { Rönja } { Ron }
 }
 %</test|expect>
 %    \end{macrocode}
