@@ -81,6 +81,7 @@
 % Variablen und Konstanten für Person \meta{id} werden unter \texttt{\meta{g_/c_/}prot_person_/\meta{id}/_\meta{var}\meta{_typ/:signatur}} gespeichert.
 % Dies erscheint mir ein plausibles Design zu sein, insbesondere unterstützt \LaTeX3 dies nativ mittels |:c|-Argumenten.
 % TODO: Setze Macros als protected sowie nopar.
+% TODO: Super krasse Anzeige für Abkürzungen.
 %    \begin{macrocode}
 %<@@=prot>
 %<*test|expect>
@@ -129,7 +130,7 @@
 %    \begin{macrocode}
 %<*test|expect>
 	\TEST { persontable } {
-	\cs_new:Nn \@@_test_type:nnnnnn { \TYPE { #1 | #2 | #3 | #4 | #5 | #6 } }
+	\cs_new_protected_nopar:Nn \@@_test_type:nnnnnn { \TYPE { #1 | #2 | #3 | #4 | #5 | #6 } }
 %<*test>
 	\group_begin:
 		\cs_set_eq:NN \prot_newperson_frontend:nnnnnn \@@_test_type:nnnnnn
@@ -155,7 +156,7 @@
 %<*package>
 	\str_new:N \l@@_id_str
 	\tl_new:N \l@@_name_tl
-	\cs_new:Npn \prot_newperson_frontend:nnnnnn #1#2#3#4 {
+	\cs_new_protected_nopar:Npn \prot_newperson_frontend:nnnnnn #1#2#3#4 {
 		\@@_set_idname_via_shorty:nnnn {#1} {#2} {#3} {#4}
 		\exp_args:NVV \prot_newperson:nnnnnn \l@@_id_str \l@@_name_tl {#3} {#4}
 	}
@@ -166,7 +167,7 @@
 %   Legt basierend auf dem ersten Argument \marg{shorty} fest, wie der Name abgekürzt werden soll.
 %   Dazu nutzt es \pkg{l3str} und \pkg{l3tl}.
 %    \begin{macrocode}
-	\cs_new:Nn \@@_set_idname_via_shorty:nnnn {
+	\cs_new_protected_nopar:Nn \@@_set_idname_via_shorty:nnnn {
 		\tl_if_blank:nTF {#4} {
 			\@@_set_idname:n {#2}
 		} {
@@ -185,16 +186,16 @@
 		\str_remove_all:Nn \l@@_id_str {~}
 		\str_remove_all:Nn \l@@_id_str {-}
 	}
-	\cs_new:Nn \@@_set_idname:n {
+	\cs_new_protected_nopar:Nn \@@_set_idname:n {
 		\str_set:Nn \l@@_id_str {#1}
 		\tl_set:Nn \l@@_name_tl {#1}
 	}
-	\cs_new:Nn \@@_set_abbreviation:n {
+	\cs_new_protected_nopar:Nn \@@_set_abbreviation:n {
 		\str_put_right:Nn \l@@_id_str {#1}
 		\tl_put_right:Nn \l@@_name_tl { \prot_nbsp: #1 . }
 	}
 	\cs_generate_variant:Nn \@@_set_abbreviation:n { x }
-	\cs_new:Nn \prot_nbsp: { \penalty10000\  }
+	\cs_new_nopar:Nn \prot_nbsp: { \penalty10000\  }
 %</package>
 %    \end{macrocode}
 %   Some tests:
@@ -202,15 +203,15 @@
 %<*test|expect>
 	\TEST { \@@_set_idname_via_shorty:nnnn } {
 %<*test>
-	\cs_new:Nn \@@_test_shorty:nnnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_shorty:nnnnnn {
 		\@@_set_idname_via_shorty:nnnn {#3} { #1 } { #2 } {#4}
 		\TYPE { { \l@@_id_str } ~ { \l@@_name_tl } }
 	}
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_shorty:nnnnnn { \TYPE { {#5} ~ {#6} } }
+	\cs_new_protected_nopar:Nn \@@_test_shorty:nnnnnn { \TYPE { {#5} ~ {#6} } }
 %</expect>
-	\cs_new:Npn \@@_test_donald:nnnn { \@@_test_shorty:nnnnnn { Donald } { Knuth } }
+	\cs_new_protected_nopar:Npn \@@_test_donald:nnnn { \@@_test_shorty:nnnnnn { Donald } { Knuth } }
 	\@@_test_donald:nnnn {} {} { Donald } { Donald }
 	\@@_test_donald:nnnn {} { = } { Donald } { Donald ~ Knuth }
 	\@@_test_donald:nnnn {} { ?Duck } { Donald } { Donald ~ Duck }
@@ -221,7 +222,7 @@
 	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \prot_nbsp: Knuth. }
 	\@@_test_donald:nnnn {} { Don } { Don } { Don }
 	\@@_test_donald:nnnn { DK } { Don } { DK } { Don }
-	\cs_new:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
+	\cs_new_protected_nopar:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
 	\@@_test_anna:nnnn {} {} { AnnaLena } { Anna-Lena }
 	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \prot_nbsp: Rot . }
 	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \prot_nbsp: Rot ~ G . }
@@ -245,7 +246,7 @@
 %<*package>
 	\prop_new:N \g@@_names_prop
 	\str_new:N \l@@_samename_id_str
-	\cs_new:Nn\prot_newperson:nnnnnn {
+	\cs_new_protected_nopar:Nn\prot_newperson:nnnnnn {
 		\@@_tl_if_alphabetic:nTF {#1} {
 			\cs_if_exist:cTF {#1} {
 				\cs_if_exist:cTF { c_prot_person_/#1/id_str }
@@ -291,12 +292,12 @@
 %   TODO: Momentan wird der attendance-Schlüssel gar nicht genutzt. specials ebenso.
 %    \begin{macrocode}
 %<*package>
-	\cs_new:Nn \@@_parse_attendance:n {
+	\cs_new_protected_nopar:Nn \@@_parse_attendance:n {
 		\str_new:c { g_\l@@_person_str/specials_str }
 		\keys_set:nn { prot / attendance } { value =, fallback = u, #1 }
 		\str_if_empty:NT \l@@_attendance_str { \str_set_eq:NN \l@@_attendance_str \l@@_attendance_fallback_str }
 	}
-	\cs_new:Nn \@@_set_attendance: {
+	\cs_new_protected_nopar:Nn \@@_set_attendance: {
 		\bool_new:c { g_\l@@_person_str/there_bool }
 		\keys_set:nV { prot / attendance / use } \l@@_attendance_str
 		\@@_provide:Ncn \tl_const:cv { c_\l@@_person_str/attendance/disp_tl } { c_\l@@_person_str/attendance_str }
@@ -322,12 +323,12 @@
 %<*test|expect>
 \TEST { \@@_parse_attendance:n , \@@_set_attendance: } {
 %<*test>
-	\cs_new:Nn \@@_test_attendance_i:nnn {
+	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn {
 		\str_set:Nn \l@@_person_str {prot_person_/#1}
 		\@@_parse_attendance:n {#2}
 		\TYPE { \l@@_attendance_str }
 	}
-	\cs_new:Nn \@@_test_attendance:nnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn {
 		\str_set:Nn \l@@_person_str {prot_person_/#1}
 		\@@_parse_attendance:n {#2}
 		\@@_set_attendance:
@@ -337,8 +338,8 @@
 	}
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_attendance_i:nnn { \TYPE {#3} }
-	\cs_new:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#3} \TYPE {there=#4} \TYPE {disp=#5} }
+	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn { \TYPE {#3} }
+	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#3} \TYPE {there=#4} \TYPE {disp=#5} }
 %</expect>
 	\@@_test_attendance_i:nnn A { x } { x }
 	\@@_test_attendance_i:nnn B { p } { x }
@@ -359,13 +360,13 @@
 % \begin{macro}{\@@_apply_group:n}
 %    \begin{macrocode}
 %<*package>
-	\cs_new:Nn \@@_apply_group:n {
+	\cs_new_protected_nopar:Nn \@@_apply_group:n {
 		\str_new:c { g_\l@@_person_str / group_str }
 		\keys_set:nn { prot / group } {#1}
-		\@@_provide:Ncn \cs_new:cn { \l@@_person_str / aftermove:N } { }
+		\@@_provide:Ncn \cs_new_protected_nopar:cn { \l@@_person_str / aftermove:N } { }
 	}
 	\keys_define:nn { prot / group } {
-		, voter .code:n = { \cs_new:cpn { \l@@_person_str / aftermove:N } { \@@_move_voter:N } }
+		, voter .code:n = { \cs_new_protected_nopar:cpn { \l@@_person_str / aftermove:N } { \@@_move_voter:N } }
 		, groupvoter .code:n = { \@@_make_groupvoter:Vn \l@@_id_str {#1} }
 		, group .code:n = {
 			\str_gset:cn { g_ \l@@_person_str / group_str } {#1}
@@ -388,22 +389,22 @@
 	\seq_new:N \g_prot_group_refvor_seq
 	\seq_new:N \g_prot_votergroup_refvor_seq
 	\int_new:N \g_prot_voters_int
-	\cs_new:Nn \@@_move_voter:N {
+	\cs_new_protected_nopar:Nn \@@_move_voter:N {
 		\bool_if:NTF {#1}
 			{ \int_gincr:N \g_prot_voters_int }
 			{ \int_gdecr:N \g_prot_voters_int }
 	}
-	\cs_new:Nn \@@_make_groupvoter:nn {
-		\cs_new:cpn { prot_person_/ #1 / aftermove:N } { \@@_move_groupvoter:nnN {#1} {#2} }
+	\cs_new_protected_nopar:Nn \@@_make_groupvoter:nn {
+		\cs_new_protected_nopar:cpn { prot_person_/ #1 / aftermove:N } { \@@_move_groupvoter:nnN {#1} {#2} }
 	}
 	\cs_generate_variant:Nn \@@_make_groupvoter:nn { Vn }
-	\cs_new:Nn \@@_move_groupvoter:nnN {
+	\cs_new_protected_nopar:Nn \@@_move_groupvoter:nnN {
 		\bool_if:NTF #3
 			\@@_enter_groupvoter:cn
 			\@@_leave_groupvoter:cn
 		{ g_prot_votergroup_#2_seq } {#1}
 	}
-	\cs_new:Nn \@@_leave_groupvoter:Nn {
+	\cs_new_protected_nopar:Nn \@@_leave_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
 			\seq_gremove_all:Nn #1 {#2}
 			\seq_if_empty:NT #1 {
@@ -413,7 +414,7 @@
 			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
 		}
 	}
-	\cs_new:Nn \@@_enter_groupvoter:Nn {
+	\cs_new_protected_nopar:Nn \@@_enter_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
 			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
 		} {
@@ -441,7 +442,7 @@
 %   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
 %    \begin{macrocode}
 %<*package>
-	\cs_new:Nn \prot_move:nN {
+	\cs_new_protected_nopar:Nn \prot_move:nN {
 		\tl_case:cnF { g_prot_person_/#1/moves_tl } {
 			- { \msg_error:nnn { prot } { move / not-there } {#1} }
 			0 {
@@ -455,21 +456,21 @@
 			} { \exp_args:Nnx \msg_error:nnn { prot } { move / \bool_to_str:n {#2} - again } {#1} }
 		}
 	}
-	\cs_new:Nn \@@_initialize_move: {
+	\cs_new_protected_nopar:Nn \@@_initialize_move: {
 		\tl_new:c { g_\l@@_person_str/moves_tl }
 		\tl_gset:cn { g_\l@@_person_str/moves_tl } 0
 		\bool_if:cTF { g_\l@@_person_str/there_bool }
 			{ \use:c { \l@@_person_str/aftermove:N } \c_true_bool }
 			{ \tl_gset:cn { g_\l@@_person_str/moves_tl } - }
 	}
-	\cs_new:Nn \@@_forcemove:nN {
+	\cs_new_protected_nopar:Nn \@@_forcemove:nN {
 		\bool_gset_eq:cN { g_prot_person_/#1/there_bool } #2
 		\use:c { prot_person_/#1/aftermove:N } #2
 	}
-	\cs_new:Nn \@@_addlate:n {
+	\cs_new_protected_nopar:Nn \@@_addlate:n {
 		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
 	}
-	\cs_new:Nn \@@_makelate:n {
+	\cs_new_protected_nopar:Nn \@@_makelate:n {
 		\@@_forcemove:nN {#1} \c_false_bool
 	}
 %</package>
@@ -487,7 +488,7 @@
 	\int_new:N \l@@_votes_stars_int
 	\seq_new:N \l@@_result_seq
 	\tl_const:Nn \c_prot_vote_sep_tl { \exp_not:N\, / \exp_not:N\, }
-	\cs_new:Nn \prot_voting:n {
+	\cs_new_protected_nopar:Nn \prot_voting:n {
 		\int_zero:N \l@@_votes_int
 		\int_zero:N \l@@_votes_stars_int
 		\seq_clear:N \l@@_result_seq
@@ -513,8 +514,8 @@
 			{ \@@_simple_seq_voting:N \l@@_result_seq }
 			{ \msg_error:nnn { prot } { voting / super-stars } {#1} }
 	}
-	\cs_new:Nn \@@_simple_seq_voting:N { ( \seq_use:Nn #1 \c_prot_vote_sep_tl ) }
-	\cs_new:Nn \prot_simple_voting:n { ( \@@_tl_use:nn {#1} \c_prot_vote_sep_tl ) }
+	\cs_new_nopar:Nn \@@_simple_seq_voting:N { ( \seq_use:Nn #1 \c_prot_vote_sep_tl ) }
+	\cs_new_nopar:Nn \prot_simple_voting:n { ( \@@_tl_use:nn {#1} \c_prot_vote_sep_tl ) }
 %</package>
 %    \end{macrocode}
 % Tests:
@@ -524,13 +525,13 @@
 	\TEST { \prot_voting:n } {
 %<*test>
 	\cs_set_eq:NN \@@_test_simple_seq_voting:N \@@_simple_seq_voting:N
-	\cs_set:Nn \@@_simple_seq_voting:N { \exp_args:Nx \TYPE { \@@_test_simple_seq_voting:N \l@@_result_seq } }
-	\cs_new:Nn \@@_test_voting:nn { \prot_voting:n {#1} }
-	\cs_new:Nn \@@_test_voting:nnn { \@@_test_voting:nn {#1} {} }
+	\cs_set_nopar:Nn \@@_simple_seq_voting:N { \exp_args:Nx \TYPE { \@@_test_simple_seq_voting:N \l@@_result_seq } }
+	\cs_new_protected_nopar:Nn \@@_test_voting:nn { \prot_voting:n {#1} }
+	\cs_new_nopar:Nn \@@_test_voting:nnn { \@@_test_voting:nn {#1} {} }
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_voting:nn { \TYPE { \prot_simple_voting:n {#2} } }
-	\cs_new:Nn \@@_test_voting:nnn { #3 \@@_test_voting:nn {} {#2} }
+	\cs_new_nopar:Nn \@@_test_voting:nn { \TYPE { \prot_simple_voting:n {#2} } }
+	\cs_new_nopar:Nn \@@_test_voting:nnn { #3 \@@_test_voting:nn {} {#2} }
 %</expect>
 	\@@_test:nn { \prot_simple_voting:n {abc} } { ( a \c_prot_vote_sep_tl b \c_prot_vote_sep_tl c ) }
 	\@@_test:nn { \prot_simple_voting:n {a} } { ( a ) }
@@ -561,9 +562,9 @@
 	\cs_new:Nn \@@_seq_to_tl:N { \seq_map_function:NN #1 \@@_exp_not_braced:n }
 	\cs_new:Nn \@@_exp_not_braced:n { \exp_not:n { {#1} } }
 	\regex_const:Nn \c@@_alph_regex { \A[A-Za-z]*\Z }
-	\cs_new:Npn \@@_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
-	\cs_new:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
-	\cs_new:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
+	\cs_new_nopar:Npn \@@_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
+	\cs_new_protected:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
+	\cs_new_protected:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_generate_variant:Nn \tl_const:Nn { cv }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
@@ -593,7 +594,7 @@
 	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
 	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
 %<*test>
-	\cs_new:Nn \@@_test_group:nnnnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\str_set:Nn \l@@_id_str {#1}
 		\str_set:Nn \l@@_person_str { prot_person_/#1 }
 		\cs_if_exist:cF { c_prot_person_/#1/id_str } {
@@ -608,16 +609,16 @@
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
 	}
-	\cs_new:Nn \@@_test_move:nNnnn {
+	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
 		\prot_move:nN {#1} {#2}
 		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
 		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
 	}
-	\cs_new:Nn \@@_test_show_name:nn {
+	\cs_new_protected_nopar:Nn \@@_test_show_name:nn {
 		\TYPE { \exp_not:n {#1} = \prop_item:Nn \g@@_names_prop {#1} }
 	}
-	\cs_new:Nn \@@_test_show_person:nnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_show_person:nnnnn {
 		\TYPE { id = \str_use:c { c_prot_person_/#1/id_str } }
 		\TYPE { name = \exp_not:v { c_prot_person_/#1/name_tl } }
 		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
@@ -626,19 +627,19 @@
 	}
 %</test>
 %<*expect>
-	\cs_new:Nn \@@_test_group:nnnnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\TYPE { group = #4 }
 		\TYPE { \quark_if_nil:nF {#5} { g_prot_group_#4_seq = #5 } }
 		\TYPE { \#voters = #6 }
 		\TYPE { \quark_if_nil:nF {#7} { g_prot_votergroup_#4_seq = #7 } }
 	}
-	\cs_new:Nn \@@_test_move:nNnnn {
+	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
 		\TYPE { there = \bool_to_str:N #2 }
 		\TYPE { \#voters = #4 }
 		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
 	}
-	\cs_new:Nn \@@_test_show_name:nn { \TYPE { \exp_not:n {#1} = #2 } }
-	\cs_new:Nn \@@_test_show_person:nnnnn {
+	\cs_new_protected_nopar:Nn \@@_test_show_name:nn { \TYPE { \exp_not:n {#1} = #2 } }
+	\cs_new_protected_nopar:Nn \@@_test_show_person:nnnnn {
 		\TYPE { id = #1 }
 		\TYPE { name = \exp_not:n{#2} }
 		\TYPE { group = #3 }
