@@ -80,8 +80,25 @@
 %
 % Variablen und Konstanten für Person \meta{id} werden unter \texttt{\meta{g_/c_/}prot_person_/\meta{id}/_\meta{var}\meta{_typ/:signatur}} gespeichert.
 % Dies erscheint mir ein plausibles Design zu sein, insbesondere unterstützt \LaTeX3 dies nativ mittels |:c|-Argumenten.
-% TODO: Setze Macros als protected sowie nopar.
-% TODO: Super krasse Anzeige für Abkürzungen.
+%
+% Plan: Baue Prototyp, der für genau ein simples Protokoll funktioniert und ergänze dann die nötigen Features nach und nach.
+%
+% #Must-have-Features
+% ✓ Personenverwaltung
+% • Nutzer-Interface
+%   • Sitzungsdaten einlesen (als Paketoptionen mit l3keys)
+%   ✓ Personentabelle einlesen
+%   • Sitzungsdaten anzeigen
+%   • Personentabelle anzeigen
+%   • \enter[]\id, \leave[]\id, \move
+%   • \result
+% Extra-Features
+% • Super krasse Anzeige für Abkürzungen.
+% • Optionen
+%
+% TODO: Wie kann man \protected entfernen, zu Testzwecken
+%
+% \subsection{Dateiköpfe}
 %    \begin{macrocode}
 %<@@=prot>
 %<*test|expect>
@@ -90,7 +107,7 @@
 	\RequirePackage{expl3}
 	\START
 	\ExplSyntaxOn
-	\keys_set:nn { sys } { check-declarations }
+	\keys_set:nn { sys } { enable-debug, check-declarations }
 	\debug_on:n { check-expressions }
 	%\keys_set:nn { sys } { log-functions }
 %<*test>
@@ -105,6 +122,10 @@
 %<*package>
 	\RequirePackage{expl3}
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
+%    \end{macrocode}
+% \subsection{Benötigte Pakete}
+%    \begin{macrocode}
+	\RequirePackage{xspace}
 %    \end{macrocode}
 % \begin{environment}{persontable}
 %   Liest gesamte Tabelle ein.
@@ -158,7 +179,7 @@
 	\tl_new:N \l@@_name_tl
 	\cs_new_protected_nopar:Npn \prot_newperson_frontend:nnnnnn #1#2#3#4 {
 		\@@_set_idname_via_shorty:nnnn {#1} {#2} {#3} {#4}
-		\exp_args:NVV \prot_newperson:nnnnnn \l@@_id_str \l@@_name_tl {#3} {#4}
+		\exp_args:NVV \prot_newperson:nnnnnn \l@@_id_str \l@@_name_tl {#2} {#3}
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -241,7 +262,7 @@
 %   Sollte \cs{\meta{id}} bereits definiert sein, wird ein Fehler erzeugt und das Anlegen der Person abgebrochen. Ansonsten wird \cs{\meta{id}} als \meta{name} mit folgendem |\@\xspace| definiert.
 %   \NB{Das |\@| sorgt dafür, dass Abstände wie bei einem normalen Wortende (also einem Kleinbuchstaben) gesetzt werden, auch wenn der Name möglicherweise mit einem Punkt oder Großbuchstaben enden sollte.}
 %
-%   Zuerst wird in \cs{g@@_names_prop} die \meta{id} hinterlegt bzw\@. gemeckert, falls \meta{name} bereits belegt ist.
+%   Zuerst wird geschaut, ob die \meta{id} ein Commandstring werden kann und dann in \cs{g@@_names_prop} die \meta{id} hinterlegt bzw\@. gemeckert, falls \meta{name} bereits belegt ist.
 %    \begin{macrocode}
 %<*package>
 	\prop_new:N \g@@_names_prop
@@ -362,8 +383,9 @@
 %<*package>
 	\cs_new_protected_nopar:Nn \@@_apply_group:n {
 		\str_new:c { g_\l@@_person_str / group_str }
-		\keys_set:nn { prot / group } {#1}
+		\keys_set_known:nn { prot / group } {#1}
 		\@@_provide:Ncn \cs_new_protected_nopar:cn { \l@@_person_str / aftermove:N } { }
+		\tl_if_empty:cT { g_\l@@_person_str / group_str } { \keys_set:nn { prot / group } { g } }
 	}
 	\keys_define:nn { prot / group } {
 		, voter .code:n = { \cs_new_protected_nopar:cpn { \l@@_person_str / aftermove:N } { \@@_move_voter:N } }
@@ -380,7 +402,7 @@
 		, fsma .meta:n = { group = fsma }
 		, reffs .meta:n = { group = reffs }
 		% AStA
-		, refvor .meta:n = { votergroup = refvor }
+		%, refvor .meta:n = { votergroup = refvor }
 	}
 	\seq_new:N \g_prot_group_gast_seq
 	\seq_new:N \g_prot_group_stupa_seq
@@ -430,49 +452,50 @@
 %    \end{macrocode}
 %   For tests see at the very end.
 % \end{macro}
-% \begin{macro}{\prot_move:nN, \@@_initialize_move:}
+% \begin{macro}{\prot_move:Nn, \@@_initialize_move:}
 %   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
 %   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
 %   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
 %   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
 %
-%   \cs{prot_move:nN} setzt momentane Anwesenheit von #1=\meta{id} auf |#2|.
-%   Ruft dazu lediglich |/prot/person/#1/move| auf, was beim ersten Aufruf ggf. in die |.aux|-Datei schreibt und bei späteren Aufrufen auf Konsistenz prüft.
-%   Nutzt |forcemove| ohne Tests, |firstmove| und |latermove| sowie – als Hook – |aftermove|.
-%   \NB{Beim ersten Kompilieren produziert |firstmove| Schrott, da die Verspäteten dann zweimal hintereinander (bei Initialisierung und jetzt) kommen. Könnte man beheben, aber wozu. Bei späterem Kompilieren darf |firstmove| korrekterweise immer |forcemove| aufrufen.}
+%   \cs{prot_move:Nn} setzt momentane Anwesenheit \cs{g_prot_person_/#2/there_bool} von #2=\meta{id} auf |#1|.
+%   Schaut in \cs{g_prot_person/#2/moves_tl} nach,
+%   ob die Person sich nicht bewegen darf (nicht da ist) (kodiert als „-“),
+%   ob sie sich noch nicht bewegt hat (kodiert als „0“) – und schreibt dann in die |.aux|-Datei – oder
+%   ob sie sich bereits bewegt hat (kodiert als „+“) und prüft dann auf Konsistenz.
+%   Nutzt |forcemove| ohne Tests und für personenabhängige Zwecke, was zusätzlich \cs{prot_person_/#2/aftermove:N} aufruft.
 %    \begin{macrocode}
 %<*package>
-	\cs_new_protected_nopar:Nn \prot_move:nN {
-		\tl_case:cnF { g_prot_person_/#1/moves_tl } {
-			- { \msg_error:nnn { prot } { move / not-there } {#1} }
+	\cs_new_protected_nopar:Nn \prot_move:Nn {
+		\exp_args:Nv \str_case:nnF { g_prot_person_/#2/moves_tl } {
+			- { \msg_error:nnn { prot } { move / not-there } {#2} }
 			0 {
-				\tl_gset:cn { g_prot_person_/#1/moves_tl } {1}
-				\bool_if:NT #2 { \@@_addlate:n {#1} }
-				\@@_forcemove:nN {#1} #2
+				\tl_gset:cn { g_prot_person_/#2/moves_tl } {+}
+				\bool_if:NT #1 { \@@_addlate:n {#2} }
+				\@@_forcemove:Nn #1 {#2}
 			}
 		} {
-			\bool_xor:nnTF { \bool_if_p:c { g_prot_person_/#1/there_bool } } {#2} {
-				\@@_forcemove:nN {#1} #2
-			} { \exp_args:Nnx \msg_error:nnn { prot } { move / \bool_to_str:n {#2} - again } {#1} }
+			\bool_show:N #1
+			\bool_xor:nnTF { \bool_if_p:c { g_prot_person_/#2/there_bool } } {#2} {
+				\@@_forcemove:Nn #1 {#2}
+			} { \exp_args:Nnx \msg_error:nnn { prot } { move / \bool_to_str:n {#1} - again } {#2} }
 		}
 	}
 	\cs_new_protected_nopar:Nn \@@_initialize_move: {
 		\tl_new:c { g_\l@@_person_str/moves_tl }
-		\tl_gset:cn { g_\l@@_person_str/moves_tl } 0
-		\bool_if:cTF { g_\l@@_person_str/there_bool }
-			{ \use:c { \l@@_person_str/aftermove:N } \c_true_bool }
-			{ \tl_gset:cn { g_\l@@_person_str/moves_tl } - }
+		\bool_if:cTF { g_\l@@_person_str/there_bool } {
+			\tl_gset:cn { g_\l@@_person_str/moves_tl } 0
+			\use:c { \l@@_person_str/aftermove:N } \c_true_bool
+		} { \tl_gset:cn { g_\l@@_person_str/moves_tl } - }
 	}
-	\cs_new_protected_nopar:Nn \@@_forcemove:nN {
-		\bool_gset_eq:cN { g_prot_person_/#1/there_bool } #2
-		\use:c { prot_person_/#1/aftermove:N } #2
+	\cs_new_protected_nopar:Nn \@@_forcemove:Nn {
+		\bool_gset_eq:cN { g_prot_person_/#2/there_bool } #1
+		\use:c { prot_person_/#2/aftermove:N } #1
 	}
 	\cs_new_protected_nopar:Nn \@@_addlate:n {
 		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
 	}
-	\cs_new_protected_nopar:Nn \@@_makelate:n {
-		\@@_forcemove:nN {#1} \c_false_bool
-	}
+	\cs_new_protected_nopar:Npn \@@_makelate:n #1 { \@@_forcemove:Nn \c_false_bool }
 %</package>
 %    \end{macrocode}
 % \end{macro}
@@ -484,6 +507,10 @@
 %   In allen anderen Fällen gibt es einen Fehler.
 %    \begin{macrocode}
 %<*package>
+	\NewDocumentCommand\erg { m m m } { \prot_voting:n { {#1} {#2} {#3} } }
+	\NewDocumentCommand\Erg { m m m } { \prot_simple_voting:n { {#1} {#2} {#3} } }
+	\NewDocumentCommand\ergwahl { m m } { \prot_voting:n { {#1} {#2} } }
+	\NewDocumentCommand\Ergwahl { m m } { \prot_simple_voting:n { {#1} {#2} } }
 	\int_new:N \l@@_votes_int
 	\int_new:N \l@@_votes_stars_int
 	\seq_new:N \l@@_result_seq
@@ -565,35 +592,47 @@
 	\cs_new_nopar:Npn \@@_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
 	\cs_new_protected:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
 	\cs_new_protected:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
+	\cs_new:Nn \@@_args_ii_ii:Nn { #1 {#2} {#2} }
+	\cs_new:Npn \@@_tl_use:nnnn #1 {
+		\seq_set_split:Nnn \l_tmpa_seq {} {#1}
+		\seq_use:Nnnn \l_tmpa_seq
+	}
+	\cs_new:Nn \@@_tl_use_german:n { \@@_tl_use:nnnn {#1} { ~und~ } { ,~ } { ~und~ } }
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_generate_variant:Nn \tl_const:Nn { cv }
+	\cs_generate_variant:Nn \seq_set_map:NNn { Nc }
+	\cs_generate_variant:Nn \seq_set_map_x:NNn { Nc }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
 %</package>
 %    \end{macrocode}
 % Fehlermeldungen:
 %    \begin{macrocode}
 %<*package>
-	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthält~#2~statt~6~Spalten. } { In~jeder~Spalte~müssen~genau~5~\&-Zeichen~stehen. }
-	\msg_new:nnnn { prot } { person / malformed-id } { Die~ID~'#1'~ist~böse. } { Ids~dürfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute~oder~sonstigen~Schnickschnack. }
+	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthaelt~#2~statt~6~Spalten. } { In~jeder~Spalte~muessen~genau~5~\&-Zeichen~stehen. }
+	\msg_new:nnnn { prot } { person / malformed-id } { Die~ID~'#1'~ist~boese. } { Ids~duerfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute~oder~sonstigen~Schnickschnack. }
 	\msg_new:nnn  { prot } { person / id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
 	\msg_new:nnn  { prot } { person / id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
-	\msg_new:nnnn { prot } { person / name-exists } { Der~Name~'#1'~für~'#2'~ist~bereits~an~'#3'~vergeben. } { Dies~könnte~Teile~der~Bevölkerung~verwirren. }
+	\msg_new:nnnn { prot } { person / name-exists } { Der~Name~'#1'~fuer~'#2'~ist~bereits~an~'#3'~vergeben. } { Dies~koennte~Teile~der~Bevoelkerung~verwirren. }
 	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~'#1'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
 	\msg_new:nnnn { prot } { move / not-there } { '#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
 	\msg_new:nnnn { prot } { move / 0-again } { '#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
 	\msg_new:nnnn { prot } { move / 1-again } { '#1'~kommt~zwei~mal~hintereinander. } { Vielleicht~ging~sie~zwischendrin~wieder? }
 	\msg_new:nnnn { prot } { voting / wrong-count } { Von~#3~anwesenden~Stimmberechtigten~haben~#1=#2~abgestimmt. } { Falls~das~so~richtig~ist,~nutze~die~\exp_not:N\Erg-Funktion. }
-	\msg_new:nnnn { prot } { voting / super-stars } { Das~Abstimmungsergebnis~'#1'~enthält~zu~viele~Sterne. } { Es~kann~nur~einen~*S*t*a*r*~geben. }
+	\msg_new:nnnn { prot } { voting / super-stars } { Das~Abstimmungsergebnis~'#1'~enthaelt~zu~viele~Sterne. } { Es~kann~nur~einen~*S*t*a*r*~geben. }
 %</package>
 %    \end{macrocode}
 % Integration Tests:
 %    \begin{macrocode}
 %<*test|expect>
-\TEST { \@@_apply_group:n, \prot_move:n } {
+\TEST { \@@_apply_group:n, \prot_move:Nn } {
 	\setcounter{errorcontextlines}{100}
 	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
 	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
 %<*test>
+	\keys_define:nn { prot / group } {
+		% AStA
+		, refvor .meta:n = { votergroup = refvor }
+	}
 	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\str_set:Nn \l@@_id_str {#1}
 		\str_set:Nn \l@@_person_str { prot_person_/#1 }
@@ -606,13 +645,13 @@
 		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
 		\@@_initialize_move:
-		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
+		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
-		\prot_move:nN {#1} {#2}
+		\prot_move:Nn {#2} {#1}
 		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
-		\TYPE { \#voters = \int_use:N \g_prot_voters_int }
+		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_show_name:nn {
@@ -630,12 +669,12 @@
 	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\TYPE { group = #4 }
 		\TYPE { \quark_if_nil:nF {#5} { g_prot_group_#4_seq = #5 } }
-		\TYPE { \#voters = #6 }
+		\TYPE { ##voters = #6 }
 		\TYPE { \quark_if_nil:nF {#7} { g_prot_votergroup_#4_seq = #7 } }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
 		\TYPE { there = \bool_to_str:N #2 }
-		\TYPE { \#voters = #4 }
+		\TYPE { ##voters = #4 }
 		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_show_name:nn { \TYPE { \exp_not:n {#1} = #2 } }
