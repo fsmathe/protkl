@@ -480,19 +480,13 @@
 		, votergroup .meta:n = { group = #1, groupvoter = #1 }
 		, info .code:n = { \tl_const:cn { \l@@_person_str / info_tl } {#1} }
 		, g .meta:n = { group = gast, info = #1 }
-		% StuPa
-		, stupa .meta:n = { group = stupa, voter }
-		, fsma .meta:n = { group = fsma }
-		, reffs .meta:n = { group = reffs }
-		% AStA
-		%, refvor .meta:n = { votergroup = refvor }
+		, f .meta:n = { group = f, voter }
+		, r .meta:n = { group = f
+			%, /prot/attendance/specials = r
+		} % Ist das specials so toll? Fallback-Anwesenheit sollte e sein.
 	}
+	\seq_new:N \g_prot_group_f_seq
 	\seq_new:N \g_prot_group_gast_seq
-	\seq_new:N \g_prot_group_stupa_seq
-	\seq_new:N \g_prot_group_fsma_seq
-	\seq_new:N \g_prot_group_reffs_seq
-	\seq_new:N \g_prot_group_refvor_seq
-	\seq_new:N \g_prot_votergroup_refvor_seq
 	\int_new:N \g_prot_voters_int
 	\cs_new_protected_nopar:Nn \@@_move_voter:N {
 		\bool_if:NTF {#1}
@@ -787,15 +781,27 @@
 % \subsection{Integration Tests}
 %    \begin{macrocode}
 %<*test|expect>
+\group_begin:
+%<*test>
+	\seq_new:N \g_prot_group_stupa_seq
+	\seq_new:N \g_prot_group_fsma_seq
+	\seq_new:N \g_prot_group_reffs_seq
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+	\keys_define:nn { prot / group } {
+		% StuPa
+		, stupa .meta:n = { group = stupa, voter }
+		, fsma .meta:n = { group = fsma }
+		, reffs .meta:n = { group = reffs }
+		% AStA
+		, refvor .meta:n = { votergroup = refvor }
+	}
+%</test>
 \TEST { \@@_apply_group:n, \prot_move:Nn } {
 	\setcounter{errorcontextlines}{100}
 	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
 	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
 %<*test>
-	\keys_define:nn { prot / group } {
-		% AStA
-		, refvor .meta:n = { votergroup = refvor }
-	}
 	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\str_set:Nn \l@@_id_str {#1}
 		\str_set:Nn \l@@_person_str { prot_person_/#1 }
@@ -914,6 +920,7 @@
 	\@@_test_show_name:nn { Eve } { Eve }
 	\@@_test_show_name:nn { Rönja } { Ron }
 }
+\group_end:
 %</test|expect>
 %    \end{macrocode}
 % \subsection{And the end}

@@ -1,0 +1,86 @@
+\documentclass{scrartcl}
+\usepackage[
+	%datum=
+	%startzeit=
+	%endzeit=
+]{prot}
+\usepackage{hyperref}
+
+\begin{persontable}
+\\     & Albert    & Augsburg       &    & f & u
+\\ Ae  & Änderung  & Umlaut-A       &    & r & x
+\\     & Bernhard  & Berlin         &    & f & x
+\\ Cae & Cäsar     & Cottbus        &    & f & x
+\\     & Charlotte & Chemnitz       &    & f & x
+\\     & David     & Düsseldorf     &    & f & e
+\\     & Emil      & Essen          &    & f & e
+\\     & Friedrich & Frankfurt      &    & f & x
+\\     & Gustav    & Görlitz        &    & f & x
+\\     & Heinrich  & Hannover       &    & f & x
+\\     & Ida       & Iserlohn       &    & f & x
+\\     & Jakob     & Jena           &    & f & x
+\\     & Katharina & Kaiserslautern &    & f & x
+\\     & Ludwig    & Leipzig        &    & f & x
+\\     & Marie     & München        &    & f & u
+\\     & Nathan    & Nürnberg       &    & f & u
+\\     & Otto      & Oldenburg      &    & f & x
+\\ Oe  & Ökonom    & Umlaut-O       &    & r & x
+\\     & Paula     & Potsdam        &    & f & x
+\\     & Quelle    & Quickborn      &    & g & x
+\\     & Richard   & Regensburg     &    & f & u
+\\     & Samuel    & Stuttgart      &    & f & x
+\\     & Schule    & Schwerin       &    & g & x
+\\     & Eszett    & Eszett         &    & f & x
+\\     & Theodor   & Tübingen       &    & f & x
+\\     & Ulrich    & Unna           &    & f & x
+\\ Ue  & Überfluss & Umlaut-U       &    & r & x
+\\     & Viktor    & Vogtland       &    & f & x
+\\     & Wilhelm   & Wuppertal      &    & f & x
+\\     & Xanthippe & Xanten         &    & f & x
+\\     & Ypsilon   & Ypsilon        &    & f & x
+\\     & Zacharias & Zwickau        &    & f & x
+\end{persontable}
+
+\begin{document}%
+
+\anwesenheitsliste { f=Fachschaftsrat, gast=Gäste }
+
+\tableofcontents
+
+\Katharina eröffnet die Sitzung% um \sStart.
+
+\section{Mitteilungen}
+
+\Nathan verweist auf \autoref{sec:TO}.
+
+\section{Festlegung der Tagesordnung}\label{sec:TO}
+
+Die Tagesordnung wird mit \erg*00 überarbeitet.
+
+\section{Gremienberichte}
+
+Es berichten %\fbr, \stupa und andere.
+
+\paragraph{FSK}
+\Xanthippe berichtet lustige Dinge.
+
+\section{Anträge}
+
+\peopleleave \Otto
+\peopleleavetext \Otto
+
+\peopleentertext \Charlotte
+
+\peopleleavetext { \Marie \Jakob \Zacharias }
+
+\peopleentertext { \Marie \Jakob \Zacharias }
+
+Der Antrag \ref{app:la} wird mit \erg*00 angenommen.
+
+\appendix
+\section{Ein Antrag}\label{app:la}
+\Eszett und \Ypsilon beantragen wohldosierten Humor in Protokollen.
+
+%\includepdf{example.pdf}
+
+\end{document}
