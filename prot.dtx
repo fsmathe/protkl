@@ -127,6 +127,56 @@
 	\RequirePackage{xspace}
 %</package>
 %    \end{macrocode}
+% \subsection{Sitzungsdaten}
+% \begin{macro}{}
+%    \begin{macrocode}
+%<*package>
+	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / meeting} }
+	\keys_define:nn { prot / meeting } {
+		, titel .tl_set:N = \l_prot_meeting_titel_tl
+		, datum .tl_set:N = \l_prot_meeting_datum_tl
+		, startzeit .tl_set:N = \l_prot_meeting_start_tl
+		, endzeit .tl_set:N = \l_prot_meeting_end_tl
+		, version .tl_set:N = \l_prot_meeting_version_tl
+		, forlaeufig .meta:n = { version = #1 }
+		, forlaeufig .default:n = 0
+		, vorlaeufig .meta:n =  { version = #1 }
+		, vorlaeufig .default:n = 1
+	}
+%</package>
+%    \end{macrocode}
+%    \begin{macrocode}
+%<*test|expect>
+	\TEST {} {
+%<*test>
+	\sitzungsdaten {
+		, titel = Fachschaftssitzung
+		, datum = 2022-01-31
+		, startzeit = 12:34
+		, endzeit = 23:45
+		, forlaeufig
+	}
+	\TYPE {
+		titel = \l_prot_meeting_titel_tl \NEWLINE
+		datum = \l_prot_meeting_datum_tl \NEWLINE
+		startzeit = \l_prot_meeting_start_tl \NEWLINE
+		endzeit = \l_prot_meeting_end_tl \NEWLINE
+		version = \l_prot_meeting_version_tl \NEWLINE
+	}
+%</test>
+%<*expect>
+	\TYPE {
+		titel = Fachschaftssitzung \NEWLINE
+		datum = 2022-01-31 \NEWLINE
+		startzeit = 12:34 \NEWLINE
+		endzeit = 23:45 \NEWLINE
+		version = 0 \NEWLINE
+	}
+%</expect>
+	}
+%</test|expect>
+%    \end{macrocode}
+% \end{macro}
 % \subsection{Personentabelle einlesen und ausgeben}
 % \begin{environment}{persontable}
 %   Liest gesamte Tabelle ein.
@@ -757,6 +807,7 @@
 	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} } + , | } { aa + bb }
 	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} {cc} } + , | } { aa , bb | cc }
 	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} {cc} {dd} } + , | } { aa , bb , cc | dd }
+	\@@_tltest:nn { \prot_tl_use:nnnn { \q_nil \q_nil \q_nil } \q_no_value \q_mark \q_stop } { \q_nil \q_mark \q_nil \q_stop \q_nil }
 	\@@_test:nn { \prot_tl_use_german:n { a b c d } } { a,~b,~c~und~d }
 	\@@_test:nn { \prot_tl_use_german:n { {Anna} {Bea} {Charlie} {Dora} } } { Anna,~Bea,~Charlie~und~Dora }
 	\ENDTEST
