@@ -143,6 +143,11 @@
 		, vorlaeufig .meta:n =  { version = #1 }
 		, vorlaeufig .default:n = 1
 	}
+
+	\NewDocumentCommand \sDatum { } { \tl_use:N { \l_prot_meeting_datum_tl } \xspace }
+	\NewDocumentCommand \sStart { } { \tl_use:N { \l_prot_meeting_start_tl } ~ Uhr \xspace }
+	\NewDocumentCommand \sEnde { } { \tl_use:N { \l_prot_meeting_end_tl } ~ Uhr \xspace }
+	\NewDocumentCommand \sVersion { } { \tl_use:N { \l_prot_meeting_version_tl } \xspace }
 %</package>
 %    \end{macrocode}
 %    \begin{macrocode}
@@ -228,21 +233,20 @@
 %   Keyvalue-liste mit Schlüsseln für die Gruppen und Gruppenname als Wert.
 %    \begin{macrocode}
 %<*package>
-	\cs_new_protected_nopar:Nn \prot_attendancelist:n {
-		\tl_set:Nx \l_tmpa_tl { \keyval_parse:NNn \prot_attendancelist_item:n \prot_attendancelist_item:nn {#1} }
+	\cs_new_protected_nopar:Nn \prot_attendancelist: {
 		\begin{description}
-			\l_tmpa_tl
+			\g_prot_attendance_sections_tl
 		\end{description}
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
-		\seq_if_empty:cF { g_prot_group_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_group_#1_seq } { \prot_fullname:n {##1} }
+		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
+			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
 	\cs_new:Nn \prot_attendancelist_actualitem:nn { \item[#1] #2 }
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:n { \prot_attendancelist_item:nn {#1} {#1} }
-	\NewDocumentCommand \anwesenheitsliste { m } { \prot_attendancelist:n {#1} }
+	\NewDocumentCommand \anwesenheitsliste { } { \prot_attendancelist: }
 %</package>
 %    \end{macrocode}
 %   Some tests:
@@ -424,11 +428,44 @@
 				\@@_set_attendance:
 				\@@_apply_group:n {#5}
 				\@@_initialize_move:
+				\@@_add_to_attendance_list:vv { g_\l@@_person_str / group_str } { c_\l@@_person_str/attendance_str }
 			}
 		} { \msg_error:nnn { prot } { person / malformed-id } {#1} }
 	}
+
+	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
+		\keys_set:nn { prot / attendance_list } { #1 = #2 }
+	}
+	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
 	\str_new:N \l@@_person_str
 %</package>
+%    \end{macrocode}
+%   Some tests:
+%    \begin{macrocode}
+%<*test|expect>
+	\TEST { \@@_add_to_attendance_list:nn } {
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\str_set:Nn \l@@_id_str {#1}
+		\@@_add_to_attendance_list:nn {#2} {#3}
+		\TYPE{\seq_use:cn { g_prot_attendance_section_#4_seq } {,~}}
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\TYPE{#5}
+	}
+%</expect>
+	\@@_test_add_to_attendance_list:nnnnn @ { f } { x } { f/x } { @ } 
+	\@@_test_add_to_attendance_list:nnnnn A { f } { x } { f/x } { @,~A }
+	\@@_test_add_to_attendance_list:nnnnn B { f } { u } {f/u} {B}
+	\@@_test_add_to_attendance_list:nnnnn C { g } { x } {g/x} {C}
+	\@@_test_add_to_attendance_list:nnnnn D { g } { a } {g/a} {}
+	\@@_test_add_to_attendance_list:nnnnn E { g } { }{g} {}
+	\@@_test_add_to_attendance_list:nnnnn F { unknown } { x }{unknown/x} {}
+	\@@_test_add_to_attendance_list:nnnnn G { stupa } { } { stupa } {G}
+	}
+%</test|expect>
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n}
@@ -459,17 +496,50 @@
 	\keys_define:nn { prot / attendance } {
 		, value .str_set:N = \l@@_attendance_str
 		, fallback .str_set:N = \l@@_attendance_fallback_str
-		, specials .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
 		, attendance .code:n = { \str_const:cn { c_ \l@@_person_str / attendance_str } {#1} }
 		, attendance/disp .code:n = { \tl_const:cn { c_ \l@@_person_str / attendance/disp_tl } { \exp_not:n{#1} } }
+		% Koennte auch direkt ein bool sein
 		, there .code:n = { \bool_gset:cn { g_ \l@@_person_str / there_bool } { \int_compare_p:nNn {#1} > 0 } }
 		, x .meta:n = { value = x }, use/x .meta:n = { attendance = x, there = 1 }
 		, e .meta:n = { value = e }, use/e .meta:n = { attendance = e, there = 0 }
 		, u .meta:n = { value = u }, use/u .meta:n = { attendance = u, there = 0 }
 		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
-		, p .meta:n = { fallback = x, specials = p }
-		, s .meta:n = { fallback = x, specials = s }
+		, p .meta:n = { fallback = x, special = p }
+		, s .meta:n = { fallback = x, special = s }
 	}
+
+	
+
+	\keys_define:nn { prot / attendance_list } {
+		, f .choice:
+		, g .choice:
+		, g / unknown .meta:n = {}
+		, unknown .code:n = {}
+	}
+
+	\tl_new:N \g_prot_attendance_sections_tl
+	\cs_new_protected_nopar:Nn \prot_add_attendance_section:nn {
+		\seq_new:c {g_prot_attendance_section_#1_seq}
+		\keys_define:nn { prot / attendance_list} { #1 .code:n = { 
+			\seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str 
+		}}
+		\tl_gput_right:Nn \g_prot_attendance_sections_tl { \prot_attendance_section_hook:nn {#1} {#2} }
+	}
+	\cs_set_eq:NN \prot_attendance_section_hook:nn \prot_attendancelist_item:nn
+
+	\prot_add_attendance_section:nn { f / x } { Anwesende }
+	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
+	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
+	\prot_add_attendance_section:nn { g / x } { Gäste }
+	\prot_add_attendance_section:nn { stupa } { StuPa }
+
+	\keys_define:nn { prot } {
+		, attendance/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+		, group/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+	}
+
+	\NewDocumentCommand \sitzungsfuehrung { } { TODO }
+	\NewDocumentCommand \protokollfuehrung { } { TODO }
 %</package>
 %    \end{macrocode}
 %   Testing Attendance parsing and setting.
@@ -529,14 +599,12 @@
 		}
 		, votergroup .meta:n = { group = #1, groupvoter = #1 }
 		, info .code:n = { \tl_const:cn { \l@@_person_str / info_tl } {#1} }
-		, g .meta:n = { group = gast, info = #1 }
+		, g .meta:n = { group = g, info = #1 }
 		, f .meta:n = { group = f, voter }
-		, r .meta:n = { group = f
-			%, /prot/attendance/specials = r
-		} % Ist das specials so toll? Fallback-Anwesenheit sollte e sein.
+		, r .meta:n = { group = f, special = r }
 	}
 	\seq_new:N \g_prot_group_f_seq
-	\seq_new:N \g_prot_group_gast_seq
+	\seq_new:N \g_prot_group_g_seq
 	\int_new:N \g_prot_voters_int
 	\cs_new_protected_nopar:Nn \@@_move_voter:N {
 		\bool_if:NTF {#1}
@@ -906,8 +974,8 @@
 		\TYPE { there = #5 }
 	}
 %</expect>
-	\@@_test_group:nnnnnnn { Donaldy } 0 { g }      { gast }  { Donaldy } 0 { \q_nil }
-	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { gast }  { Donaldy , Donald } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Donaldy } 0 { g }      { g }  { Donaldy } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { g }  { Donaldy , Donald } 0 { \q_nil }
 	\SEPARATOR
 	\@@_test_group:nnnnnnn { Anna    } 0 { stupa }  { stupa } { Anna } 0 { \q_nil }
 	\@@_test_group:nnnnnnn { Bea     } 1 { stupa }  { stupa } { Anna , Bea } 1 { \q_nil }
@@ -964,8 +1032,8 @@
 	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } { true }
 	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } { false }
 	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } { true }
-	\@@_test_show_person:nnnnn { Eve } { Eve } { gast  } { x } { true }
-	\@@_test_show_person:nnnnn { Ron } { Rönja } { gast  } { x } { true }
+	\@@_test_show_person:nnnnn { Eve } { Eve } { g  } { x } { true }
+	\@@_test_show_person:nnnnn { Ron } { Rönja } { g  } { x } { true }
 	\@@_test_show_name:nn { Nathan\prot_nbsp: We. } { Nat }
 	\@@_test_show_name:nn { Ada } { Ada }
 	\@@_test_show_name:nn { Eve } { Eve }
