@@ -500,15 +500,15 @@
 		, attendance/disp .code:n = { \tl_const:cn { c_ \l@@_person_str / attendance/disp_tl } { \exp_not:n{#1} } }
 		% Koennte auch direkt ein bool sein
 		, there .code:n = { \bool_gset:cn { g_ \l@@_person_str / there_bool } { \int_compare_p:nNn {#1} > 0 } }
+		, protokoll .code:n = { \seq_gput_right:NV \g_prot_protokollfuehrung_seq \l@@_id_str }
+		, sitzungsleitung .code:n = { \seq_gput_right:NV \g_prot_sitzungsfuehrung_seq \l@@_id_str }
 		, x .meta:n = { value = x }, use/x .meta:n = { attendance = x, there = 1 }
 		, e .meta:n = { value = e }, use/e .meta:n = { attendance = e, there = 0 }
 		, u .meta:n = { value = u }, use/u .meta:n = { attendance = u, there = 0 }
 		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
-		, p .meta:n = { fallback = x, special = p }
-		, s .meta:n = { fallback = x, special = s }
-	}
-
-	
+		, p .meta:n = { fallback = x, special = p, protokoll }
+		, s .meta:n = { fallback = x, special = s, sitzungsleitung }
+	}	
 
 	\keys_define:nn { prot / attendance_list } {
 		, f .choice:
@@ -538,8 +538,25 @@
 		, group/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
 	}
 
-	\NewDocumentCommand \sitzungsfuehrung { } { TODO }
-	\NewDocumentCommand \protokollfuehrung { } { TODO }
+	\seq_new:N \g_prot_sitzungsfuehrung_seq
+	\seq_new:N \g_prot_protokollfuehrung_seq
+
+	\NewDocumentCommand \sitzungsfuehrung { } { 
+		\seq_if_empty:NTF \g_prot_sitzungsfuehrung_seq {
+			\msg_error:nn { prot } { person / no-leader }
+		} { 
+			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_sitzungsfuehrung_seq { \prot_fullname:n {##1} }
+			\seq_use:Nn \l_tmpa_seq { ,~ }
+		}
+	}
+	\NewDocumentCommand \protokollfuehrung { } { 
+		\seq_if_empty:NTF \g_prot_protokollfuehrung_seq {
+			\msg_error:nn { prot } { person / no-record }
+		} { 
+			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_protokollfuehrung_seq { \prot_fullname:n {##1} }
+			\seq_use:Nn \l_tmpa_seq { ,~ }
+		}
+	}
 %</package>
 %    \end{macrocode}
 %   Testing Attendance parsing and setting.
@@ -885,6 +902,8 @@
 %    \begin{macrocode}
 %<*package>
 	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthaelt~#2~statt~6~Spalten. } { In~jeder~Spalte~muessen~genau~5~\&-Zeichen~stehen. }
+	\msg_new:nnnn { prot } { person / no-leader } { Es~gibt~keine~Sitzungsleitung. } { In~der~Personentabelle~muss~eine~Sitzungsleitung~eingetragen~werden. }
+	\msg_new:nnnn { prot } { person / no-record } { Es~gibt~keine~Protokollfuehrung. } { In~der~Personentabelle~muss~eine~Protkollfuehrung~eingetragen~werden. }
 	\msg_new:nnnn { prot } { person / malformed-id } { Die~ID~'#1'~ist~boese. } { Ids~duerfen~nur~die~Buchstaben~A-Z~und~a-z~enthalten.~Keine~Umlaute~oder~sonstigen~Schnickschnack. }
 	\msg_new:nnn  { prot } { person / id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
 	\msg_new:nnn  { prot } { person / id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
