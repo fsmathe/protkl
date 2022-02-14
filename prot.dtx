@@ -235,12 +235,12 @@
 %<*package>
 	\cs_new_protected_nopar:Nn \prot_attendancelist: {
 		\begin{description}
-			\g_prot_attendance_sections_tl
+			\l_prot_attendance_sections_tl
 		\end{description}
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
-		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
+		\seq_if_empty:cF { l_prot_attendance_section_#1_seq } {
+			\seq_set_map_x:Ncn \l_tmpa_seq { l_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
@@ -252,18 +252,22 @@
 %   Some tests:
 %    \begin{macrocode}
 %<*test|expect>
-	\BEGINTEST { \prot_attendancelist:n }
+	\BEGINTEST { \prot_attendancelist: }
 		\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } }
 		\cs_set:Npn \end #1 { \TYPE { END {#1} } }
 		\let\item\relax
 %<*test>
 		\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPE { \item[#1] #2 } }
 		\cs_set:Nn \prot_fullname:n { FN ( #1 ) }
-		\seq_new:c { g_prot_group_test1_seq }
-		\seq_new:c { g_prot_group_test2_seq }
-		\seq_gset_from_clist:cn { g_prot_group_test1_seq } { Anna, Bert, Charlotte }
-		\seq_gset_from_clist:cn { g_prot_group_test2_seq } { Xaver, Yvonne, Zarathrustra }
-		\prot_attendancelist:n { test1, test2=XYZ }
+		\seq_new:c { l_prot_attendance_section_test1_seq }
+		\seq_new:c { l_prot_attendance_section_test2_seq }
+		\seq_set_from_clist:cn { l_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
+		\seq_set_from_clist:cn { l_prot_attendance_section_test2_seq } { Xaver, Yvonne, Zarathrustra }
+		\tl_set:Nn \l_prot_attendance_sections_tl {
+			\prot_attendancelist_item:n { test1 }
+			\prot_attendancelist_item:nn { test2 } { XYZ }
+		}
+		\prot_attendancelist:
 %</test>
 %<*expect>
 	\TYPE {
@@ -432,40 +436,8 @@
 			}
 		} { \msg_error:nnn { prot } { person / malformed-id } {#1} }
 	}
-
-	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
-		\keys_set:nn { prot / attendance_list } { #1 = #2 }
-	}
-	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
 	\str_new:N \l@@_person_str
 %</package>
-%    \end{macrocode}
-%   Some tests:
-%    \begin{macrocode}
-%<*test|expect>
-	\TEST { \@@_add_to_attendance_list:nn } {
-%<*test>
-	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
-		\str_set:Nn \l@@_id_str {#1}
-		\@@_add_to_attendance_list:nn {#2} {#3}
-		\TYPE{\seq_use:cn { g_prot_attendance_section_#4_seq } {,~}}
-	}
-%</test>
-%<*expect>
-	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
-		\TYPE{#5}
-	}
-%</expect>
-	\@@_test_add_to_attendance_list:nnnnn @ { f } { x } { f/x } { @ } 
-	\@@_test_add_to_attendance_list:nnnnn A { f } { x } { f/x } { @,~A }
-	\@@_test_add_to_attendance_list:nnnnn B { f } { u } {f/u} {B}
-	\@@_test_add_to_attendance_list:nnnnn C { g } { x } {g/x} {C}
-	\@@_test_add_to_attendance_list:nnnnn D { g } { a } {g/a} {}
-	\@@_test_add_to_attendance_list:nnnnn E { g } { }{g} {}
-	\@@_test_add_to_attendance_list:nnnnn F { unknown } { x }{unknown/x} {}
-	\@@_test_add_to_attendance_list:nnnnn G { stupa } { } { stupa } {G}
-	}
-%</test|expect>
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n}
@@ -508,55 +480,8 @@
 		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
 		, p .meta:n = { fallback = x, special = p, protokoll }
 		, s .meta:n = { fallback = x, special = s, sitzungsleitung }
-	}	
-
-	\keys_define:nn { prot / attendance_list } {
-		, f .choice:
-		, g .choice:
-		, g / unknown .meta:n = {}
-		, unknown .code:n = {}
 	}
 
-	\tl_new:N \g_prot_attendance_sections_tl
-	\cs_new_protected_nopar:Nn \prot_add_attendance_section:nn {
-		\seq_new:c {g_prot_attendance_section_#1_seq}
-		\keys_define:nn { prot / attendance_list} { #1 .code:n = { 
-			\seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str 
-		}}
-		\tl_gput_right:Nn \g_prot_attendance_sections_tl { \prot_attendance_section_hook:nn {#1} {#2} }
-	}
-	\cs_set_eq:NN \prot_attendance_section_hook:nn \prot_attendancelist_item:nn
-
-	\prot_add_attendance_section:nn { f / x } { Anwesende }
-	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
-	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
-	\prot_add_attendance_section:nn { g / x } { Gäste }
-	\prot_add_attendance_section:nn { stupa } { StuPa }
-
-	\keys_define:nn { prot } {
-		, attendance/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
-		, group/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
-	}
-
-	\seq_new:N \g_prot_sitzungsfuehrung_seq
-	\seq_new:N \g_prot_protokollfuehrung_seq
-
-	\NewDocumentCommand \sitzungsfuehrung { } { 
-		\seq_if_empty:NTF \g_prot_sitzungsfuehrung_seq {
-			\msg_error:nn { prot } { person / no-leader }
-		} { 
-			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_sitzungsfuehrung_seq { \prot_fullname:n {##1} }
-			\seq_use:Nn \l_tmpa_seq { ,~ }
-		}
-	}
-	\NewDocumentCommand \protokollfuehrung { } { 
-		\seq_if_empty:NTF \g_prot_protokollfuehrung_seq {
-			\msg_error:nn { prot } { person / no-record }
-		} { 
-			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_protokollfuehrung_seq { \prot_fullname:n {##1} }
-			\seq_use:Nn \l_tmpa_seq { ,~ }
-		}
-	}
 %</package>
 %    \end{macrocode}
 %   Testing Attendance parsing and setting.
@@ -595,6 +520,69 @@
 	\@@_test_attendance:nnnnn K { x, e } e { false } { e }
 	\@@_test_attendance:nnnnn L { e, x } x { true } { x }
 }
+%</test|expect>
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@@_add_to_attendance_list:nn, \prot_add_attendance_section:nn}
+%   TODO: Dokumentation
+%    \begin{macrocode}
+%<*package>
+	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
+		\keys_set:nn { prot / attendance_list } { #1 = #2 }
+	}
+	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
+
+	\tl_new:N \l_prot_attendance_sections_tl
+	\cs_set_eq:NN \prot_attendance_section_hook:nn \prot_attendancelist_item:nn
+	\cs_new_protected_nopar:Nn \prot_add_attendance_section:nn {
+		\seq_new:c { l_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list} { #1 .code:n = {
+			\seq_put_right:cV { l_prot_attendance_section_#1_seq } \l@@_id_str
+		} }
+		\tl_put_right:Nn \l_prot_attendance_sections_tl { \prot_attendance_section_hook:nn {#1} {#2} }
+	}
+
+	\keys_define:nn { prot / attendance_list } {
+		, f .choice:
+		, g .choice:
+		, g / unknown .code:n = {}
+	}
+
+	\prot_add_attendance_section:nn { f / x } { Anwesende }
+	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
+	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
+	\prot_add_attendance_section:nn { g / x } { Gäste }
+	\prot_add_attendance_section:nn { stupa } { StuPa }
+%</package>
+%    \end{macrocode}
+%   Some tests:
+%    \begin{macrocode}
+%<*test|expect>
+	\TEST { \@@_add_to_attendance_list:nn } {
+%<*test>
+	\seq_new:N \l_prot_attendance_section_ignored_seq
+	\seq_put_right:Nn \l_prot_attendance_section_ignored_seq { --ignored-- }
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\str_set:Nn \l@@_id_str {#1}
+		\@@_add_to_attendance_list:nn {#2} {#3}
+		\TYPE { #2 / #3 ~=~ \seq_use:cn { l_prot_attendance_section_#4_seq } {,~} }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\TYPE { #2 / #3 ~=~ #5 }
+	}
+%</expect>
+	\@@_test_add_to_attendance_list:nnnnn @ { f } { x } { f / x } { @ }
+	\@@_test_add_to_attendance_list:nnnnn A { f } { x } { f / x } { @ ,~ A }
+	\@@_test_add_to_attendance_list:nnnnn B { f } { u } { f / u } { B }
+	\@@_test_add_to_attendance_list:nnnnn C { g } { x } { g / x } { C }
+	\@@_test_add_to_attendance_list:nnnnn D { g } { a } { ignored } { --ignored-- }
+	\@@_test_add_to_attendance_list:nnnnn E { g } { }  { ignored } { --ignored-- }
+	\@@_nontest:nn { } { \msg_error:nnnn { keys } { unknown } { prot / attendance_list / undef } { prot / attendance_list } }
+	\@@_test_add_to_attendance_list:nnnnn F { undef } { x } { ignored } { --ignored-- }
+	\@@_test_add_to_attendance_list:nnnnn G { stupa } { } { stupa } { G }
+	}
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
@@ -663,6 +651,48 @@
 %</package>
 %    \end{macrocode}
 %   For tests see at the very end.
+% \end{macro}
+% \begin{macro}{attendance/special, group/special, \sitzungsfuehrung, \protokollfuehrung}
+%   TODO: Dokumentation
+%    \begin{macrocode}
+%<*package>
+	\keys_define:nn { prot } {
+		, attendance/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+		, group/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+	}
+
+	\seq_new:N \g_prot_sitzungsfuehrung_seq
+	\seq_new:N \g_prot_protokollfuehrung_seq
+
+	\NewDocumentCommand \sitzungsfuehrung { } {
+		\seq_if_empty:NTF \g_prot_sitzungsfuehrung_seq {
+			\msg_error:nn { prot } { person / no-leader }
+		} {
+			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_sitzungsfuehrung_seq { \prot_fullname:n {##1} }
+			\seq_use:Nn \l_tmpa_seq { ,~ }
+		}
+	}
+	\NewDocumentCommand \protokollfuehrung { } {
+		\seq_if_empty:NTF \g_prot_protokollfuehrung_seq {
+			\msg_error:nn { prot } { person / no-record }
+		} {
+			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_protokollfuehrung_seq { \prot_fullname:n {##1} }
+			\seq_use:Nn \l_tmpa_seq { ,~ }
+		}
+	}
+%</package>
+%    \end{macrocode}
+%   TODO: Some tests:
+%    \begin{macrocode}
+%<*test|expect>
+	\BEGINTEST {special, sitzungsfuehrung, protokollfuehrung}
+%<*test>
+%</test>
+%<*expect>
+%</expect>
+	\ENDTEST
+%</test|expect>
+%    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\prot_move:Nn, \@@_initialize_move:}
 %   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
