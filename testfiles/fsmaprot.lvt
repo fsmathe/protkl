@@ -1,8 +1,9 @@
 \documentclass{scrartcl}
 \usepackage[
-	%datum=
-	%startzeit=
-	%endzeit=
+	, style = fsma
+	, datum = 17.~Februar 2022
+	, startzeit = 15:06
+	, endzeit   = 16:00
 ]{prot}
 \usepackage{hyperref}
 
@@ -43,7 +44,7 @@
 
 \begin{document}%
 
-\anwesenheitsliste { f=Fachschaftsrat, gast=Gäste }
+\anwesenheitsliste
 
 \tableofcontents
 

@@ -23,6 +23,8 @@
 		\file{prot.ins}{\from{prot.dtx}{install}}
 		\file{prot.drv}{\from{prot.dtx}{driver}}% for documentation
 		\file{prot.sty}{\from{prot.dtx}{package}}
+		\file{prot-fsma.def}{\from{prot.dtx}{fsma}}
+		\file{prot-stupa.def}{\from{prot.dtx}{stupa}}
 	}
 	\usedir{testfiles}
 	\generate{
@@ -85,13 +87,13 @@
 %
 % #Must-have-Features
 % ✓ Personenverwaltung
-% • Nutzer-Interface
-%   • Sitzungsdaten einlesen (als Paketoptionen mit l3keys)
+% ✓ Nutzer-Interface
+%   ✓ Sitzungsdaten einlesen (als Paketoptionen mit l3keys)
 %   ✓ Personentabelle einlesen
-%   • Sitzungsdaten anzeigen
-%   • Personentabelle anzeigen
-%   • \enter[]\id, \leave[]\id, \move
-%   • \result
+%   ✓ Sitzungsdaten anzeigen
+%   ✓ Personentabelle anzeigen
+%   ✓ \peoplemove, …
+%   ✓ \erg
 % Extra-Features
 % • Super krasse Anzeige für Abkürzungen.
 % • Optionen
@@ -103,10 +105,12 @@
 	\input{regression-test}
 	\RequirePackage{prot}
 	\RequirePackage{expl3}
+	\sitzungsdaten { style = fsma, style = stupa }
 	\START
 	\ExplSyntaxOn
 	\keys_set:nn { sys } { enable-debug, check-declarations }
 	\debug_on:n { check-expressions }
+	\cs_new:Npn \TYPENOEXP #1 { \TYPE { \exp_not:n {#1} } }
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
 	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
@@ -114,25 +118,35 @@
 %</test>
 %<*expect>
 	\cs_new:Nn \@@_test:nn { \TYPE {#2} }
-	\cs_new:Nn \@@_tltest:nn { \TYPE { \exp_not:n {#2} } }
+	\cs_new:Nn \@@_tltest:nn { \TYPENOEXP {#2} }
 	\cs_new:Nn \@@_nontest:nn {#2}
 %</expect>
 %</test|expect>
+%<fsma|stupa>\ExplSyntaxOn
 %<*package>
 	\RequirePackage{expl3}
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
 %    \end{macrocode}
 % \subsection{Benötigte Pakete}
 %    \begin{macrocode}
+	\RequirePackage{l3keys2e}
 	\RequirePackage{xspace}
 %</package>
 %    \end{macrocode}
-% \subsection{Sitzungsdaten}
-% \begin{macro}{}
+% \subsection{Paketoptionen}
+% \begin{key}{prot/options}
+%   Datum, Uhrzeit etc.\@ können dem Paket (oder auch der Dokumentklasse) übergeben werden.
+%   Alternativ funktioniert auch \cmd\sitzungsdaten\ für den selben Zweck.
+%
+%   Die |style|-Option lädt gremienspezifische Konfiguration nach.
+%   Beispieslweise mit |style=fsma|.
+%   Wird |style| mehrfach aufgerufen, so werden eben alle Konfigurationen in der angegebenen Reihenfolge geladen.
+%
+%   Das Parsen der Optionen mit \cmd\ProcessKeysOptions\ wird ans Ende der Datei verschoben, da insbesondere für die |style|-Option alle möglichen Befehle vorher definiert sein müssen.
 %    \begin{macrocode}
 %<*package>
-	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / meeting} }
-	\keys_define:nn { prot / meeting } {
+	\keys_define:nn { prot / options } {
+		, style .code:n = { \file_input:n { prot-#1.def } }
 		, titel .tl_set:N = \l_prot_meeting_titel_tl
 		, datum .tl_set:N = \l_prot_meeting_datum_tl
 		, startzeit .tl_set:N = \l_prot_meeting_start_tl
@@ -143,6 +157,7 @@
 		, vorlaeufig .meta:n =  { version = #1 }
 		, vorlaeufig .default:n = 1
 	}
+	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / options } }
 
 	\NewDocumentCommand \sDatum { } { \tl_use:N { \l_prot_meeting_datum_tl } \xspace }
 	\NewDocumentCommand \sStart { } { \tl_use:N { \l_prot_meeting_start_tl } ~ Uhr \xspace }
@@ -150,6 +165,7 @@
 	\NewDocumentCommand \sVersion { } { \tl_use:N { \l_prot_meeting_version_tl } \xspace }
 %</package>
 %    \end{macrocode}
+%   Tests:
 %    \begin{macrocode}
 %<*test|expect>
 	\TEST {} {
@@ -181,8 +197,9 @@
 	}
 %</test|expect>
 %    \end{macrocode}
-% \end{macro}
+% \end{key}
 % \subsection{Personentabelle einlesen und ausgeben}
+% \subsubsection{Einlesen der Personentabelle}
 % \begin{environment}{persontable}
 %   Liest gesamte Tabelle ein.
 %    \begin{macrocode}
@@ -205,6 +222,7 @@
 	\seq_new:N \l@@_personrow_seq
 %</package>
 %    \end{macrocode}
+%   Tests:
 %    \begin{macrocode}
 %<*test|expect>
 	\TEST { persontable } {
@@ -228,6 +246,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{environment}
+% \subsubsection{Ausgeben der Personentabelle}
 % \begin{macro}{\anwesenheitsliste}
 %   Gibt Anwesenheitsliste aus.
 %   Keyvalue-liste mit Schlüsseln für die Gruppen und Gruppenname als Wert.
@@ -239,13 +258,12 @@
 		\end{description}
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
-		\seq_if_empty:cF { l_prot_attendance_section_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { l_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
+		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
+			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
-	\cs_new:Nn \prot_attendancelist_actualitem:nn { \item[#1] #2 }
-	\cs_new_protected_nopar:Nn \prot_attendancelist_item:n { \prot_attendancelist_item:nn {#1} {#1} }
+	\cs_new:Nn \prot_attendancelist_actualitem:nn { \exp_not:n { \item[#1] #2 } }
 	\NewDocumentCommand \anwesenheitsliste { } { \prot_attendancelist: }
 %</package>
 %    \end{macrocode}
@@ -259,12 +277,12 @@
 %<*test>
 		\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPE { \item[#1] #2 } }
 		\cs_set:Nn \prot_fullname:n { FN ( #1 ) }
-		\seq_new:c { l_prot_attendance_section_test1_seq }
-		\seq_new:c { l_prot_attendance_section_test2_seq }
-		\seq_set_from_clist:cn { l_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
-		\seq_set_from_clist:cn { l_prot_attendance_section_test2_seq } { Xaver, Yvonne, Zarathrustra }
+		\seq_new:c { g_prot_attendance_section_test1_seq }
+		\seq_new:c { g_prot_attendance_section_test2_seq }
+		\seq_gset_from_clist:cn { g_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
+		\seq_gset_from_clist:cn { g_prot_attendance_section_test2_seq } { Xaver, Yvonne, Zarathrustra }
 		\tl_set:Nn \l_prot_attendance_sections_tl {
-			\prot_attendancelist_item:n { test1 }
+			\prot_attendancelist_item:nn { test1 } { test1 }
 			\prot_attendancelist_item:nn { test2 } { XYZ }
 		}
 		\prot_attendancelist:
@@ -281,6 +299,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Parsen des Namens}
 % \begin{macro}{\prot_fullname:n}
 %   Informationen über Person.
 %    \begin{macrocode}
@@ -440,6 +459,7 @@
 %</package>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Parsen der Anwesenheit}
 % \begin{macro}{\@@_parse_attendance:n, \@@_set_attendance:n}
 %   Über das Anwesenheitsfeld wird die Anwesenheit als ein Single-Choice-Wert definiert,
 %   üblicherweise eins aus: x (anwesend), d (digital), e (entschuldigt), u (unentschuldigt).
@@ -523,6 +543,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Verarbeiten der Anwesenheit}
 % \begin{macro}{\@@_add_to_attendance_list:nn, \prot_add_attendance_section:nn}
 %   TODO: Dokumentation
 %    \begin{macrocode}
@@ -535,37 +556,39 @@
 	\tl_new:N \l_prot_attendance_sections_tl
 	\cs_set_eq:NN \prot_attendance_section_hook:nn \prot_attendancelist_item:nn
 	\cs_new_protected_nopar:Nn \prot_add_attendance_section:nn {
-		\seq_new:c { l_prot_attendance_section_#1_seq }
-		\keys_define:nn { prot / attendance_list} { #1 .code:n = {
-			\seq_put_right:cV { l_prot_attendance_section_#1_seq } \l@@_id_str
+		\seq_new:c { g_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list } { #1 .code:n = {
+			\seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str
 		} }
 		\tl_put_right:Nn \l_prot_attendance_sections_tl { \prot_attendance_section_hook:nn {#1} {#2} }
 	}
-
-	\keys_define:nn { prot / attendance_list } {
-		, f .choice:
-		, g .choice:
-		, g / unknown .code:n = {}
-	}
-
+%</package>
+%<*fsma|stupa>
+%<*fsma>
+	\keys_define:nn { prot / attendance_list } { f .choice: }
 	\prot_add_attendance_section:nn { f / x } { Anwesende }
 	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
 	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
+%</fsma>
+%<stupa>\prot_add_attendance_section:nn { stupa } { StuPa }
+	\keys_define:nn { prot / attendance_list } {
+		, g .choice:
+		, g / unknown .code:n = {}
+	}
 	\prot_add_attendance_section:nn { g / x } { Gäste }
-	\prot_add_attendance_section:nn { stupa } { StuPa }
-%</package>
+%</fsma|stupa>
 %    \end{macrocode}
 %   Some tests:
 %    \begin{macrocode}
 %<*test|expect>
 	\TEST { \@@_add_to_attendance_list:nn } {
 %<*test>
-	\seq_new:N \l_prot_attendance_section_ignored_seq
-	\seq_put_right:Nn \l_prot_attendance_section_ignored_seq { --ignored-- }
+	\seq_new:N \g_prot_attendance_section_ignored_seq
+	\seq_gput_right:Nn \g_prot_attendance_section_ignored_seq { --ignored-- }
 	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
 		\str_set:Nn \l@@_id_str {#1}
 		\@@_add_to_attendance_list:nn {#2} {#3}
-		\TYPE { #2 / #3 ~=~ \seq_use:cn { l_prot_attendance_section_#4_seq } {,~} }
+		\TYPE { #2 / #3 ~=~ \seq_use:cn { g_prot_attendance_section_#4_seq } {,~} }
 	}
 %</test>
 %<*expect>
@@ -586,6 +609,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Parsen der Gruppenzugehörigkeit}
 % \begin{macro}{\@@_apply_group:n}
 %    \begin{macrocode}
 %<*package>
@@ -652,6 +676,7 @@
 %    \end{macrocode}
 %   For tests see at the very end.
 % \end{macro}
+% \subsubsection{Kleinkram}
 % \begin{macro}{attendance/special, group/special, \sitzungsfuehrung, \protokollfuehrung}
 %   TODO: Dokumentation
 %    \begin{macrocode}
@@ -694,6 +719,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsection{Personenbewegungen}
 % \begin{macro}{\prot_move:Nn, \@@_initialize_move:}
 %   Momentane Implementierung: Alle Menschen kommen automatisch, wenn sie mit |x| oder dergleichen angelegt sind.
 %   Beim Einlesen der |.aux|-Datei gehen alle, deren erste Interaktion ein Kommen ist.
@@ -781,6 +807,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsection{Abstimmungen}
 % \begin{macro}{\prot_voting:n, \prot_simple_voting:n}
 %   Nimmt eine tokenlist als Argument und lässt ein Ergebnis im Input Stream.
 %   \cs{prot_simple_voting:n} tut dies direkt, wohingegen \cs{prot_voting:n} noch etwas mehr erledigt:`
@@ -1057,6 +1084,11 @@
 }
 \TEST { persontable } {
 %<*test>
+\seq_gclear:c { g_prot_attendance_section_g/x_seq }
+\seq_gclear:c { g_prot_attendance_section_f/x_seq }
+\seq_gclear:c { g_prot_attendance_section_f/e_seq }
+\seq_gclear:c { g_prot_attendance_section_f/u_seq }
+\seq_gclear:c { g_prot_attendance_section_stupa_seq }
 \begin{persontable}
 \\ Nat & Nathan  & Weise    & !!   & stupa & x
 \\ NW  & Nathan  & Waise    & !!   & stupa & e
@@ -1065,7 +1097,7 @@
 \\ Ron & Rönja   & Daus     &      & g     & x
 \\
 \\     & Evä     & Daus     &      & g     & x
-\\     & Roman   & Leser    &      & g     & x
+\\     & Roman   & Leser    &      & g     &
 \\     & Ada     & Love     &      & stupa & x
 \\ Eva & Eva     & Daus     & Eve  & g     & x
 \\     & Nathan  & Weise    & !!   & stupa & u
@@ -1087,12 +1119,35 @@
 	\@@_test_show_name:nn { Ada } { Ada }
 	\@@_test_show_name:nn { Eve } { Eve }
 	\@@_test_show_name:nn { Rönja } { Ron }
+
+	\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } }
+	\cs_set:Npn \end #1 { \TYPE { END {#1} } }
+	\let\item\relax
+%<*test>
+	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPENOEXP { \item[#1] #2 } }
+	% TODO: Laden mehrerer Styles lädt momentan auch mehrfach die Gäste. Daher hier händisch korrigiert.
+	\tl_set:Nn \l_prot_attendance_sections_tl {
+		\prot_attendancelist_item:nn { stupa } { StuPa }
+		\prot_attendancelist_item:nn { g / x } { Gäste }
+	}
+	\anwesenheitsliste
+%</test>
+%<*expect>
+	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.
+	\TYPE {
+	\begin{description} \NEWLINE
+		\exp_not:n { \item[StuPa] Nathan~Weise,~Nathan~Waise,~Ada~Lovelace,~Nathan~Weise } \NEWLINE
+		\exp_not:n { \item[Gäste] Eva~Daus,~Rönja~Daus,~Eva~Daus } \NEWLINE
+	\end{description} \NEWLINE
+	}
+%</expect>
 }
 \group_end:
 %</test|expect>
 %    \end{macrocode}
 % \subsection{And the end}
 %    \begin{macrocode}
+%<package>\ProcessKeysOptions { prot / options }
 %<*test|expect>
 	\ExplSyntaxOff
 	\END
