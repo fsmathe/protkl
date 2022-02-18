@@ -1,15 +1,15 @@
-\documentclass{scrartcl}
-\usepackage[
-	, style = fsma
-	, datum = 17.~Februar 2022
-	, startzeit = 15:06
-	, endzeit   = 16:00
-]{prot}
-\usepackage{hyperref}
+\documentclass{fsmaprot}
+\sitzungsdaten {
+    , datum = 17.02.2022
+	, startzeit = 18:09
+	, endzeit = 18:52
+    , typ = fsr % one of fsr, vv, konsti, semikonsti
+    , version = forlaeufig % one of final, vorlauefig, forlauefig
+}
 
 \begin{persontable}
-\\     & Albert    & Augsburg       &    & f & u
-\\ Ae  & Änderung  & Umlaut-A       &    & r & x
+\\     & Albert    & Augsburg       &    & f & p
+\\ Ae  & Änderung  & Umlaut-A       &    & r & s
 \\     & Bernhard  & Berlin         &    & f & x
 \\ Cae & Cäsar     & Cottbus        &    & f & x
 \\     & Charlotte & Chemnitz       &    & f & x
@@ -43,12 +43,11 @@
 \end{persontable}
 
 \begin{document}%
+\Katharina eröffnet die Sitzung um \sStart.
 
-\anwesenheitsliste
+Die Tagesordnung lautet:
 
 \tableofcontents
-
-\Katharina eröffnet die Sitzung% um \sStart.
 
 \section{Mitteilungen}
 
