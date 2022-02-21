@@ -23,8 +23,8 @@
 		\file{prot.ins}{\from{prot.dtx}{install}}
 		\file{prot.drv}{\from{prot.dtx}{driver}}% for documentation
 		\file{prot.sty}{\from{prot.dtx}{package}}
-		\file{prot-fsma.def}{\from{prot.dtx}{fsma}}
-		\file{prot-stupa.def}{\from{prot.dtx}{stupa}}
+		\file{prot-fsma.def}{\from{prot.dtx}{style,fsma}}
+		\file{prot-stupa.def}{\from{prot.dtx}{style,stupa}}
 	}
 	\usedir{testfiles}
 	\generate{
@@ -111,6 +111,7 @@
 	\keys_set:nn { sys } { enable-debug, check-declarations }
 	\debug_on:n { check-expressions }
 	\cs_new:Npn \TYPENOEXP #1 { \TYPE { \exp_not:n {#1} } }
+	\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself:N { \cs_set_nopar:Npn #1 { \TYPE { \exp_not:N #1 } } }
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
 	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
@@ -122,7 +123,7 @@
 	\cs_new:Nn \@@_nontest:nn {#2}
 %</expect>
 %</test|expect>
-%<fsma|stupa>\ExplSyntaxOn
+%<style>\ExplSyntaxOn
 %<*package>
 	\RequirePackage{expl3}
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
@@ -264,7 +265,26 @@
 		}
 	}
 	\cs_new:Nn \prot_attendancelist_actualitem:nn { \exp_not:n { \item[#1] #2 } }
-	\NewDocumentCommand \anwesenheitsliste { } { \prot_attendancelist: }
+
+	\cs_new_protected_nopar:Nn \prot_attendancetable:Nn {
+		\begin{tabular}[t]{cp{#2}}
+			\toprule
+			% Achtung: Zwischen dem letzten |\\| und |\bottomrule| muss alles expandierbar sein.
+			% Momentan ist sogar alles expandierbar implementiert.
+			#1
+			\bottomrule
+		\end{tabular}
+	}
+	\cs_new_nopar:Nn \prot_attendancetable_part:nn {
+		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
+			\prot_table_row:nn { } { \exp_not:n {#2} }
+			\midrule
+			\seq_map_function:cN { g_prot_attendance_section_#1_seq } \prot_attendancetable_actualentry:n
+		}
+	}
+	\cs_new:Nn \prot_table_row:nn { #1 & #2 \\ }
+	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} } }
+	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person_/#1/attendance_str } }
 %</package>
 %    \end{macrocode}
 %   Some tests:
@@ -413,6 +433,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Anlegen einer Person}
 % \begin{macro}{\prot_newperson:nnnnnn}
 %   Nimmt \marg{id}, \marg{name}, \marg{first_name}, \marg{last_name}, \marg{group}, \marg{attendance}, \marg{special}, \marg{voter}.
 %   Zuvor müssen diese bereits befüllt werden.
@@ -543,7 +564,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
-% \subsubsection{Verarbeiten der Anwesenheit}
+% \subsubsection{Einordnen in Anwesenheitsliste mittels Gruppe und Anwesenheit}
 % \begin{macro}{\@@_add_to_attendance_list:nn, \prot_add_attendance_section:nn}
 %   TODO: Dokumentation
 %    \begin{macrocode}
@@ -554,29 +575,50 @@
 	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
 
 	\tl_new:N \l_prot_attendance_sections_tl
-	\cs_set_eq:NN \prot_attendance_section_hook:nn \prot_attendancelist_item:nn
-	\cs_new_protected_nopar:Nn \prot_add_attendance_section:nn {
-		\seq_new:c { g_prot_attendance_section_#1_seq }
-		\keys_define:nn { prot / attendance_list } { #1 .code:n = {
-			\seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str
+	\cs_new_protected_nopar:Nn \prot_add_attendance_section:Nnnn {
+		\seq_new:c { g_prot_attendance_section_#3_seq }
+		\keys_define:nn { prot / attendance_list } { #3 .code:n = {
+			\seq_gput_right:cV { g_prot_attendance_section_#3_seq } \l@@_id_str
 		} }
-		\tl_put_right:Nn \l_prot_attendance_sections_tl { \prot_attendance_section_hook:nn {#1} {#2} }
+		\tl_put_right:Nn #1 { #2 {#3} {#4} }
+	}
+	\cs_new:Npn \prot_add_attendance_section:nn {
+		\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_tl \prot_attendancelist_item:nn
+	}
+
+	\keys_define:nn { prot / attendance_list } {
+		, g .choice:
+		, g / unknown .code:n = {}
 	}
 %</package>
-%<*fsma|stupa>
+%<*style>
 %<*fsma>
 	\keys_define:nn { prot / attendance_list } { f .choice: }
 	\prot_add_attendance_section:nn { f / x } { Anwesende }
 	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
 	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
-%</fsma>
-%<stupa>\prot_add_attendance_section:nn { stupa } { StuPa }
-	\keys_define:nn { prot / attendance_list } {
-		, g .choice:
-		, g / unknown .code:n = {}
-	}
 	\prot_add_attendance_section:nn { g / x } { Gäste }
-%</fsma|stupa>
+	\NewDocumentCommand \anwesenheitsliste { } { \prot_attendancelist: }
+%</fsma>
+%<*stupa|stud-vv>
+	\RequirePackage{booktabs}
+	\tl_new:N \l_prot_attendance_sections_left_tl
+	\tl_new:N \l_prot_attendance_sections_right_tl
+	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_left_tl \prot_attendancetable_part:nn { stupa } { Studierendenparlament }
+	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_left_tl \prot_attendancetable_part:nn { fs } { Studierendenparlament (beratend) }
+	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_right_tl \prot_attendancetable_part:nn { asta } { AStA }
+	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_right_tl \prot_attendancetable_part:nn { g / x } { Gäste }
+	\NewDocumentCommand \anwesenheitstabelle { } {
+		\par\noindent
+		\prot_attendancetable:Nn \l_prot_attendance_sections_left_tl {.4\linewidth}
+		\hfill
+		\prot_attendancetable:Nn \l_prot_attendance_sections_right_tl {.4\linewidth}
+		\par
+%<stud-vv>\prot_attendancelist:
+	}
+%<stud-vv>\prot_add_attendance_section:nn { studi / x } { Weitere Studierende }
+%</stupa|stud-vv>
+%</style>
 %    \end{macrocode}
 %   Some tests:
 %    \begin{macrocode}
@@ -602,6 +644,7 @@
 	\@@_test_add_to_attendance_list:nnnnn C { g } { x } { g / x } { C }
 	\@@_test_add_to_attendance_list:nnnnn D { g } { a } { ignored } { --ignored-- }
 	\@@_test_add_to_attendance_list:nnnnn E { g } { }  { ignored } { --ignored-- }
+	% Note, that unknown entries in attendance table will be changed to g on parsing the attendance.
 	\@@_nontest:nn { } { \msg_error:nnnn { keys } { unknown } { prot / attendance_list / undef } { prot / attendance_list } }
 	\@@_test_add_to_attendance_list:nnnnn F { undef } { x } { ignored } { --ignored-- }
 	\@@_test_add_to_attendance_list:nnnnn G { stupa } { } { stupa } { G }
@@ -628,12 +671,37 @@
 		}
 		, votergroup .meta:n = { group = #1, groupvoter = #1 }
 		, info .code:n = { \tl_const:cn { \l@@_person_str / info_tl } {#1} }
-		, g .meta:n = { group = g, info = #1 }
+	}
+	\seq_new:N \g_prot_group_g_seq
+	\keys_define:nn { prot / group } { g .meta:n = { group = g, info = #1 } }
+%</package>
+%<*fsma>
+	\seq_new:N \g_prot_group_f_seq
+	\keys_define:nn { prot / group } {
 		, f .meta:n = { group = f, voter }
 		, r .meta:n = { group = f, special = r }
 	}
-	\seq_new:N \g_prot_group_f_seq
-	\seq_new:N \g_prot_group_g_seq
+%</fsma>
+%<*stupa|stud-vv>
+	% Beispiel: \NewDocumentCommand {stud} [Studium \& L.] {Studium und Lehre}
+	\NewDocumentCommand \referat { m o m } {
+		\not_implemented_yet % TODO
+	}
+	\seq_new:N \g_prot_group_stupa_seq
+	\seq_new:N \g_prot_group_fsma_seq
+	\seq_new:N \g_prot_group_reffs_seq
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+	\keys_define:nn { prot / group } {
+		% StuPa
+		, stupa .meta:n = { group = stupa, voter }
+		, fsma .meta:n = { group = fsma }
+		, reffs .meta:n = { group = reffs }
+		% AStA
+		, refvor .meta:n = { votergroup = refvor }
+	}
+%</stupa|stud-vv>
+%<*package>
 	\int_new:N \g_prot_voters_int
 	\cs_new_protected_nopar:Nn \@@_move_voter:N {
 		\bool_if:NTF {#1}
@@ -760,9 +828,11 @@
 		\use:c { prot_person_/#2/aftermove:N } #1
 	}
 	\cs_new_protected_nopar:Nn \@@_addlate:n {
-		\iow_now:Nn \@mainaux { \@@_makelate:n {#1} }
+		\iow_now:Nn \@mainaux { \prot@makelate {#1} }
 	}
 	\cs_new_protected_nopar:Nn \@@_makelate:n { \@@_forcemove:Nn \c_false_bool {#1} }
+	% Beim Einlesen der aux-Datei ist keine expl3-Syntax aktiviert, daher hier ein Alias:
+	\cs_set_eq:cN { prot@makelate } \@@_makelate:n
 %</package>
 %    \end{macrocode}
 % \end{macro}
@@ -977,21 +1047,6 @@
 %    \begin{macrocode}
 %<*test|expect>
 \group_begin:
-%<*test>
-	\seq_new:N \g_prot_group_stupa_seq
-	\seq_new:N \g_prot_group_fsma_seq
-	\seq_new:N \g_prot_group_reffs_seq
-	\seq_new:N \g_prot_group_refvor_seq
-	\seq_new:N \g_prot_votergroup_refvor_seq
-	\keys_define:nn { prot / group } {
-		% StuPa
-		, stupa .meta:n = { group = stupa, voter }
-		, fsma .meta:n = { group = fsma }
-		, reffs .meta:n = { group = reffs }
-		% AStA
-		, refvor .meta:n = { votergroup = refvor }
-	}
-%</test>
 \TEST { \@@_apply_group:n, \prot_move:Nn } {
 	\setcounter{errorcontextlines}{100}
 	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
@@ -1060,7 +1115,7 @@
 	\SEPARATOR
 	\@@_nontest:nn { \@@_makelate:n { Bea } } { }
 	\@@_test_move:nNnnn    { Donald  } \c_false_bool { } 2 { }
-	\@@_test:nn { } { \@@_makelate:n { Bea } }
+	\@@_test:nn { } { \use:c { prot@makelate } { Bea } }
 	\@@_test_move:nNnnn    { Bea     } \c_true_bool  { } 3 { }
 	\@@_test_move:nNnnn    { Charlie } \c_false_bool { } 2 { }
 	\@@_test_move:nNnnn    { Bea     } \c_false_bool { } 1 { }
@@ -1074,13 +1129,14 @@
 	\@@_nontest:nn { \@@_makelate:n { Gerda } } { }
 	\@@_nontest:nn { \@@_makelate:n { Heidi } } { }
 	\@@_test_move:nNnnn    { Donald } \c_true_bool  { refvor } 1 { Fynn }
-	\@@_test:nn { } { \@@_makelate:n { Heidi } }
+	\@@_test:nn { } { \use:c { prot@makelate } { Heidi } }
 	\@@_test_move:nNnnn    { Heidi  } \c_true_bool  { refvor } 1 { Fynn , Heidi }
 	\@@_test_move:nNnnn    { Fynn   } \c_false_bool { refvor } 1 { Heidi }
-	\@@_test:nn { } { \@@_makelate:n { Gerda } }
+	\@@_test:nn { } { \use:c { prot@makelate } { Gerda } }
 	\@@_test_move:nNnnn    { Gerda  } \c_true_bool  { refvor } 1 { Heidi , Gerda }
 	\@@_test_move:nNnnn    { Gerda  } \c_false_bool { refvor } 1 { Heidi }
 	\@@_test_move:nNnnn    { Heidi  } \c_false_bool { refvor } 0 { }
+%<expect>\makeatother
 }
 \TEST { persontable } {
 %<*test>
@@ -1094,7 +1150,7 @@
 \\ NW  & Nathan  & Waise    & !!   & stupa & e
 \\     & Ada     & Lovelace &      & stupa & x
 \\     & Eva     & Daus     & Eve  & g     & x
-\\ Ron & Rönja   & Daus     &      & g     & x
+\\ Ron & Rönja   & Daus     &      & raub  & x
 \\
 \\     & Evä     & Daus     &      & g     & x
 \\     & Roman   & Leser    &      & g     &
@@ -1120,25 +1176,56 @@
 	\@@_test_show_name:nn { Eve } { Eve }
 	\@@_test_show_name:nn { Rönja } { Ron }
 
-	\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } }
+	\NewExpandableDocumentCommand \@@_test_ignore_tabular_arguments: { o m } { }
+	\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } \str_if_eq:nnT {#1} { tabular } \@@_test_ignore_tabular_arguments: }
 	\cs_set:Npn \end #1 { \TYPE { END {#1} } }
 	\let\item\relax
+	\let\par\relax
+	\let\noindent\relax
+	\@@_test_cs_set_typeself:N \toprule
+	\@@_test_cs_set_typeself:N \midrule
+	\@@_test_cs_set_typeself:N \bottomrule
+	\@@_test_cs_set_typeself:N \hfill
 %<*test>
 	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPENOEXP { \item[#1] #2 } }
 	% TODO: Laden mehrerer Styles lädt momentan auch mehrfach die Gäste. Daher hier händisch korrigiert.
 	\tl_set:Nn \l_prot_attendance_sections_tl {
-		\prot_attendancelist_item:nn { stupa } { StuPa }
+		\prot_attendancelist_item:nn { stupa } { Studierendenparlament }
 		\prot_attendancelist_item:nn { g / x } { Gäste }
 	}
+	\cs_set:Nn \prot_table_row:nn { \TYPE { #1 & #2 \\ } }
 	\anwesenheitsliste
+	\anwesenheitstabelle
 %</test>
 %<*expect>
 	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.
 	\TYPE {
 	\begin{description} \NEWLINE
-		\exp_not:n { \item[StuPa] Nathan~Weise,~Nathan~Waise,~Ada~Lovelace,~Nathan~Weise } \NEWLINE
+		\exp_not:n { \item[Studierendenparlament] Nathan~Weise,~Nathan~Waise,~Ada~Lovelace,~Nathan~Weise } \NEWLINE
 		\exp_not:n { \item[Gäste] Eva~Daus,~Rönja~Daus,~Eva~Daus } \NEWLINE
 	\end{description} \NEWLINE
+	}
+	\TYPE {
+	\begin{tabular}{} \NEWLINE
+		\toprule \NEWLINE
+		& Studierendenparlament \\ \NEWLINE
+	\midrule \NEWLINE
+		x & Nathan~Weise \\ \NEWLINE
+		e & Nathan~Waise \\ \NEWLINE
+		x & Ada~Lovelace \\ \NEWLINE
+		u & Nathan~Weise \\ \NEWLINE
+	\bottomrule \NEWLINE
+	\end{tabular} \NEWLINE
+	\hfill \NEWLINE
+	\begin{tabular}{} \NEWLINE
+	\toprule \NEWLINE
+		& \exp_not:n { Gäste } \\ \NEWLINE
+	\midrule \NEWLINE
+		x & Eva~Daus \\ \NEWLINE
+		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
+		x & Eva~Daus \\ \NEWLINE
+	\bottomrule \NEWLINE
+	\end{tabular}
 	}
 %</expect>
 }
