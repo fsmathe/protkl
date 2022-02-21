@@ -22,19 +22,19 @@
 		, long .tl_set:N = \l@@_title_long_tl
 		, prefix .tl_set:N = \l@@_title_prefix_tl
 		, typ .choice:
-		, typ / fsr .meta:n = { 
+		, typ / fsr .meta:n = {
 			short = { Fachschaftsratsitzung }, long = { Fachschaftsratsitzung~der~Fachschaft~Mathematik }
 		}
-		, typ / vv .meta:n = { 
+		, typ / vv .meta:n = {
 			short = { Vollversammlung }, long = { Vollversammlung~der~Fachschaft~Mathematik }
 		}
-		, typ / konsti .meta:n = {  
+		, typ / konsti .meta:n = {
 			short = { konstituierenden~Sitzung}, long = { konstituierenden~Sitzung~der~Fachschaft~Mathematik }
 		}
-		, typ / semikonsti .meta:n = {  
+		, typ / semikonsti .meta:n = {
 			short = { semikonstituierenden~Sitzung }, long = { semikonstituierenden~Sitzung~der~Fachschaft~Mathematik }
 		}
-		, typ .default:n = { fsr } 
+		, typ .default:n = { fsr }
 		, version .choice:
 		, version / vorlaeufig .meta:n = { prefix = { Vorläufiges~ }, versionierung = \c_true_bool }
 		, version / forlaeufig .meta:n = { prefix = { Vorläufiges~vorläufiges~ }, versionierung = \c_true_bool }
@@ -47,7 +47,7 @@
 				\RequirePackage{lineno}%Zeilennummern
 				\RequirePackage{soulutf8}%Durchstreichungen
 			
-				\NewDocumentCommand \todo { m } { 
+				\NewDocumentCommand \todo { m } {
 					\PackageWarning{fsmaprot}{TODO:~##1} \hl{TODO:~##1}
 				}
 				\NewDocumentCommand \change { m } { \textcolor{red} ##1 }
@@ -66,7 +66,7 @@
 				}
 			} {
 				%% fertig
-				\NewDocumentCommand \todo { m } { 
+				\NewDocumentCommand \todo { m } {
 					\PackageError{fsmaprot}{TODO:~##1}{Du~hast~offenbar~noch~irgendetwas~zu~tun.}
 				}
 				\NewDocumentCommand \change { m } { ##1 }
@@ -123,12 +123,12 @@
 \renewcommand\appendix{
 	% make signature
 	\MakeSignatur\clearpage
-	% no longer prepend „TOP“ to sections and subsections 
+	% no longer prepend „TOP“ to sections and subsections
 	\let\@seccntformat\prot@@seccntformat
 	% hide appendix sections from table of contents
 	\let\appendixtoc\relax
 	\addtocontents{toc}{\appendixtoc}
-	% 
+	%
 	\prot@appendix
 }
 \def\appendixtoc{\def\contentsline{\@gobblefour}}%unterdrückt weitere Punkte in \tableofcontents, sobald dies aufgerufen wird, wird in \Tagesordnung überschrieben.
@@ -195,13 +195,13 @@
 %%Signatur
 \RequirePackage{tabularx}%tables with equally spaced columns
 \newcommand\EndSignatur{
-    \begin{figure}[b]
+	\begin{figure}[b]
 		Kaiserslautern, \@date \vspace{2em}
 
 		\begin{tabularx}{\linewidth}{@{}XX@{}}%@{} suppresses the space between columns
-    		\hrule&\hrule\\%
-    		\protokollfuehrung{}&\sitzungsfuehrung{}\\%
-    	    Protokoll&Sitzungsleitung%
+			\hrule&\hrule\\%
+			\protokollfuehrung{}&\sitzungsfuehrung{}\\%
+			Protokoll&Sitzungsleitung%
 		\end{tabularx}
 	\end{figure}
 }
