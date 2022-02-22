@@ -248,7 +248,7 @@
 %    \end{macrocode}
 % \end{environment}
 % \subsubsection{Ausgeben der Personentabelle}
-% \begin{macro}{\anwesenheitsliste}
+% \begin{macro}{\anwesenheitsliste, \anwesenheitstabelle}
 %   Gibt Anwesenheitsliste aus.
 %   Keyvalue-liste mit Schlüsseln für die Gruppen und Gruppenname als Wert.
 %    \begin{macrocode}
@@ -260,7 +260,7 @@
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
 		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} }
+			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} \prot_info:n {##1} \prot_specials:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
@@ -283,8 +283,7 @@
 		}
 	}
 	\cs_new:Nn \prot_table_row:nn { #1 & #2 \\ }
-	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} } }
-	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person_/#1/attendance_str } }
+	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} \prot_info:n {#1} } }
 %</package>
 %    \end{macrocode}
 %   Some tests:
@@ -297,6 +296,8 @@
 %<*test>
 		\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPE { \item[#1] #2 } }
 		\cs_set:Nn \prot_fullname:n { FN ( #1 ) }
+		\cs_set:Nn \prot_info:n { }
+		\cs_set:Nn \prot_specials:n { }
 		\seq_new:c { g_prot_attendance_section_test1_seq }
 		\seq_new:c { g_prot_attendance_section_test2_seq }
 		\seq_gset_from_clist:cn { g_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
@@ -319,14 +320,22 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
-% \subsubsection{Parsen des Namens}
-% \begin{macro}{\prot_fullname:n}
+% \begin{macro}{\prot_fullname:n, \prot_attendance:n, \prot_info:n, \prot_specials:n}
 %   Informationen über Person.
 %    \begin{macrocode}
 %<*package>
 	\cs_new_nopar:Nn \prot_fullname:n {
 		\exp_not:v { c_prot_person_/#1/name/first_tl }
 		\space \exp_not:v { c_prot_person_/#1/name/last_tl }
+	}
+	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person_/#1/attendance_str } }
+	\cs_new_nopar:Nn \prot_info:n {
+		\seq_if_empty:cF { g_prot_person_/#1/info_seq }
+			{ ~ ( \seq_use:cn { g_prot_person_/#1/info_seq } { ,~ } ) }
+	}
+	\cs_new_nopar:Nn \prot_specials:n {
+		\seq_if_empty:cF { g_prot_person_/#1/specials_seq }
+			{ ~ ( \seq_use:cn { g_prot_person_/#1/info_seq } { ,~ } ) }
 	}
 %</package>
 %    \end{macrocode}
@@ -351,6 +360,7 @@
 %</test|expect>
 %    \end{macrocode}
 % \end{macro}
+% \subsubsection{Parsen des Namens}
 % \begin{macro}{\prot_newperson_frontend:nnnnnn}
 %   Erstellt \meta{id} und \meta{name} mittels \cs{@@_set_idname_via_shorty:nnnn} und verarbeitet Angaben zur Gruppenzugehörigkeit, Anwesenheit und Zusatzinformationen.
 %    \begin{macrocode}
@@ -497,7 +507,7 @@
 %    \begin{macrocode}
 %<*package>
 	\cs_new_protected_nopar:Nn \@@_parse_attendance:n {
-		\str_new:c { g_\l@@_person_str/specials_str }
+		\seq_new:c { g_\l@@_person_str/specials_seq }
 		\keys_set:nn { prot / attendance } { value =, fallback = u, #1 }
 		\str_if_empty:NT \l@@_attendance_str { \str_set_eq:NN \l@@_attendance_str \l@@_attendance_fallback_str }
 	}
@@ -519,8 +529,8 @@
 		, e .meta:n = { value = e }, use/e .meta:n = { attendance = e, there = 0 }
 		, u .meta:n = { value = u }, use/u .meta:n = { attendance = u, there = 0 }
 		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
-		, p .meta:n = { fallback = x, special = p, protokoll }
-		, s .meta:n = { fallback = x, special = s, sitzungsleitung }
+		, p .meta:n = { fallback = x, special = Protokoll, protokoll }
+		, s .meta:n = { fallback = x, special = Sitzungsleitung, sitzungsleitung }
 	}
 
 %</package>
@@ -658,6 +668,7 @@
 %<*package>
 	\cs_new_protected_nopar:Nn \@@_apply_group:n {
 		\str_new:c { g_\l@@_person_str / group_str }
+		\seq_new:c { g_\l@@_person_str / info_seq }
 		\keys_set_known:nn { prot / group } {#1}
 		\@@_provide:Ncn \cs_new_protected_nopar:cn { \l@@_person_str / aftermove:N } { }
 		\tl_if_empty:cT { g_\l@@_person_str / group_str } { \keys_set:nn { prot / group } { g } }
@@ -670,36 +681,64 @@
 			\seq_gput_right:cV { g_prot_group_#1_seq } \l@@_id_str
 		}
 		, votergroup .meta:n = { group = #1, groupvoter = #1 }
-		, info .code:n = { \tl_const:cn { \l@@_person_str / info_tl } {#1} }
+		, info .code:n = { \tl_if_novalue:nF {#1} { \seq_gput_right:cn { g_ \l@@_person_str / info_seq } {#1} } }
+		, voter      .value_forbidden:n = true
+		, groupvoter .value_required:n = true
+		, group      .value_required:n = true
+		, votergroup .value_required:n = true
+		, info       .value_required:n = true
+		, g .meta:n = { group = g, info = #1 }
 	}
+	\cs_generate_variant:Nn \keys_define:nn { nx }
+	\keys_define:nx { prot / group } { g .default:n = \c_novalue_tl }
 	\seq_new:N \g_prot_group_g_seq
-	\keys_define:nn { prot / group } { g .meta:n = { group = g, info = #1 } }
+
+	% Beispiel: \NewShortLongText {ma} [Mathe] {Mathematik}
+	% \ShortLongText { ma } -> Mathe ODER Mathematik -- je nach Kontext
+	\NewDocumentCommand \NewShortLongText { m o m } {
+		\tl_const:Nn { prot_longtext->#1 } {#3}
+		\IfValueTF {#2}
+			{ \tl_const:Nn { prot_shorttext->#1 } {#2} }
+			{ \tl_const:Nn { prot_shorttext->#1 } {#3} }
+	}
+	\bool_new:N \l_prot_shorttext_bool
+	\NewDocumentCommand \ShortLongText { m } {
+		\tl_use:c {
+			c_prot_
+			\bool_if:NTF \l_prot_shorttext_bool { short } { long } text
+			->#1
+		}
+	}
 %</package>
 %<*fsma>
 	\seq_new:N \g_prot_group_f_seq
 	\keys_define:nn { prot / group } {
 		, f .meta:n = { group = f, voter }
-		, r .meta:n = { group = f, special = r }
+		, r .meta:n = { group = f, special = ruhendes~Mandat }
 	}
 %</fsma>
 %<*stupa|stud-vv>
-	% Beispiel: \NewDocumentCommand {stud} [Studium \& L.] {Studium und Lehre}
-	\NewDocumentCommand \referat { m o m } {
-		\not_implemented_yet % TODO
+	% Beispiel: \NeueFachschaft {ma} [Mathe] {Mathematik}
+	% Beispiel: \NewShortLongText {stud} [Studium \& L.] {Studium und Lehre}
+	\NewDocumentCommand \NeueFachschaft { m o m } {
+		\NewShortLongText { fs=#1 } [#2] {#3}
+	}
+	\NewDocumentCommand \NeuesReferat { m o m } {
+		\NewShortLongText { ref=#1 } [#2] {#3}
 	}
 	\seq_new:N \g_prot_group_stupa_seq
-	\seq_new:N \g_prot_group_fsma_seq
-	\seq_new:N \g_prot_group_reffs_seq
-	\seq_new:N \g_prot_group_refvor_seq
-	\seq_new:N \g_prot_votergroup_refvor_seq
+	\seq_new:N \g_prot_group_fs_seq
+	\seq_new:N \g_prot_group_asta_seq
 	\keys_define:nn { prot / group } {
-		% StuPa
 		, stupa .meta:n = { group = stupa, voter }
-		, fsma .meta:n = { group = fsma }
-		, reffs .meta:n = { group = reffs }
-		% AStA
+		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
+		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
+		% AStA -- momentan hier zu Testzwecken
 		, refvor .meta:n = { votergroup = refvor }
 	}
+	% AStA -- momentan hier zu Testzwecken
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
 %</stupa|stud-vv>
 %<*package>
 	\int_new:N \g_prot_voters_int
@@ -750,8 +789,8 @@
 %    \begin{macrocode}
 %<*package>
 	\keys_define:nn { prot } {
-		, attendance/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
-		, group/special .code:n = { \str_gput_right:cn { g_ \l@@_person_str / specials_str } {#1} }
+		, attendance/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
+		, group/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
 	}
 
 	\seq_new:N \g_prot_sitzungsfuehrung_seq
@@ -1149,13 +1188,13 @@
 \\ Nat & Nathan  & Weise    & !!   & stupa & x
 \\ NW  & Nathan  & Waise    & !!   & stupa & e
 \\     & Ada     & Lovelace &      & stupa & x
-\\     & Eva     & Daus     & Eve  & g     & x
+\\     & Eva     & Daus     & Eve  & g=Äöü & x
 \\ Ron & Rönja   & Daus     &      & raub  & x
 \\
 \\     & Evä     & Daus     &      & g     & x
 \\     & Roman   & Leser    &      & g     &
 \\     & Ada     & Love     &      & stupa & x
-\\ Eva & Eva     & Daus     & Eve  & g     & x
+\\ Eva & Eva     & Daus     & Eve &g=\emph!& x
 \\     & Nathan  & Weise    & !!   & stupa & u
 \end{persontable}
 %</test>
@@ -1202,7 +1241,7 @@
 	\TYPE {
 	\begin{description} \NEWLINE
 		\exp_not:n { \item[Studierendenparlament] Nathan~Weise,~Nathan~Waise,~Ada~Lovelace,~Nathan~Weise } \NEWLINE
-		\exp_not:n { \item[Gäste] Eva~Daus,~Rönja~Daus,~Eva~Daus } \NEWLINE
+		\exp_not:n { \item[Gäste] Eva~Daus~(Äöü),~Rönja~Daus,~Eva~Daus~(\emph!) } \NEWLINE
 	\end{description} \NEWLINE
 	}
 	\TYPE {
@@ -1221,9 +1260,9 @@
 	\toprule \NEWLINE
 		& \exp_not:n { Gäste } \\ \NEWLINE
 	\midrule \NEWLINE
-		x & Eva~Daus \\ \NEWLINE
+		x & \exp_not:n { Eva~Daus~(Äöü) }\\ \NEWLINE
 		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
-		x & Eva~Daus \\ \NEWLINE
+		x & \exp_not:n { Eva~Daus~(\emph!) } \\ \NEWLINE
 	\bottomrule \NEWLINE
 	\end{tabular}
 	}
