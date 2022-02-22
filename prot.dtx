@@ -112,6 +112,9 @@
 	\debug_on:n { check-expressions }
 	\cs_new:Npn \TYPENOEXP #1 { \TYPE { \exp_not:n {#1} } }
 	\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself:N { \cs_set_nopar:Npn #1 { \TYPE { \exp_not:N #1 } } }
+	\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_n:N { \cs_set_nopar:Npn #1 ##1 { \TYPE { \exp_not:n { #1 {##1} } } } }
+	\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nn:N { \cs_set_nopar:Npn #1 ##1##2 { \TYPE { \exp_not:n { #1 {##1} {##2} } } } }
+	\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nnn:N { \cs_set_nopar:Npn #1 ##1##2##3 { \TYPE { \exp_not:n { #1 {##1} {##2} {##3} } } } }
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
 	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
@@ -253,9 +256,9 @@
 %   Keyvalue-liste mit Schlüsseln für die Gruppen und Gruppenname als Wert.
 %    \begin{macrocode}
 %<*package>
-	\cs_new_protected_nopar:Nn \prot_attendancelist: {
+	\cs_new_protected_nopar:Nn \prot_attendancelist:n {
 		\begin{description}
-			\l_prot_attendance_sections_tl
+			#1
 		\end{description}
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
@@ -266,23 +269,35 @@
 	}
 	\cs_new:Nn \prot_attendancelist_actualitem:nn { \exp_not:n { \item[#1] #2 } }
 
-	\cs_new_protected_nopar:Nn \prot_attendancetable:Nn {
-		\begin{tabular}[t]{cp{#2}}
+	\bool_new:N \g@@_attendancetable_has_previous_bool
+	\dim_new:N \l@@_attendancetable_namewidth_dim
+	\cs_new_protected_nopar:Nn \prot_attendancetable:nn {
+		\bool_gset_false:N \g@@_attendancetable_has_previous_bool
+		\dim_set:Nn \l@@_attendancetable_namewidth_dim {#1}
+		\begin{tabular}[t]{cp{#1}}
 			\toprule
 			% Achtung: Zwischen dem letzten |\\| und |\bottomrule| muss alles expandierbar sein.
-			% Momentan ist sogar alles expandierbar implementiert.
-			#1
+			#2
 			\bottomrule
 		\end{tabular}
 	}
 	\cs_new_nopar:Nn \prot_attendancetable_part:nn {
 		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
-			\prot_table_row:nn { } { \exp_not:n {#2} }
+			\bool_if:NT \g@@_attendancetable_has_previous_bool \midrule
+			\multicolumn 2 l { \exp_not:n {#2} } \\
 			\midrule
+			\bool_gset_true:N \g@@_attendancetable_has_previous_bool
 			\seq_map_function:cN { g_prot_attendance_section_#1_seq } \prot_attendancetable_actualentry:n
 		}
 	}
-	\cs_new:Nn \prot_table_row:nn { #1 & #2 \\ }
+	\cs_new:Nn \prot_table_row:nn {
+		#1 &
+		\hbox_set:Nn \l_tmpa_box {#2}
+		\dim_compare:nNnTF { \box_wd:N \l_tmpa_box } > \l@@_attendancetable_namewidth_dim
+			{ \group_begin: \bool_set_true:N \l_prot_shorttext_bool #2 \group_end: }
+			{#2}
+		\\
+	}
 	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} \prot_info:n {#1} } }
 %</package>
 %    \end{macrocode}
@@ -302,11 +317,10 @@
 		\seq_new:c { g_prot_attendance_section_test2_seq }
 		\seq_gset_from_clist:cn { g_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
 		\seq_gset_from_clist:cn { g_prot_attendance_section_test2_seq } { Xaver, Yvonne, Zarathrustra }
-		\tl_set:Nn \l_prot_attendance_sections_tl {
+		\prot_attendancelist:n {
 			\prot_attendancelist_item:nn { test1 } { test1 }
 			\prot_attendancelist_item:nn { test2 } { XYZ }
 		}
-		\prot_attendancelist:
 %</test>
 %<*expect>
 	\TYPE {
@@ -335,7 +349,7 @@
 	}
 	\cs_new_nopar:Nn \prot_specials:n {
 		\seq_if_empty:cF { g_prot_person_/#1/specials_seq }
-			{ ~ ( \seq_use:cn { g_prot_person_/#1/info_seq } { ,~ } ) }
+			{ ~ ( \seq_use:cn { g_prot_person_/#1/specials_seq } { ,~ } ) }
 	}
 %</package>
 %    \end{macrocode}
@@ -575,7 +589,7 @@
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Einordnen in Anwesenheitsliste mittels Gruppe und Anwesenheit}
-% \begin{macro}{\@@_add_to_attendance_list:nn, \prot_add_attendance_section:nn}
+% \begin{macro}{\@@_add_to_attendance_list:vv, \prot_add_attendance_section:n, \prot_add_x_attendance_section:n}
 %   TODO: Dokumentation
 %    \begin{macrocode}
 %<*package>
@@ -584,45 +598,51 @@
 	}
 	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
 
-	\tl_new:N \l_prot_attendance_sections_tl
-	\cs_new_protected_nopar:Nn \prot_add_attendance_section:Nnnn {
-		\seq_new:c { g_prot_attendance_section_#3_seq }
-		\keys_define:nn { prot / attendance_list } { #3 .code:n = {
-			\seq_gput_right:cV { g_prot_attendance_section_#3_seq } \l@@_id_str
-		} }
-		\tl_put_right:Nn #1 { #2 {#3} {#4} }
+	\cs_new_protected:Nn \prot_add_attendance_section:n {
+		\seq_new:c { g_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list } {
+			#1 .code:n = \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str
+		}
 	}
-	\cs_new:Npn \prot_add_attendance_section:nn {
-		\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_tl \prot_attendancelist_item:nn
+	\cs_new_protected:Nn \prot_add_x_attendance_section:n {
+		\seq_new:c { g_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list } {
+			#1 .code:n = \str_if_eq:nnT {##1} { x } { \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str }
+		}
 	}
-
-	\keys_define:nn { prot / attendance_list } {
-		, g .choice:
-		, g / unknown .code:n = {}
-	}
+	\prot_add_x_attendance_section:n { g }
 %</package>
 %<*style>
 %<*fsma>
 	\keys_define:nn { prot / attendance_list } { f .choice: }
-	\prot_add_attendance_section:nn { f / x } { Anwesende }
-	\prot_add_attendance_section:nn { f / e } { Entschuldigte }
-	\prot_add_attendance_section:nn { f / u } { Unentschuldigte }
-	\prot_add_attendance_section:nn { g / x } { Gäste }
-	\NewDocumentCommand \anwesenheitsliste { } { \prot_attendancelist: }
+	\prot_add_attendance_section:n { f / x }
+	\prot_add_attendance_section:n { f / e }
+	\prot_add_attendance_section:n { f / u }
+	\NewDocumentCommand \anwesenheitsliste { } {
+		\prot_attendancelist:n {
+			\prot_attendancelist_item:nn { f / x } { Anwesende }
+			\prot_attendancelist_item:nn { f / e } { Entschuldigte }
+			\prot_attendancelist_item:nn { f / u } { Unentschuldigte }
+			\prot_attendancelist_item:nn { g } { Gäste }
+		}
+	}
 %</fsma>
 %<*stupa|stud-vv>
+	\prot_add_attendance_section:n { stupa }
+	\prot_add_x_attendance_section:n { fs }
+	\prot_add_x_attendance_section:n { asta }
 	\RequirePackage{booktabs}
-	\tl_new:N \l_prot_attendance_sections_left_tl
-	\tl_new:N \l_prot_attendance_sections_right_tl
-	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_left_tl \prot_attendancetable_part:nn { stupa } { Studierendenparlament }
-	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_left_tl \prot_attendancetable_part:nn { fs } { Studierendenparlament (beratend) }
-	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_right_tl \prot_attendancetable_part:nn { asta } { AStA }
-	\prot_add_attendance_section:Nnnn \l_prot_attendance_sections_right_tl \prot_attendancetable_part:nn { g / x } { Gäste }
 	\NewDocumentCommand \anwesenheitstabelle { } {
 		\par\noindent
-		\prot_attendancetable:Nn \l_prot_attendance_sections_left_tl {.4\linewidth}
+		\prot_attendancetable:nn {.4\linewidth} {
+			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }
+			\prot_attendancetable_part:nn { asta } { Allgemeiner~Studierendenausschuss }
+		}
 		\hfill
-		\prot_attendancetable:Nn \l_prot_attendance_sections_right_tl {.4\linewidth}
+		\prot_attendancetable:nn {.4\linewidth} {
+			\prot_attendancetable_part:nn { fs } { Beratende~Mitglieder }
+			\prot_attendancetable_part:nn { g } { Gäste }
+		}
 		\par
 %<stud-vv>\prot_attendancelist:
 	}
@@ -651,7 +671,7 @@
 	\@@_test_add_to_attendance_list:nnnnn @ { f } { x } { f / x } { @ }
 	\@@_test_add_to_attendance_list:nnnnn A { f } { x } { f / x } { @ ,~ A }
 	\@@_test_add_to_attendance_list:nnnnn B { f } { u } { f / u } { B }
-	\@@_test_add_to_attendance_list:nnnnn C { g } { x } { g / x } { C }
+	\@@_test_add_to_attendance_list:nnnnn C { g } { x } { g } { C }
 	\@@_test_add_to_attendance_list:nnnnn D { g } { a } { ignored } { --ignored-- }
 	\@@_test_add_to_attendance_list:nnnnn E { g } { }  { ignored } { --ignored-- }
 	% Note, that unknown entries in attendance table will be changed to g on parsing the attendance.
@@ -681,7 +701,7 @@
 			\seq_gput_right:cV { g_prot_group_#1_seq } \l@@_id_str
 		}
 		, votergroup .meta:n = { group = #1, groupvoter = #1 }
-		, info .code:n = { \tl_if_novalue:nF {#1} { \seq_gput_right:cn { g_ \l@@_person_str / info_seq } {#1} } }
+		, info .code:n = { \tl_if_empty:nF {#1} { \seq_gput_right:cn { g_ \l@@_person_str / info_seq } {#1} } }
 		, voter      .value_forbidden:n = true
 		, groupvoter .value_required:n = true
 		, group      .value_required:n = true
@@ -690,23 +710,22 @@
 		, g .meta:n = { group = g, info = #1 }
 	}
 	\cs_generate_variant:Nn \keys_define:nn { nx }
-	\keys_define:nx { prot / group } { g .default:n = \c_novalue_tl }
 	\seq_new:N \g_prot_group_g_seq
 
 	% Beispiel: \NewShortLongText {ma} [Mathe] {Mathematik}
 	% \ShortLongText { ma } -> Mathe ODER Mathematik -- je nach Kontext
 	\NewDocumentCommand \NewShortLongText { m o m } {
-		\tl_const:Nn { prot_longtext->#1 } {#3}
+		\tl_const:cn { c_prot_longtext->#1_tl } {#3}
 		\IfValueTF {#2}
-			{ \tl_const:Nn { prot_shorttext->#1 } {#2} }
-			{ \tl_const:Nn { prot_shorttext->#1 } {#3} }
+			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#2} }
+			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#3} }
 	}
 	\bool_new:N \l_prot_shorttext_bool
 	\NewDocumentCommand \ShortLongText { m } {
 		\tl_use:c {
 			c_prot_
 			\bool_if:NTF \l_prot_shorttext_bool { short } { long } text
-			->#1
+			->#1_tl
 		}
 	}
 %</package>
@@ -720,8 +739,9 @@
 %<*stupa|stud-vv>
 	% Beispiel: \NeueFachschaft {ma} [Mathe] {Mathematik}
 	% Beispiel: \NewShortLongText {stud} [Studium \& L.] {Studium und Lehre}
-	\NewDocumentCommand \NeueFachschaft { m o m } {
+	\NewDocumentCommand \NeueFachschaft { m O{#3} m O{#3} } {
 		\NewShortLongText { fs=#1 } [#2] {#3}
+		\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} {#4} }
 	}
 	\NewDocumentCommand \NeuesReferat { m o m } {
 		\NewShortLongText { ref=#1 } [#2] {#3}
@@ -733,12 +753,41 @@
 		, stupa .meta:n = { group = stupa, voter }
 		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
 		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
+		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
 		% AStA -- momentan hier zu Testzwecken
 		, refvor .meta:n = { votergroup = refvor }
 	}
 	% AStA -- momentan hier zu Testzwecken
 	\seq_new:N \g_prot_group_refvor_seq
 	\seq_new:N \g_prot_votergroup_refvor_seq
+	\NeueFachschaft { arc  } [ Arch   ] { Architektur }
+	\NeueFachschaft { bi   } [ BI     ] { BauIng      } [Bauingenieurwesen]
+	\NeueFachschaft { bio  } [ Bio    ] { Biologie    }
+	\NeueFachschaft { ch   } [        ] { Chemie      }
+	\NeueFachschaft { eit  } [        ] { EIT         } [Elektro-~und~Informationstechnik]
+	\NeueFachschaft { info } [ Info   ] { Informatik  }
+	\NeueFachschaft { mv   } [        ] { MV          } [Maschinenbau~und~Verfahrenstechnik]
+	\NeueFachschaft { ma   } [ Mathe  ] { Mathematik  }
+	\NeueFachschaft { ph   } [ $\Phi$ ] { Physik      }
+	\NeueFachschaft { ru   } [        ] { RU          } [Raum-~und~Umweltplanung]
+	\NeueFachschaft { sowi } [        ] { SoWi        } [Sozialwissenschaften]
+	\NeueFachschaft { wiwi } [        ] { WiWi        } [Wirtschaftswissenschaften]
+
+	\NeuesReferat { vors }                   { Vorsitz                  }
+	\NeuesReferat { fin  }                   { Finanzen                 }
+	\NeuesReferat { fs   }                   { Fachschaften             }
+	\NeuesReferat { nach }                   { Nachhaltigkeit           }
+	\NeuesReferat { sozi }                   { Soziales                 }
+	\NeuesReferat { stud } [ Stud.~\&~L. ] { Studium~und~Lehre        }
+	\NeuesReferat { inkl } [ Inklusion     ] { Inklusion~und~Diversität }
+	\NeuesReferat { bar  } [ BfS           ] { Barrierefreies~Studium   }
+	\NeuesReferat { int  } [ Int.          ] { Internationales          }
+	\NeuesReferat { kult }                   { Kultur                   }
+	\NeuesReferat { pr   } [ ÖA            ] { Öffentlichkeitsarbeit    }
+	\NeuesReferat { pa   } [ PA            ] { Politische~Arbeit        }
+	\NeuesReferat { spo  }                   { Sport                    }
+	\NeuesReferat { verk }                   { Verkehr                  }
+	\NeuesReferat { sofe }                   { Sommerfest               }
 %</stupa|stud-vv>
 %<*package>
 	\int_new:N \g_prot_voters_int
@@ -1043,6 +1092,9 @@
 	\cs_generate_variant:Nn \seq_set_map:NNn { Nc }
 	\cs_generate_variant:Nn \seq_set_map_x:NNn { Nc }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
+	\cs_set_eq:NN \@@_@ \@
+	\cs_set:Npn \@ { \texorpdfstring { \@@_@ } { } }
+	\cs_new:Npn \nicehyphen { \penalty\@M-\hskip\z@skip }
 %</package>
 %    \end{macrocode}
 %   Tests für einige der zusätzlichen Kernel-Funktionen
@@ -1179,23 +1231,25 @@
 }
 \TEST { persontable } {
 %<*test>
-\seq_gclear:c { g_prot_attendance_section_g/x_seq }
+\seq_gclear:c { g_prot_attendance_section_g_seq }
 \seq_gclear:c { g_prot_attendance_section_f/x_seq }
 \seq_gclear:c { g_prot_attendance_section_f/e_seq }
 \seq_gclear:c { g_prot_attendance_section_f/u_seq }
 \seq_gclear:c { g_prot_attendance_section_stupa_seq }
 \begin{persontable}
-\\ Nat & Nathan  & Weise    & !!   & stupa & x
-\\ NW  & Nathan  & Waise    & !!   & stupa & e
-\\     & Ada     & Lovelace &      & stupa & x
-\\     & Eva     & Daus     & Eve  & g=Äöü & x
-\\ Ron & Rönja   & Daus     &      & raub  & x
+\\ Nat & Nathan & Weise    & !!  & stupa    & x
+\\ NW  & Nathan & Waise    & !!  & stupa    & e
+\\     & Ada    & Lovelace &     & stupa    & x
+\\     & Eva    & Daus     & Eve & g=Äöü    & x
+\\ Ron & Rönja  & Daus     &     & raub     & x
 \\
-\\     & Evä     & Daus     &      & g     & x
-\\     & Roman   & Leser    &      & g     &
-\\     & Ada     & Love     &      & stupa & x
-\\ Eva & Eva     & Daus     & Eve &g=\emph!& x
-\\     & Nathan  & Weise    & !!   & stupa & u
+\\     & Evä    & Daus     &     & g        & x
+\\     & Roman  & Leser    &     & g        &
+\\     & Ada    & Love     &     & stupa    & x
+\\ Eva & Eva    & Daus     & Eve & g=\emph! & x
+\\     & Nathan & Weise    & !!  & stupa    & u
+\\     & Momo   & Ende     &     & fs=ma    & x
+\\     & Omoo   & Oho      &     & ref=pr   & x
 \end{persontable}
 %</test>
 %<*expect>
@@ -1221,17 +1275,14 @@
 	\let\item\relax
 	\let\par\relax
 	\let\noindent\relax
+	\@@_test_cs_set_typeself:N \\
 	\@@_test_cs_set_typeself:N \toprule
 	\@@_test_cs_set_typeself:N \midrule
 	\@@_test_cs_set_typeself:N \bottomrule
 	\@@_test_cs_set_typeself:N \hfill
+	\@@_test_cs_set_typeself_nnn:N \multicolumn
 %<*test>
 	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPENOEXP { \item[#1] #2 } }
-	% TODO: Laden mehrerer Styles lädt momentan auch mehrfach die Gäste. Daher hier händisch korrigiert.
-	\tl_set:Nn \l_prot_attendance_sections_tl {
-		\prot_attendancelist_item:nn { stupa } { Studierendenparlament }
-		\prot_attendancelist_item:nn { g / x } { Gäste }
-	}
 	\cs_set:Nn \prot_table_row:nn { \TYPE { #1 & #2 \\ } }
 	\anwesenheitsliste
 	\anwesenheitstabelle
@@ -1240,25 +1291,32 @@
 	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.
 	\TYPE {
 	\begin{description} \NEWLINE
-		\exp_not:n { \item[Studierendenparlament] Nathan~Weise,~Nathan~Waise,~Ada~Lovelace,~Nathan~Weise } \NEWLINE
 		\exp_not:n { \item[Gäste] Eva~Daus~(Äöü),~Rönja~Daus,~Eva~Daus~(\emph!) } \NEWLINE
 	\end{description} \NEWLINE
 	}
 	\TYPE {
 	\begin{tabular}{} \NEWLINE
 		\toprule \NEWLINE
-		& Studierendenparlament \\ \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Studierendenparlament } } \NEWLINE \\ \NEWLINE
 	\midrule \NEWLINE
 		x & Nathan~Weise \\ \NEWLINE
 		e & Nathan~Waise \\ \NEWLINE
 		x & Ada~Lovelace \\ \NEWLINE
 		u & Nathan~Weise \\ \NEWLINE
+	\midrule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Allgemeiner~Studierendenausschuss } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & \exp_not:n { Omoo~Oho~(\ShortLongText{ref=pr}) } \\ \NEWLINE
 	\bottomrule \NEWLINE
 	\end{tabular} \NEWLINE
 	\hfill \NEWLINE
 	\begin{tabular}{} \NEWLINE
 	\toprule \NEWLINE
-		& \exp_not:n { Gäste } \\ \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Beratende~Mitglieder } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & \exp_not:n { Momo~Ende~(\ShortLongText{fs=ma}) } \\ \NEWLINE
+	\midrule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Gäste } } \NEWLINE \\ \NEWLINE
 	\midrule \NEWLINE
 		x & \exp_not:n { Eva~Daus~(Äöü) }\\ \NEWLINE
 		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
