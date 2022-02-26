@@ -1,8 +1,8 @@
 \documentclass{fsmaprot}
 \sitzungsdaten {
     , datum = 17.02.2022
-	, startzeit = 18:09
-	, endzeit = 18:52
+    , startzeit = 18:09
+    , endzeit = 18:52
     , typ = fsr % one of fsr, vv, konsti, semikonsti
     , version = forlaeufig % one of final, vorlauefig, forlauefig
 }

@@ -1,0 +1,462 @@
+%    \begin{macrocode}
+%<@@=prot>
+\input{regression-test.tex}
+\RequirePackage{prot}
+\RequirePackage{expl3}
+\sitzungsdaten { style = fsma, style = stupa }
+\START
+\ExplSyntaxOn
+\keys_set:nn { sys } { enable-debug, check-declarations }
+\debug_on:n { check-expressions }
+\cs_new:Npn \TYPENOEXP #1 { \TYPE { \exp_not:n {#1} } }
+\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself:N { \cs_set_nopar:Npn #1 { \TYPE { \exp_not:N #1 } } }
+\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_n:N { \cs_set_nopar:Npn #1 ##1 { \TYPE { \exp_not:n { #1 {##1} } } } }
+\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nn:N { \cs_set_nopar:Npn #1 ##1##2 { \TYPE { \exp_not:n { #1 {##1} {##2} } } } }
+\cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nnn:N { \cs_set_nopar:Npn #1 ##1##2##3 { \TYPE { \exp_not:n { #1 {##1} {##2} {##3} } } } }
+%<*test>
+	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
+	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
+	\cs_new:Nn \@@_nontest:nn {#1}
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test:nn { \TYPE {#2} }
+	\cs_new:Nn \@@_tltest:nn { \TYPENOEXP {#2} }
+	\cs_new:Nn \@@_nontest:nn {#2}
+%</expect>
+
+\TEST {\sitzungsdaten} {
+%<*test>
+	\sitzungsdaten {
+		, titel = Fachschaftssitzung
+		, datum = 2022-01-31
+		, startzeit = 12:34
+		, endzeit = 23:45
+		, forlaeufig
+	}
+	\TYPE {
+		titel = \l_prot_meeting_titel_tl \NEWLINE
+		datum = \l_prot_meeting_datum_tl \NEWLINE
+		startzeit = \l_prot_meeting_start_tl \NEWLINE
+		endzeit = \l_prot_meeting_end_tl \NEWLINE
+		version = \l_prot_meeting_version_tl \NEWLINE
+	}
+%</test>
+%<*expect>
+	\TYPE {
+		titel = Fachschaftssitzung \NEWLINE
+		datum = 2022-01-31 \NEWLINE
+		startzeit = 12:34 \NEWLINE
+		endzeit = 23:45 \NEWLINE
+		version = 0 \NEWLINE
+	}
+%</expect>
+}
+
+\TEST { persontable } {
+\cs_new_protected_nopar:Nn \@@_test_type:nnnnnn { \TYPE { #1 | #2 | #3 | #4 | #5 | #6 } }
+%<*test>
+	\group_begin:
+		\cs_set_eq:NN \prot_newperson_frontend:nnnnnn \@@_test_type:nnnnnn
+		\begin{persontable}
+			a & b & c & d & e & f \\
+			q & w & e & r & t & z \\
+			& Anna & - &  & foo={~bar~} & ~joah~ \\
+		\end{persontable}
+	\group_end:
+%</test>
+%<*expect>
+	\@@_test_type:nnnnnn { a }{ b }{ c }{ d }{ e }{ f }
+	\@@_test_type:nnnnnn { q }{ w }{ e }{ r }{ t }{ z }
+	\@@_test_type:nnnnnn { }{ Anna }{ - }{  }{ foo={~bar~} }{ joah }
+%</expect>
+}
+
+\BEGINTEST { \prot_attendancelist: }
+	\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } }
+	\cs_set:Npn \end #1 { \TYPE { END {#1} } }
+	\let\item\relax
+%<*test>
+	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPE { \item[#1] #2 } }
+	\cs_set:Nn \prot_fullname:n { FN ( #1 ) }
+	\cs_set:Nn \prot_info:n { }
+	\cs_set:Nn \prot_specials:n { }
+	\seq_new:c { g_prot_attendance_section_test1_seq }
+	\seq_new:c { g_prot_attendance_section_test2_seq }
+	\seq_gset_from_clist:cn { g_prot_attendance_section_test1_seq } { Anna, Bert, Charlotte }
+	\seq_gset_from_clist:cn { g_prot_attendance_section_test2_seq } { Xaver, Yvonne, Zarathrustra }
+	\prot_attendancelist:n {
+		\prot_attendancelist_item:nn { test1 } { test1 }
+		\prot_attendancelist_item:nn { test2 } { XYZ }
+	}
+%</test>
+%<*expect>
+	\TYPE {
+	\begin{description}\NEWLINE
+		\item[test1] FN(Anna),~FN(Bert),~FN(Charlotte)\NEWLINE
+		\item[XYZ] FN(Xaver),~FN(Yvonne),~FN(Zarathrustra)\NEWLINE
+	\end{description}\NEWLINE
+	}
+%</expect>
+\ENDTEST
+
+\BEGINTEST { \prot_fullname:n }
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_fullname:nnn {
+		\tl_const:cn { c_prot_person_/#1/name/first_tl } {#2}
+		\tl_const:cn { c_prot_person_/#1/name/last_tl } {#3}
+		\tl_log:x { \prot_fullname:n {#1} }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_fullname:nnn { \tl_log:n { #2 ~ #3 } }
+%</expect>
+	\@@_test_fullname:nnn { FN1 } { Anna } { Rot }
+	\@@_test_fullname:nnn { FN2 } { Berta~Marie } { Weiß }
+	\@@_test_fullname:nnn { FN3 } { Carla \undefined } { Grün-Schwarz }
+	\ENDTEST
+	\TEST { \@@_set_idname_via_shorty:nnnn } {
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_shorty:nnnnnn {
+		\@@_set_idname_via_shorty:nnnn {#3} { #1 } { #2 } {#4}
+		\TYPE { { \l@@_id_str } ~ { \l@@_name_tl } }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_shorty:nnnnnn { \TYPE { {#5} ~ {#6} } }
+%</expect>
+	\cs_new_protected_nopar:Npn \@@_test_donald:nnnn { \@@_test_shorty:nnnnnn { Donald } { Knuth } }
+	\@@_test_donald:nnnn {} {} { Donald } { Donald }
+	\@@_test_donald:nnnn {} { = } { Donald } { Donald ~ Knuth }
+	\@@_test_donald:nnnn {} { ?Duck } { Donald } { Donald ~ Duck }
+	\@@_test_donald:nnnn {} { :Don } { Donald } { Don }
+	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \prot_nbsp: K. }
+	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \prot_nbsp: Kn. }
+	% The following is weird, but you asked for it :D
+	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \prot_nbsp: Knuth. }
+	\@@_test_donald:nnnn {} { Don } { Don } { Don }
+	\@@_test_donald:nnnn { DK } { Don } { DK } { Don }
+	\cs_new_protected_nopar:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
+	\@@_test_anna:nnnn {} {} { AnnaLena } { Anna-Lena }
+	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \prot_nbsp: Rot . }
+	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \prot_nbsp: Rot ~ G . }
+	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \prot_nbsp: Rot ~ Grau- . }
+	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \prot_nbsp: Rot ~ Grau-S . }
+}
+
+\TEST { \@@_parse_attendance:n , \@@_set_attendance: } {
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn {
+		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\@@_parse_attendance:n {#2}
+		\TYPE { \l@@_attendance_str }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn {
+		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\@@_parse_attendance:n {#2}
+		\@@_set_attendance:
+		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+		\TYPE { disp = \tl_use:c { c_prot_person_/#1/attendance/disp_tl } }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn { \TYPE {#3} }
+	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn { \TYPE {attendance=#3} \TYPE {there=#4} \TYPE {disp=#5} }
+%</expect>
+	\@@_test_attendance_i:nnn A { x } { x }
+	\@@_test_attendance_i:nnn B { p } { x }
+	\@@_test_attendance_i:nnn C { u } { u }
+	\@@_test_attendance_i:nnn D { d } { d }
+	\@@_test_attendance_i:nnn E { x, e } { e }
+	\@@_test_attendance_i:nnn F { e, x } { x }
+	\@@_test_attendance:nnnnn G { x } x { true } { x }
+	\@@_test_attendance:nnnnn H { p } x { true } { x }
+	\@@_test_attendance:nnnnn I { u } u { false } { u }
+	\@@_test_attendance:nnnnn J { d } d { true } { \exp_not:N\emph x }
+	\@@_test_attendance:nnnnn K { x, e } e { false } { e }
+	\@@_test_attendance:nnnnn L { e, x } x { true } { x }
+}
+
+\TEST { \@@_add_to_attendance_list:nn } {
+%<*test>
+	\seq_new:N \g_prot_attendance_section_ignored_seq
+	\seq_gput_right:Nn \g_prot_attendance_section_ignored_seq { --ignored-- }
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\str_set:Nn \l@@_id_str {#1}
+		\@@_add_to_attendance_list:nn {#2} {#3}
+		\TYPE { #2 / #3 ~=~ \seq_use:cn { g_prot_attendance_section_#4_seq } {,~} }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_add_to_attendance_list:nnnnn {
+		\TYPE { #2 / #3 ~=~ #5 }
+	}
+%</expect>
+	\@@_test_add_to_attendance_list:nnnnn @ { f } { x } { f / x } { @ }
+	\@@_test_add_to_attendance_list:nnnnn A { f } { x } { f / x } { @ ,~ A }
+	\@@_test_add_to_attendance_list:nnnnn B { f } { u } { f / u } { B }
+	\@@_test_add_to_attendance_list:nnnnn C { g } { x } { g } { C }
+	\@@_test_add_to_attendance_list:nnnnn D { g } { a } { ignored } { --ignored-- }
+	\@@_test_add_to_attendance_list:nnnnn E { g } { }  { ignored } { --ignored-- }
+	% Note, that unknown entries in attendance table will be changed to g on parsing the attendance.
+	\@@_nontest:nn { } { \msg_error:nnnn { keys } { unknown } { prot / attendance_list / undef } { prot / attendance_list } }
+	\@@_test_add_to_attendance_list:nnnnn F { undef } { x } { ignored } { --ignored-- }
+	\@@_test_add_to_attendance_list:nnnnn G { stupa } { } { stupa } { G }
+}
+
+\BEGINTEST { \peoplemove, ..., \peoplemovetext, ... }
+%<*test>
+	\cs_set_nopar:Nn \prot_move:Nn { \TYPE { ~--~ #2 ~ \bool_if:NTF #1 { kommt } { geht } } }
+%</test>
+	\@@_test:nn { \peopleenter \Anna } { ~--~ Anna~kommt }
+	\@@_test:nn { \peopleleave { \Anna \Bea } } { ~--~ Anna~geht ~--~ Bea~geht }
+	\@@_test:nn { \peoplemove { \Anna \Bea \Carla } {} } { ~--~ Anna~kommt ~--~ Bea~kommt ~--~ Carla~kommt }
+	\@@_test:nn { \peoplemove \Anna { \Bea \Carla } } { ~--~ Anna~kommt ~--~ Bea~geht ~--~ Carla~geht }
+	\@@_tltest:nn { \peopleentertext { { Anná } } } { Anná~betritt~die~Sitzung. }
+	\@@_tltest:nn { \peopleleavetext { { Anna } } } { Anna~verlässt~die~Sitzung. }
+	\@@_tltest:nn { \peopleentertext { { Anna } { Bea } } } { Anna~und~Bea~betreten~die~Sitzung. }
+	\@@_tltest:nn { \peopleleavetext { { Anna } { Bea } { Carla } } } { Anna,~Bea~und~Carla~verlassen~die~Sitzung. }
+	\@@_tltest:nn { \peoplemovetext { { Anna } { Bea } { Carla } } { { Xaver } } } { Anna,~Bea~und~Carla~betreten~und~Xaver~verlässt~die~Sitzung. }
+	\@@_tltest:nn { \peoplemovetext { { Xaver } } { { Anna } { Bea } { Carla } } } { Xaver~betritt~und~Anna,~Bea~und~Carla~verlassen~die~Sitzung. }
+	\@@_tltest:nn { \peopleleavetext {} } { ~verlassen~die~Sitzung. }
+\ENDTEST
+
+\group_begin:
+\TEST { \prot_voting:n } {
+%<*test>
+	\cs_set_eq:NN \@@_test_simple_seq_voting:N \@@_simple_seq_voting:N
+	\cs_set_nopar:Nn \@@_simple_seq_voting:N { \exp_args:Nx \TYPE { \@@_test_simple_seq_voting:N \l@@_result_seq } }
+	\cs_new_protected_nopar:Nn \@@_test_voting:nn { \prot_voting:n {#1} }
+	\cs_new_nopar:Nn \@@_test_voting:nnn { \@@_test_voting:nn {#1} {} }
+%</test>
+%<*expect>
+	\cs_new_nopar:Nn \@@_test_voting:nn { \TYPE { \prot_simple_voting:n {#2} } }
+	\cs_new_nopar:Nn \@@_test_voting:nnn { #3 \@@_test_voting:nn {} {#2} }
+%</expect>
+	\@@_test:nn { \prot_simple_voting:n {abc} } { ( a \c_prot_vote_sep_tl b \c_prot_vote_sep_tl c ) }
+	\@@_test:nn { \prot_simple_voting:n {a} } { ( a ) }
+	\@@_test:nn { \prot_simple_voting:n {} } { ( ) }
+	\int_gset:Nn \g_prot_voters_int { 21 }
+	\@@_test_voting:nn { 0123456 } { 0123456 }
+	\@@_test_voting:nn { 012345* } { 0123456 }
+	\@@_test_voting:nn { 0123*56 } { 0123456 }
+	\@@_test_voting:nn { 0*23456 } { 0123456 }
+	\@@_test_voting:nn { *123456 } { 0123456 }
+	\@@_test_voting:nn { 5{10}* } { 5{10}6 }
+	\@@_test_voting:nn { *1 } { {20}1 }
+	\@@_test_voting:nn { * } { {21} }
+	\@@_test_voting:nnn{ 1123456 } { 1123456 } { \msg_warning:nnnnn { prot } { voting / wrong-count } { 1+1+2+3+4+5+6 } { 22 } { 21 } }
+	\@@_nontest:nn { \prot_voting:n { *12345* } } { \msg_error:nnn { prot } { voting / super-stars } { *12345* } }
+	\int_gzero:N \g_prot_voters_int
+}
+\group_end:
+
+\BEGINTEST { \prot_tl_use:nnnn }
+	\@@_test:nn { \prot_tl_use:nnnn { } + , | } { }
+	\@@_test:nn { \prot_tl_use:nnnn { a } + , | } { a }
+	\@@_test:nn { \prot_tl_use:nnnn { a b } + , | } { a + b }
+	\@@_test:nn { \prot_tl_use:nnnn { a b c } + , | } { a , b | c }
+	\@@_test:nn { \prot_tl_use:nnnn { a b c d } + , | } { a , b , c | d }
+	\@@_test:nn { \prot_tl_use:nnnn { {aa} } + , | } { aa }
+	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} } + , | } { aa + bb }
+	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} {cc} } + , | } { aa , bb | cc }
+	\@@_test:nn { \prot_tl_use:nnnn { {aa} {bb} {cc} {dd} } + , | } { aa , bb , cc | dd }
+	\@@_tltest:nn { \prot_tl_use:nnnn { \q_nil \q_nil \q_nil } \q_no_value \q_mark \q_stop } { \q_nil \q_mark \q_nil \q_stop \q_nil }
+	\@@_test:nn { \prot_tl_use_german:n { a b c d } } { a,~b,~c~und~d }
+	\@@_test:nn { \prot_tl_use_german:n { {Anna} {Bea} {Charlie} {Dora} } } { Anna,~Bea,~Charlie~und~Dora }
+\ENDTEST
+
+\group_begin:
+\TEST { \@@_apply_group:n, \prot_move:Nn } {
+	\setcounter{errorcontextlines}{100}
+	\cs_new:Npn \@@_test_seq_use:c #1 { \seq_use:cn {#1} , }
+	\cs_new:Npn \@@_test_use_if_exist:Nc #1#2 { \cs_if_exist:cT {#2} { #2 = #1 { #2 } } }
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
+		\str_set:Nn \l@@_id_str {#1}
+		\str_set:Nn \l@@_person_str { prot_person_/#1 }
+		\cs_if_exist:cF { c_prot_person_/#1/id_str } {
+			\str_const:cn { c_prot_person_/#1/id_str } {#1}
+			\bool_new:c  { g_prot_person_/#1/there_bool }
+		}
+		\bool_gset:cn { g_prot_person_/#1/there_bool } { ! \str_if_eq_p:nn {#2} 0 }
+		\@@_apply_group:n {#3}
+		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
+		\@@_initialize_move:
+		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#4_seq } }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
+		\prot_move:Nn {#2} {#1}
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
+		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_show_name:nn {
+		\TYPE { \exp_not:n {#1} = \prop_item:Nn \g@@_names_prop {#1} }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_show_person:nnnnn {
+		\TYPE { id = \str_use:c { c_prot_person_/#1/id_str } }
+		\TYPE { name = \exp_not:v { c_prot_person_/#1/name_tl } }
+		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
+		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
+		\TYPE { group = #4 }
+		\TYPE { \quark_if_nil:nF {#5} { g_prot_group_#4_seq = #5 } }
+		\TYPE { ##voters = #6 }
+		\TYPE { \quark_if_nil:nF {#7} { g_prot_votergroup_#4_seq = #7 } }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
+		\TYPE { there = \bool_to_str:N #2 }
+		\TYPE { ##voters = #4 }
+		\TYPE { \tl_if_empty:nF {#3} { g_prot_votergroup_#3_seq = #5 } }
+	}
+	\cs_new_protected_nopar:Nn \@@_test_show_name:nn { \TYPE { \exp_not:n {#1} = #2 } }
+	\cs_new_protected_nopar:Nn \@@_test_show_person:nnnnn {
+		\TYPE { id = #1 }
+		\TYPE { name = \exp_not:n{#2} }
+		\TYPE { group = #3 }
+		\TYPE { attendance = #4 }
+		\TYPE { there = #5 }
+	}
+%</expect>
+	\@@_test_group:nnnnnnn { Donaldy } 0 { g }      { g }  { Donaldy } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Donald  } 1 { g }      { g }  { Donaldy , Donald } 0 { \q_nil }
+	\SEPARATOR
+	\@@_test_group:nnnnnnn { Anna    } 0 { stupa }  { stupa } { Anna } 0 { \q_nil }
+	\@@_test_group:nnnnnnn { Bea     } 1 { stupa }  { stupa } { Anna , Bea } 1 { \q_nil }
+	\@@_test_group:nnnnnnn { Charlie } 1 { stupa }  { stupa } { Anna , Bea , Charlie } 2 { \q_nil }
+	\@@_test_group:nnnnnnn { Dora    } 1 { stupa }  { stupa } { Anna , Bea , Charlie , Dora } 3 { \q_nil }
+	\SEPARATOR
+	\@@_nontest:nn { \@@_makelate:n { Bea } } { }
+	\@@_test_move:nNnnn    { Donald  } \c_false_bool { } 2 { }
+	\@@_test:nn { } { \use:c { prot@makelate } { Bea } }
+	\@@_test_move:nNnnn    { Bea     } \c_true_bool  { } 3 { }
+	\@@_test_move:nNnnn    { Charlie } \c_false_bool { } 2 { }
+	\@@_test_move:nNnnn    { Bea     } \c_false_bool { } 1 { }
+	\@@_test_move:nNnnn    { Dora    } \c_false_bool { } 0 { }
+	\SEPARATOR
+	\@@_test_group:nnnnnnn { Emilie } 0 { refvor }  { refvor } { Emilie } 0 { }
+	\@@_test_group:nnnnnnn { Fynn   } 1 { refvor }  { refvor } { Emilie , Fynn } 1 { Fynn }
+	\@@_test_group:nnnnnnn { Gerda  } 1 { refvor }  { refvor } { Emilie , Fynn , Gerda } 1 { Fynn , Gerda }
+	\@@_test_group:nnnnnnn { Heidi  } 1 { refvor }  { refvor } { Emilie , Fynn , Gerda , Heidi } 1 { Fynn , Gerda , Heidi }
+	\SEPARATOR
+	\@@_nontest:nn { \@@_makelate:n { Gerda } } { }
+	\@@_nontest:nn { \@@_makelate:n { Heidi } } { }
+	\@@_test_move:nNnnn    { Donald } \c_true_bool  { refvor } 1 { Fynn }
+	\@@_test:nn { } { \use:c { prot@makelate } { Heidi } }
+	\@@_test_move:nNnnn    { Heidi  } \c_true_bool  { refvor } 1 { Fynn , Heidi }
+	\@@_test_move:nNnnn    { Fynn   } \c_false_bool { refvor } 1 { Heidi }
+	\@@_test:nn { } { \use:c { prot@makelate } { Gerda } }
+	\@@_test_move:nNnnn    { Gerda  } \c_true_bool  { refvor } 1 { Heidi , Gerda }
+	\@@_test_move:nNnnn    { Gerda  } \c_false_bool { refvor } 1 { Heidi }
+	\@@_test_move:nNnnn    { Heidi  } \c_false_bool { refvor } 0 { }
+}
+
+\TEST { persontable, \anwesenheitsliste } {
+%<*test>
+	\seq_gclear:c { g_prot_attendance_section_g_seq }
+	\seq_gclear:c { g_prot_attendance_section_f/x_seq }
+	\seq_gclear:c { g_prot_attendance_section_f/e_seq }
+	\seq_gclear:c { g_prot_attendance_section_f/u_seq }
+	\seq_gclear:c { g_prot_attendance_section_stupa_seq }
+	\begin{persontable}
+	\\ Nat & Nathan & Weise    & !!  & stupa    & x
+	\\ NW  & Nathan & Waise    & !!  & stupa    & e
+	\\     & Ada    & Lovelace &     & stupa    & x
+	\\     & Eva    & Daus     & Eve & g=Äöü    & x
+	\\ Ron & Rönja  & Daus     &     & raub     & x
+	\\
+	\\     & Evä    & Daus     &     & g        & x
+	\\     & Roman  & Leser    &     & g        &
+	\\     & Ada    & Love     &     & stupa    & x
+	\\ Eva & Eva    & Daus     & Eve & g=\emph! & x
+	\\     & Nathan & Weise    & !!  & stupa    & u
+	\\     & Momo   & Ende     &     & fs=ma    & x
+	\\     & Omoo   & Oho      &     & ref=pr   & x
+	\end{persontable}
+%</test>
+%<*expect>
+	\msg_error:nnn { prot } { person / malformed-id } { Evä }
+	\msg_error:nnn { prot } { person / id-iscsname } { Roman }
+	\msg_error:nnn { prot } { person / id-exists } { Ada }
+	\msg_error:nnnnn { prot } { person / name-exists } { Eve } { Eva } { Eve }
+	\msg_error:nnnnn { prot } { person / name-exists } { Nathan\prot_nbsp: We. } { NathanWe } { Nat }
+%</expect>
+	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } { true }
+	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } { false }
+	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } { true }
+	\@@_test_show_person:nnnnn { Eve } { Eve } { g  } { x } { true }
+	\@@_test_show_person:nnnnn { Ron } { Rönja } { g  } { x } { true }
+	\@@_test_show_name:nn { Nathan\prot_nbsp: We. } { Nat }
+	\@@_test_show_name:nn { Ada } { Ada }
+	\@@_test_show_name:nn { Eve } { Eve }
+	\@@_test_show_name:nn { Rönja } { Ron }
+
+	\NewExpandableDocumentCommand \@@_test_ignore_tabular_arguments: { o m } { }
+	\cs_set:Npn \begin #1 { \TYPE { BEGIN {#1} } \str_if_eq:nnT {#1} { tabular } \@@_test_ignore_tabular_arguments: }
+	\cs_set:Npn \end #1 { \TYPE { END {#1} } }
+	\let\item\relax
+	\let\par\relax
+	\let\noindent\relax
+	\@@_test_cs_set_typeself:N \\
+	\@@_test_cs_set_typeself:N \toprule
+	\@@_test_cs_set_typeself:N \midrule
+	\@@_test_cs_set_typeself:N \bottomrule
+	\@@_test_cs_set_typeself:N \hfill
+	\@@_test_cs_set_typeself_nnn:N \multicolumn
+%<*test>
+	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPENOEXP { \item[#1] #2 } }
+	\cs_set:Nn \prot_table_row:nn { \TYPE { #1 & #2 \\ } }
+	\anwesenheitsliste
+	\anwesenheitstabelle
+%</test>
+%<*expect>
+	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.
+	\TYPE {
+	\begin{description} \NEWLINE
+		\exp_not:n { \item[Gäste] Eva~Daus~(Äöü),~Rönja~Daus,~Eva~Daus~(\emph!) } \NEWLINE
+	\end{description} \NEWLINE
+	}
+	\TYPE {
+	\begin{tabular}{} \NEWLINE
+		\toprule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Studierendenparlament } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & Nathan~Weise \\ \NEWLINE
+		e & Nathan~Waise \\ \NEWLINE
+		x & Ada~Lovelace \\ \NEWLINE
+		u & Nathan~Weise \\ \NEWLINE
+	\midrule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Allgemeiner~Studierendenausschuss } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & \exp_not:n { Omoo~Oho~(\ShortLongText{ref=pr}) } \\ \NEWLINE
+	\bottomrule \NEWLINE
+	\end{tabular} \NEWLINE
+	\hfill \NEWLINE
+	\begin{tabular}{} \NEWLINE
+	\toprule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Beratende~Mitglieder } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & \exp_not:n { Momo~Ende~(\ShortLongText{fs=ma}) } \\ \NEWLINE
+	\midrule \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Gäste } } \NEWLINE \\ \NEWLINE
+	\midrule \NEWLINE
+		x & \exp_not:n { Eva~Daus~(Äöü) }\\ \NEWLINE
+		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
+		x & \exp_not:n { Eva~Daus~(\emph!) } \\ \NEWLINE
+	\bottomrule \NEWLINE
+	\end{tabular}
+	}
+%</expect>
+}
+\group_end:
+
+\ExplSyntaxOff
+\END
+%    \end{macrocode}

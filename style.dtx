@@ -1,0 +1,114 @@
+\ExplSyntaxOn
+%<*fsma>
+	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
+	% f: Fachschaftsrat → f
+	% r: Fachschaftsrat mit ruhendem Mandat → f
+	% alles andere: Gast → g (generisch implementiert)
+	\seq_new:N \g_prot_group_f_seq
+	\keys_define:nn { prot / group } {
+		, f .meta:n = { group = f, voter }
+		, r .meta:n = { group = f, special = ruhendes~Mandat }
+	}
+
+	\keys_define:nn { prot / attendance_list } { f .choice: }
+	\prot_add_attendance_section:n { f / x }
+	\prot_add_attendance_section:n { f / e }
+	\prot_add_attendance_section:n { f / u }
+
+	\NewDocumentCommand \anwesenheitsliste { } {
+		\prot_attendancelist:n {
+			\prot_attendancelist_item:nn { f / x } { Anwesende }
+			\prot_attendancelist_item:nn { f / e } { Entschuldigte }
+			\prot_attendancelist_item:nn { f / u } { Unentschuldigte }
+			\prot_attendancelist_item:nn { g } { Gäste }
+		}
+	}
+%</fsma>
+
+%<*stupa|stud-vv>
+	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
+	% stupa: zentral gewähltes StuPa-Mitglied → stupa
+	% fs: beratendes StuPa-Mitglied → fs
+	% ref: AStA-Referent_in → asta
+	% co: AStA-Co-Referent_in → asta
+	\seq_new:N \g_prot_group_stupa_seq
+	\seq_new:N \g_prot_group_fs_seq
+	\seq_new:N \g_prot_group_asta_seq
+	\keys_define:nn { prot / group } {
+		, stupa .meta:n = { group = stupa, voter }
+		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
+		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
+		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
+		% TODO: AStA -- momentan hier zu Testzwecken
+		, refvor .meta:n = { votergroup = refvor }
+	}
+
+	\prot_add_attendance_section:n { stupa }
+	\prot_add_x_attendance_section:n { fs }
+	\prot_add_x_attendance_section:n { asta }
+%<stud-vv>\prot_add_attendance_section:nn { studi / x } { Weitere Studierende }
+
+	\RequirePackage{booktabs}
+	\NewDocumentCommand \anwesenheitstabelle { } {
+		\par\noindent
+		\prot_attendancetable:nn {.4\linewidth} {
+			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }
+			\prot_attendancetable_part:nn { asta } { Allgemeiner~Studierendenausschuss }
+		}
+		\hfill
+		\prot_attendancetable:nn {.4\linewidth} {
+			\prot_attendancetable_part:nn { fs } { Beratende~Mitglieder }
+			\prot_attendancetable_part:nn { g } { Gäste }
+		}
+		\par
+%<stud-vv>\prot_attendancelist:
+	}
+
+	% Beispiel: \NeueFachschaft {bi} [BI] {BauIng} [Bauingenieurwesen]
+	% In Anwesenheitsliste wird fs=bi als „BauIng” angezeigt oder als „BI“ wenn der Platz nicht reicht,
+	% zudem gibt \fsbi im Text „BauIng“ aus und \fsbi* wiederum „Bauingenieurwesen“
+	\NewDocumentCommand \NeueFachschaft { m O{#3} m O{#3} } {
+		\NewShortLongText { fs=#1 } [#2] {#3}
+		\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} {#4} }
+	}
+	\NeueFachschaft { arc  } [ Arch   ] { Architektur }
+	\NeueFachschaft { bi   } [ BI     ] { BauIng      } [Bauingenieurwesen]
+	\NeueFachschaft { bio  } [ Bio    ] { Biologie    }
+	\NeueFachschaft { ch   } [        ] { Chemie      }
+	\NeueFachschaft { eit  } [        ] { EIT         } [Elektro-~und~Informationstechnik]
+	\NeueFachschaft { info } [ Info   ] { Informatik  }
+	\NeueFachschaft { mv   } [        ] { MV          } [Maschinenbau~und~Verfahrenstechnik]
+	\NeueFachschaft { ma   } [ Mathe  ] { Mathematik  }
+	\NeueFachschaft { ph   } [ $\Phi$ ] { Physik      }
+	\NeueFachschaft { ru   } [        ] { RU          } [Raum-~und~Umweltplanung]
+	\NeueFachschaft { sowi } [        ] { SoWi        } [Sozialwissenschaften]
+	\NeueFachschaft { wiwi } [        ] { WiWi        } [Wirtschaftswissenschaften]
+
+	% Beispiel: \NeuesReferat {stud} [Stud. \& L.] {Studium und Lehre}
+	% In Anwesenheitsliste wird ref=stud als „Studium und Lehre” angezeigt
+	% oder als „Stud. \& L.“ wenn der Platz nicht reicht,
+	% co=stud fügt vornedran noch ein „Co-“ ein.
+	% Zudem gibt \refstud im Text „Studium und Lehre“ aus
+	\NewDocumentCommand \NeuesReferat { m o m } {
+		\NewShortLongText { ref=#1 } [#2] {#3}
+	}
+	\NeuesReferat { vors }                   { Vorsitz                  }
+	\NeuesReferat { fin  }                   { Finanzen                 }
+	\NeuesReferat { fs   }                   { Fachschaften             }
+	\NeuesReferat { nach }                   { Nachhaltigkeit           }
+	\NeuesReferat { sozi }                   { Soziales                 }
+	\NeuesReferat { stud } [ Stud.~\&~L.   ] { Studium~und~Lehre        }
+	\NeuesReferat { inkl } [ Inklusion     ] { Inklusion~und~Diversität }
+	\NeuesReferat { bar  } [ BfS           ] { Barrierefreies~Studium   }
+	\NeuesReferat { int  } [ Int.          ] { Internationales          }
+	\NeuesReferat { kult }                   { Kultur                   }
+	\NeuesReferat { pr   } [ ÖA            ] { Öffentlichkeitsarbeit    }
+	\NeuesReferat { pa   } [ PA            ] { Politische~Arbeit        }
+	\NeuesReferat { spo  }                   { Sport                    }
+	\NeuesReferat { verk }                   { Verkehr                  }
+	\NeuesReferat { sofe }                   { Sommerfest               }
+
+	% TODO: AStA -- momentan hier zu Testzwecken
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+%</stupa|stud-vv>
