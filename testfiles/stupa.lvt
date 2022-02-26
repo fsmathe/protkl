@@ -1,0 +1,282 @@
+\documentclass{scrartcl}
+\usepackage[
+	, style = stupa
+]{prot}
+\usepackage[ngerman]{babel}
+\title{StuPa-Protokoll}
+\author{Markus}
+\usepackage{hyperref}
+\usepackage{pdfpages}
+
+\begin{persontable}
+\\     & Albert    & Augsburg       &    & stupa    & d
+\\ Ae  & Änderung  & Umlaut-A       &    & stupa    & p
+\\     & Bernhard  & Berlin         &    & stupa    & x
+\\ Cae & Cäsar     & Cottbus        &    & stupa    & x
+\\     & Charlotte & Chemnitz       &    & stupa    & s
+\\     & David     & Düsseldorf     &    & stupa    & e
+\\     & Emil      & Essen          &    & stupa    & e
+\\     & Friedrich & Frankfurt      &    & stupa    & d
+\\     & Gustav    & Görlitz        &    & stupa    & x
+\\     & Heinrich  & Hannover       &    & stupa    & d
+\\     & Ida       & Iserlohn       &    & stupa    & x
+\\     & Jakob     & Jena           &    & fs=ma    & x
+\\     & Katharina & Kaiserslautern &    & fs=ph    & x
+\\     & Ludwig    & Leipzig        &    & fs=ch    & x
+\\     & Marie     & München        &    & fs=bio   & u
+\\     & Nathan    & Nürnberg       &    & fs=info  & u
+\\     & Otto      & Oldenburg      &    & fs=mv    & x
+\\ Oe  & Ökonom    & Umlaut-O       &    & fs=eit   & x
+\\     & Paula     & Potsdam        &    & fs=sowi  & x
+\\     & Quelle    & Quickborn      &    & fs=wiwi  & x
+\\     & Richard   & Regensburg     &    & fs=arc   & u
+\\     & Samuel    & Stuttgart      &    & fs=ru    & x
+\\     & Schule    & Schwerin       &    & fs=bi    & x
+\\     & Eszett    & Eszett         &    & ref=vors & x
+\\     & Theodor   & Tübingen       &    & co=vors  & x
+\\     & Ulrich    & Unna           &    & ref=fin  & x
+\\ Ue  & Überfluss & Umlaut-U       &    & ref=fs   & x
+\\     & Viktor    & Vogtland       &    & ref=nach & x
+\\     & Wilhelm   & Wuppertal      &    & ref=sozi & x
+\\     & Xanthippe & Xanten         &    & ref=stud & x
+\\     & Ypsilon   & Ypsilon        &    & ypsilon  & x
+\\     & Zacharias & Zwickau        &    & g=Ende   & x
+\end{persontable}
+
+\newcommand{\LAK}{\renewcommand{\LAK}{LAK\xspace}LandesAStenKonferenz (LAK)\xspace}
+\newcommand\stupa{Studierendenparlament}
+\newcommand{\Vergabeausschuss}{\renewcommand{\Vergabeausschuss}{Vergabeausschuss\xspace}Vergabeausschuss\footnote{Ausschuss des Studierendenparlaments, der möglicherweise Menschen vergibt und für Liebe und Frieden betet. Vielleicht auch nicht. Tagt zum Schutze personenbezogener Daten nicht öffentlich.}\xspace}
+\newcommand{\agKLeVeR}{\renewcommand{\agKLeVeR}{AG~KLeVeR\xspace}AG~KLeVeR\footnote{Steht möglicherweise für Abkützungs-Gemeinschaft Kaiserslauterner Leben, Verplanung und Randbemerkungen und wird irgendwie besetzt.}\xspace}
+
+\newcommand{\nix}{Es gibt nichts zu berichten.}
+\newcommand{\niemand}{Es ist niemand anwesend.}
+
+\usepackage{twemojis}
+\newcommand\paperclip{\twemoji{paperclip}}
+\newcommand\smiley{\twemoji{smiley}}
+%\usepackage{fontspec}
+%\newfontfamily\emojifont{TwemojiMozilla.ttf}
+%\newfontfamily\emojifont{NotoColorEmoji.ttf}
+%\newcommand\paperclip{{\emojifont\char"1F4CE}}
+\providecommand\linenumbers{}
+
+\newcommand\unterlagen[1]{\marginline{\hyperlink{app.#1}{\paperclip\ #1}}}
+\ExplSyntaxOn
+% Buggy: Wenn \unterlagen vor ##2 steht, interagiert die Verwendung von \...see
+% am Seitenanfang komisch mit Fußnoten auf der Seite vornedran.
+\cs_new:Nn \def_sectsee:n {
+	\exp_args:Nc \NewDocumentCommand { #1see } { o m } {
+		\IfNoValueTF {##1}
+			{ \use:c {#1} {##2} }
+			{ \use:c {#1} [##2] { ##2 \unterlagen {##1} } }
+}}
+\def_sectsee:n {section}
+\def_sectsee:n {subsection}
+\def_sectsee:n {paragraph}
+\NewDocumentCommand \finanzantrag { o m m } {
+	\paragraphsee [#1] { FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
+}
+\NewDocumentCommand \includepdfsection { O{} m } { TODO: Noch nicht implementiert. }
+\ExplSyntaxOff
+
+%\hyphenation{Pa-ral-lel-ver-an-stal-tun-g-en aus-zu-tau-schen White-board White-boards White-board-mar-ker White-board-mar-kern}
+\hyphenation{Stu-die-ren-den-par-la-ment}
+
+\NewDocumentCommand \change { m } {#1}
+
+\def\dtm#1#2#3#4 {#1#2.\,#3#4.\@}
+\def\dat#1#2#3#4 {#1#2.~Monat}
+\newcommand\datum[6]{#1#2.~Monat 2021}
+\newcommand\eur[1]{#1~€}
+\newcommand\fs{Fachschaft}
+
+\NewDocumentCommand\einschub { o o m } {\smallskip\par\noindent
+	\emph{\IfValueT{#1}{#1\IfValueT{#2}{ -- #2}~Uhr: }#3}%
+	\smallskip\par}
+\def\Pause#1#2#3#4-#5#6#7#8{\einschub[#1#2:#3#4][#5#6:#7#8]{Sitzungspause}}
+
+%%% Personen kommen und gehen
+% wrappers around \peoplemove, ..., \peoplemovetext, ...
+\newcommand\kommt[1]{
+	\peopleenter{#1}
+	\Einschub{\peopleentertext{#1}}
+}
+\newcommand\geht[1]{
+	\peopleleave{#1}
+	\Einschub{\peopleleavetext{#1}}
+}
+\newcommand\kommtgeht[2]{
+	\peoplemove{#1}{#2}
+	\Einschub{\peoplemovetext{#1}{#2}}
+}
+\let\kommtstill\peopleenter
+\let\gehtstill\peopleleave
+\let\kommtgehtstill\peoplemove
+
+
+
+
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\medskip
+\einschub{\unterlagen{1}In der Randspalte des Protokolls finden sich Verweise auf die entsprechenden Seiten der Sitzungsunterlagen.}
+\einschub{In diesem Protokoll ist das Verlassen und Betreten der Sitzung nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
+\einschub{Die Sitzung findet hybrid in Hörsaal 46-210 und über BigBlueButton statt. Abstimmungen und Wahlen erfolgen für Mitglieder des \stupa, die nicht vor Ort aber in BigBlueButton anwesend sind, per BigBlueButton-Chat.}
+
+\clearpage
+\section*{Anwesenheitsliste}
+\emph{x: anwesend, e: entschuldigt, u: unentschuldigt, d: digital anwesend}
+\anwesenheitstabelle
+
+\sectionsee{Mitteilungen}
+\Charlotte eröffnet die Sitzung um 18~Uhr und begrüßt alle Anwesenden.
+
+Da man nachher immer klüger ist, beantragt \Charlotte die Sitzung hybrid zu veranstalten. Dieser Antrag benötigt eine absolute Mehrheit und erhält sie mit \erg*00.
+
+\kommtstill{\Albert\Friedrich\Heinrich}
+\einschub[18:11]{Wunder werden wahr, die Bedeutungen von Zeit und Raum verschieben sich, Wellen hinreichend fortgeschrittener Technik breiten sich quer durchs Land aus, erreichen den Sitzungssaal und der Sitzungssaal erreicht \Albert, \Friedrich, \Heinrich und viele weitere, die sich Kraft dieser Magie nun mit und ohne Stimme zu Wort melden können.}
+
+\Charlotte beantragt wie auf den vorherigen Sitzungen, eine quotierte Redeliste zu führen. Dies wird mit \erg*04 angenommen.
+
+Unbekannte Mächte unbekannter Ordnungen zwingen \Wilhelm mitzuteilen, dass der \Vergabeausschuss getagt hat.
+Genaueres bleibt im Verborgenen.
+
+\sectionsee[1]{Festlegung der Tagesordnung}
+\Charlotte stellt die Tagesordnung, mit der eingeladen wurde, und die für die jeweiligen TOPe geplanten Dauern vor.
+\Xanthippe beantragt einen weiteren TOP\unterlagen2 zu Spuk an der TUK und \Eszett einen TOP zur Umgebung der Sonne, diese werden mit \erg*00 hinzugefügt.
+
+\sectionsee[3]{Wahlen}
+\paragraph{Wahlausschuss}
+\Ida und \Eszett kandidieren für den Wahlausschuss.
+\Katharina fragt, wer sich um die Bewerbung der Wahl kümmern will.
+\Ida bricht eine Lanze für die Ehrlichkeit und sagt, dass sie sich dazu noch keine Gedanken gemacht habe.
+\Charlotte erklärt, dass sie sich bereits um die Bewerbung kümmern wollte.
+Voll Bewunderung über \Ida{}s Offenheit und Diplomatie bricht \Eszett eine Lanze für die Wichtigkeit von Null"=Aussagen und verweist darauf, dass die Wahlordnung nur sagt, dass der Wahlausschuss die Wahl bekannt machen muss, aber in keiner Ordnung steht, wer inwiefern zur Bewerbung der Wahl verpflichtet ist.
+
+\Ida und \Charlotte erklären sich bereit, ihre Wahl anzunehmen und werden hierauf mit \erg*01 gewählt.
+
+
+\sectionsee[4]{Grundsatzprogramm der Studierendenschaft}
+Es handelt sich hierbei um einen Hauptantrag nach §~15~GO, der bereits auf mehreren vorangegangenen Sitzungen behandelt wurde und zu dem niemand mehr was neues zu sagen hat.
+
+\subsection{Einzelberatung}
+Der Antrag wird mit \erg*00 in die Schlussberatung gegeben.
+
+\subsection{Schlussberatung}
+Das Grundsatzprogramm\unterlagen{5} wird mit \erg*00 angenommen.
+
+\sectionsee[2]{Umgebung der Sonne}
+\Charlotte hat sich diesen TOP aus vielfältigen Gründen gewünscht.
+
+\einschub{Der Nützlichkeit halber sind die Beiträge inhaltlich gruppiert.}
+
+\subsection{Allgemeiner Austausch über Fakten, Meinungen und fromme Wünsche}
+\paragraph{Die drei Gs}
+Hier wird geredet \dots
+und auf irgendwas\footnote{\url{https://example.org}} verwiesen.
+
+\paragraph{Erweiterte G-Arithmetik}
+Leute mögen gute wissenschaftliche Praxis und führen noch mehr Referenzen an.\footnote{Hier mögen auch Menschen gute wissenschaftliche Praxis: \url{https://de.wikipedia.org/wiki/Portal:Wissenschaft}}
+
+\paragraph{Hybride Hydras}
+Was soll das hier?
+
+\einschub[18:57][19:03]{Pausensport mit \Charlotte}
+
+\Ida fragt sich, was sie hier eigentlich tut und was der Zweck dieses TOPs sein soll.
+
+\subsection{Studentische Gremien}\label{Sonne.Gremien}
+
+Es wird noch ein wenig geredet.
+
+\sectionsee[2]{Spukzeiten an der TUK}
+Die \agKLeVeR diskutiert momentan über die Spukzeiten im Schloss.\footnote{%
+Der organisierte Spuk der Vergangenheit -- als alles noch besser war -- war wie folgt durchgetaktet:
+
+\noindent\(8{:}15-9{:}45,\hfill 10{:}00-11{:}30,\hfill 11{:}45-13{:}15,\hfill 13{:}45-15{:}15,\hfill 15{:}30-17{:}00,\hfill 17{:}15-18{:}45,\hfill 19{:}00-20{:}30.\)
+
+\noindent Da wir hier eine mehrere Absätze umspannende Fußnote schreiben wollen, enthalten wir euch auch folgende neuere allgemein bekannte Information nicht vor:
+
+\noindent\(8{:}00-9{:}30,\hfill 10{:}00-11{:}30,\hfill 12{:}00-13{:}30,\hfill 14{:}00-15{:}30,\hfill 16{:}00-17{:}30,\hfill 18{:}00-19{:}30,\hfill 20{:}00-21{:}30.\)
+}
+
+Dies ist alles hochinteressant.
+
+\sectionsee[11]{Einführung einer genialen Regelung für anhaltenden \AE ther}
+Es handelt sich hierbei mal wieder um einen Hauptantrag nach §~15~GO, der bereits auf vielen vorangegangenen Sitzungen behandelt wurde.
+
+\subsection{Einzelberatung}
+\Ida stellt ihre Änderungs- und Modifikationsanträge\unterlagen{14} vor.
+Diese werden als wundervoll elegant gepriesen und erhalten viele Lorbeeren.
+
+Der gesamte Antrag wird einstimmig in die Schlussberatung gegeben.
+
+\subsection{Schlussberatung}
+Der Antrag wird mit \erg*01 angenommen.
+
+
+\sectionsee[32]{Finanzanträge}\label{Finanzen}
+
+\finanzantrag{42/21}{Leasing Buchdrucker} \Ulrich referiert über die unumgängliche Notwendigkeit jährlich tausende an Büchern zu drucken, um unauffällig einige hundert Exemplare eines geheimen Untergrundbuches, dessen Titelbild einem in großen freundlichen Buchstaben \textsc{Don't panic!}\footnote{Die moderne Version von „Fürchtet euch nicht“, nur ausdrucksstärker und beliebter.} zuruft produzieren zu können.\footnote{Natürlich hat sich das der Protokollant nur ausgedacht und die \emph{wahren} Gründe sind ganz andere.}
+
+
+\Pause1956-2004
+
+\finanzantrag[5]{72/21}{Förderung von Mehrheitskultur}
+Viele Leute argumentieren auf verschiedenen Ebenen verschiedenste Dinge.
+
+Auf \Ida{s} Aufforderung geben alle, die im StuPa eine Stimme haben, deren Stimme in der Diskussion aber noch nicht gehört wurde, einen Kommentar ab: \Albert ist dafür, \Bernhard auch, \Ae hat keine Ahnung, \Heinrich will sich enthalten, \Gustav ist eher dagegen und \Friedrich ist dagegen.
+
+\Ida weist darauf hin, dass die Abstimmung bei Enthaltungsmehrheit wiederholt werden müsste, was letztlich mit \erg5*3 aber nicht notwendig ist.
+
+\finanzantrag[3]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Corona.Gremien} angebracht.
+Der Antrag wird mit \erg*00 angenommen.
+
+\sectionsee[1]{Weihnachten}
+Alle mögen Weihnachten und glauben an das Gute.
+
+\subsection{\Eszett{s} und \Theodor{s} Wunschzettel}
+Das dürfen sie natürlich nicht weitersagen. Ist ja klar.
+
+
+\subsectionsee[2]{Wünsche für \Ae}
+Möge alles gut funktionieren.
+
+
+\sectionsee[7]{Gerede}
+Der TOP wird ohne Gegenrede vertagt.
+
+\section{Berichte}
+
+\einschub{Die Berichte sind teils über den BigBlueButton-Chat erfolgt.}
+\subsection{Allgemeiner Studierenden Ausschuss (AStA)}
+
+\paragraph{Vorsitz} \Eszett berichtet, dass das Hochschulgesetz nun unter einem wundervollen, alle Protokollschreibenden glücklich machenden, einmalig guten Ort im sogenannten Internet zu finden ist.\footnote{\url{https://www.landesrecht.rlp.de/bsrp/document/jlr-HSchulGRP2020rahmen}}
+\smallskip
+
+Außerdem erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
+
+
+\subsection{Fachschaften}
+\paragraph{Architektur} \Richard berichtet viel Schönes.
+
+
+\sectionsee[8]{Protokolle}
+Der wahre Grund, weshalb Sitzungen stattfinden ist doch immer noch, damit wir Protokollant:innen uns austoben können. Hier stehen wieder einmal die Früchte unserer Arbeit zur Abstimmung und werden mit einer überwältigenden Mehrheit von \erg{17}0* und \erg*0{-1} angenommen. Phänomenal!
+
+\sectionsee[4]{Sitzungstermine}
+Es wundert nun niemanden mehr, dass die vorgeschlagenen Termine am \datum241221, \datum311221, \datum010122 und \datum220222 werden einstimmig angenommen. Die einen wundern nach den vorherigen Abstimmungen einfach über nichts mehr und die anderen können sich nichts schöneres erträumen, als eine StuPa-Sitzung unterm Tannenbaum.
+
+\section{Verschiedenes}
+Vielen Dank euch allen, dass ihr so seid wie ihr seid und zu dieser wunderschönen Welt beitragt.
+
+\appendix
+%\nolinenumbers
+
+%\includepdfsection[link, linkname=app]{Sitzungsunterlagen}{Sitzungsunterlagen}
+\end{document}
+% vi: tw=0
