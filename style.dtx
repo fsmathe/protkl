@@ -11,9 +11,11 @@
 	}
 
 	\keys_define:nn { prot / attendance_list } { f .choice: }
-	\prot_add_attendance_section:n { f / x }
-	\prot_add_attendance_section:n { f / e }
-	\prot_add_attendance_section:n { f / u }
+	\AddToHook { AtEndProtClass } [ fsma ] {
+		\prot_add_attendance_section:n { f / x }
+		\prot_add_attendance_section:n { f / e }
+		\prot_add_attendance_section:n { f / u }
+	}
 
 	\NewDocumentCommand \anwesenheitsliste { } {
 		\prot_attendancelist:n {
@@ -34,19 +36,26 @@
 	\seq_new:N \g_prot_group_stupa_seq
 	\seq_new:N \g_prot_group_fs_seq
 	\seq_new:N \g_prot_group_asta_seq
+	% TODO: AStA -- momentan hier zu Testzwecken
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+
 	\keys_define:nn { prot / group } {
 		, stupa .meta:n = { group = stupa, voter }
 		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
 		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
 		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
+%<stud-vv>, gast .meta:n = { group = gast, info = {#1} }
 		% TODO: AStA -- momentan hier zu Testzwecken
 		, refvor .meta:n = { votergroup = refvor }
 	}
 
-	\prot_add_attendance_section:n { stupa }
-	\prot_add_x_attendance_section:n { fs }
-	\prot_add_x_attendance_section:n { asta }
-%<stud-vv>\prot_add_attendance_section:nn { studi / x } { Weitere Studierende }
+	\AddToHook { AtEndProtClass } [ stupa ] {
+		\prot_add_attendance_section:n { stupa }
+		\prot_add_x_attendance_section:n { fs }
+		\prot_add_x_attendance_section:n { asta }
+	%<stud-vv>\prot_add_x_attendance_section:n { gast }
+	}
 
 	\RequirePackage{booktabs}
 	\NewDocumentCommand \anwesenheitstabelle { } {
@@ -58,57 +67,63 @@
 		\hfill
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { fs } { Beratende~Mitglieder }
-			\prot_attendancetable_part:nn { g } { Gäste }
+%<stupa>\prot_attendancetable_part:nn { g } { Gäste }
+%<*stud-vv>
+			\seq_if_empty:NF \g_prot_attendance_section_g_seq {
+				\bool_if:NT \g@@_attendancetable_has_previous_bool \midrule
+				\multicolumn 2 l { \bool_gset_true:N \g@@_attendancetable_has_previous_bool Weitere~Studierende } \\
+				\midrule
+				& \exp_not:n { \emph { siehe~Liste~unten } } \\
+			}
+			\prot_attendancetable_part:nn { gast } { Gäste }
+%</stud-vv>
 		}
 		\par
-%<stud-vv>\prot_attendancelist:
+%<stud-vv>\prot_attendancelist:n { \prot_attendancelist_item:nn { g } { Weitere Studierende } }
 	}
-
-	% Beispiel: \NeueFachschaft {bi} [BI] {BauIng} [Bauingenieurwesen]
-	% In Anwesenheitsliste wird fs=bi als „BauIng” angezeigt oder als „BI“ wenn der Platz nicht reicht,
-	% zudem gibt \fsbi im Text „BauIng“ aus und \fsbi* wiederum „Bauingenieurwesen“
-	\NewDocumentCommand \NeueFachschaft { m O{#3} m O{#3} } {
-		\NewShortLongText { fs=#1 } [#2] {#3}
-		\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} {#4} }
-	}
-	\NeueFachschaft { arc  } [ Arch   ] { Architektur }
-	\NeueFachschaft { bi   } [ BI     ] { BauIng      } [Bauingenieurwesen]
-	\NeueFachschaft { bio  } [ Bio    ] { Biologie    }
-	\NeueFachschaft { ch   } [        ] { Chemie      }
-	\NeueFachschaft { eit  } [        ] { EIT         } [Elektro-~und~Informationstechnik]
-	\NeueFachschaft { info } [ Info   ] { Informatik  }
-	\NeueFachschaft { mv   } [        ] { MV          } [Maschinenbau~und~Verfahrenstechnik]
-	\NeueFachschaft { ma   } [ Mathe  ] { Mathematik  }
-	\NeueFachschaft { ph   } [ $\Phi$ ] { Physik      }
-	\NeueFachschaft { ru   } [        ] { RU          } [Raum-~und~Umweltplanung]
-	\NeueFachschaft { sowi } [        ] { SoWi        } [Sozialwissenschaften]
-	\NeueFachschaft { wiwi } [        ] { WiWi        } [Wirtschaftswissenschaften]
-
-	% Beispiel: \NeuesReferat {stud} [Stud. \& L.] {Studium und Lehre}
-	% In Anwesenheitsliste wird ref=stud als „Studium und Lehre” angezeigt
-	% oder als „Stud. \& L.“ wenn der Platz nicht reicht,
-	% co=stud fügt vornedran noch ein „Co-“ ein.
-	% Zudem gibt \refstud im Text „Studium und Lehre“ aus
-	\NewDocumentCommand \NeuesReferat { m o m } {
-		\NewShortLongText { ref=#1 } [#2] {#3}
-	}
-	\NeuesReferat { vors }                   { Vorsitz                  }
-	\NeuesReferat { fin  }                   { Finanzen                 }
-	\NeuesReferat { fs   }                   { Fachschaften             }
-	\NeuesReferat { nach }                   { Nachhaltigkeit           }
-	\NeuesReferat { sozi }                   { Soziales                 }
-	\NeuesReferat { stud } [ Stud.~\&~L.   ] { Studium~und~Lehre        }
-	\NeuesReferat { inkl } [ Inklusion     ] { Inklusion~und~Diversität }
-	\NeuesReferat { bar  } [ BfS           ] { Barrierefreies~Studium   }
-	\NeuesReferat { int  } [ Int.          ] { Internationales          }
-	\NeuesReferat { kult }                   { Kultur                   }
-	\NeuesReferat { pr   } [ ÖA            ] { Öffentlichkeitsarbeit    }
-	\NeuesReferat { pa   } [ PA            ] { Politische~Arbeit        }
-	\NeuesReferat { spo  }                   { Sport                    }
-	\NeuesReferat { verk }                   { Verkehr                  }
-	\NeuesReferat { sofe }                   { Sommerfest               }
-
-	% TODO: AStA -- momentan hier zu Testzwecken
-	\seq_new:N \g_prot_group_refvor_seq
-	\seq_new:N \g_prot_votergroup_refvor_seq
 %</stupa|stud-vv>
+
+% Beispiel: \NeueFachschaft {bi} [BI] {BauIng} [Bauingenieurwesen]
+% In Anwesenheitsliste wird fs=bi als „BauIng” angezeigt oder als „BI“ wenn der Platz nicht reicht,
+% zudem gibt \fsbi im Text „BauIng“ aus und \fsbi* wiederum „Bauingenieurwesen“
+\NewDocumentCommand \NeueFachschaft { m O{#3} m O{#3} } {
+	\NewShortLongText { fs=#1 } [#2] {#3}
+	\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} {#4} }
+}
+\NeueFachschaft { arc  } [ Arch   ] { Architektur }
+\NeueFachschaft { bi   } [ BI     ] { BauIng      } [Bauingenieurwesen]
+\NeueFachschaft { bio  } [ Bio    ] { Biologie    }
+\NeueFachschaft { ch   } [        ] { Chemie      }
+\NeueFachschaft { eit  } [        ] { EIT         } [Elektro-~und~Informationstechnik]
+\NeueFachschaft { info } [ Info   ] { Informatik  }
+\NeueFachschaft { mv   } [        ] { MV          } [Maschinenbau~und~Verfahrenstechnik]
+\NeueFachschaft { ma   } [ Mathe  ] { Mathematik  }
+\NeueFachschaft { ph   } [ $\Phi$ ] { Physik      }
+\NeueFachschaft { ru   } [        ] { RU          } [Raum-~und~Umweltplanung]
+\NeueFachschaft { sowi } [        ] { SoWi        } [Sozialwissenschaften]
+\NeueFachschaft { wiwi } [        ] { WiWi        } [Wirtschaftswissenschaften]
+
+% Beispiel: \NeuesReferat {stud} [Stud. \& L.] {Studium und Lehre}
+% In Anwesenheitsliste wird ref=stud als „Studium und Lehre” angezeigt
+% oder als „Stud. \& L.“ wenn der Platz nicht reicht,
+% co=stud fügt vornedran noch ein „Co-“ ein.
+% Zudem gibt \refstud im Text „Studium und Lehre“ aus
+\NewDocumentCommand \NeuesReferat { m o m } {
+	\NewShortLongText { ref=#1 } [#2] {#3}
+	\exp_args:Nc \NewDocumentCommand { ref#1 } { } {#3}
+}
+\NeuesReferat { vors }                   { Vorsitz                  }
+\NeuesReferat { fin  }                   { Finanzen                 }
+\NeuesReferat { fs   }                   { Fachschaften             }
+\NeuesReferat { nach }                   { Nachhaltigkeit           }
+\NeuesReferat { sozi }                   { Soziales                 }
+\NeuesReferat { stud } [ Stud.~\&~L.   ] { Studium~und~Lehre        }
+\NeuesReferat { inkl } [ Inklusion     ] { Inklusion~und~Diversität }
+\NeuesReferat { bar  } [ BfS           ] { Barrierefreies~Studium   }
+\NeuesReferat { int  } [ Int.          ] { Internationales          }
+\NeuesReferat { kult }                   { Kultur                   }
+\NeuesReferat { pr   } [ ÖA            ] { Öffentlichkeitsarbeit    }
+\NeuesReferat { pa   } [ PA            ] { Politische~Arbeit        }
+\NeuesReferat { spo  }                   { Sport                    }
+\NeuesReferat { verk }                   { Verkehr                  }
+\NeuesReferat { sofe }                   { Sommerfest               }

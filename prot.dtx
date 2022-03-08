@@ -25,6 +25,7 @@
 		\file{prot.sty}{\from{prot.dtx}{package}}
 		\file{prot-fsma.def}{\from{style.dtx}{style,fsma}}
 		\file{prot-stupa.def}{\from{style.dtx}{style,stupa}}
+		\file{prot-stud-vv.def}{\from{style.dtx}{style,stud-vv}}
 	}
 	\usedir{testfiles}
 	\generate{
@@ -110,6 +111,29 @@
 	\RequirePackage{l3keys2e}
 	\RequirePackage{xspace}
 %    \end{macrocode}
+% \subsection{Variabel lange Namen}
+% \begin{macro}{\NewShortLongText, \ShortLongText}
+%   Diese Makros werden in den Styles verwendet. Daher stehen sie hier.
+%
+%   Beispiel: \cmd\NewShortLongText {ma} [Mathe] {Mathematik}
+%   führt zu \cmd\ShortLongText { ma } $\to$ Mathe $\vee$ Mathematik -- je nach Kontext
+%    \begin{macrocode}
+	\NewDocumentCommand \NewShortLongText { m o m } {
+		\tl_const:cn { c_prot_longtext->#1_tl } {#3}
+		\IfValueTF {#2}
+			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#2} }
+			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#3} }
+	}
+	\bool_new:N \l_prot_shorttext_bool
+	\NewDocumentCommand \ShortLongText { m } {
+		\tl_use:c {
+			c_prot_
+			\bool_if:NTF \l_prot_shorttext_bool { short } { long } text
+			->#1_tl
+		}
+	}
+%    \end{macrocode}
+% \end{macro}
 % \subsection{Paketoptionen}
 % \begin{key}{prot/options}
 %   Datum, Uhrzeit etc.\@ können dem Paket (oder auch der Dokumentklasse) übergeben werden.
@@ -118,28 +142,45 @@
 %   Die |style|-Option lädt gremienspezifische Konfiguration nach.
 %   Beispieslweise mit |style=fsma|.
 %   Wird |style| mehrfach aufgerufen, so werden eben alle Konfigurationen in der angegebenen Reihenfolge geladen.
-%
-%   Das Parsen der Optionen mit \cmd\ProcessKeysOptions\ wird ans Ende der Datei verschoben, da insbesondere für die |style|-Option alle möglichen Befehle vorher definiert sein müssen.
+%   Für Code, der erst später in dieser Klasse definierte Befehle nutzt, steht ein Haken\footnote{Referenz: \emph{source2e.pdf}, Abschnitt \emph{lthooks.dtx}} „AtEndProtClass“ zur Verfügung.
 %    \begin{macrocode}
 	\keys_define:nn { prot / options } {
 		, style .code:n = { \file_input:n { prot-#1.def } }
-		, titel .tl_set:N = \l_prot_meeting_titel_tl
 		, datum .tl_set:N = \l_prot_meeting_datum_tl
-		, startzeit .tl_set:N = \l_prot_meeting_start_tl
-		, endzeit .tl_set:N = \l_prot_meeting_end_tl
+		, start .tl_set:N = \l_prot_meeting_start_tl
+		, ende .tl_set:N = \l_prot_meeting_ende_tl
 		, version .tl_set:N = \l_prot_meeting_version_tl
 		, forlaeufig .meta:n = { version = #1 }
 		, forlaeufig .default:n = 0
 		, vorlaeufig .meta:n =  { version = #1 }
 		, vorlaeufig .default:n = 1
+		, titel .tl_set:N = \l_prot_meeting_titel_tl
+		, legislatur .tl_set:N = \l_prot_meeting_legislatur_tl
+		, sitzung .tl_set:N = \l_prot_meeting_sitzung_tl
+		, unterschriftsdatum .tl_set:N = \l_prot_meeting_unterschriftsdatum_tl
 	}
 	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / options } }
 
-	\NewDocumentCommand \sDatum { } { \tl_use:N { \l_prot_meeting_datum_tl } \xspace }
-	\NewDocumentCommand \sStart { } { \tl_use:N { \l_prot_meeting_start_tl } ~ Uhr \xspace }
-	\NewDocumentCommand \sEnde { } { \tl_use:N { \l_prot_meeting_end_tl } ~ Uhr \xspace }
-	\NewDocumentCommand \sVersion { } { \tl_use:N { \l_prot_meeting_version_tl } \xspace }
+	\NewHook { AtEndProtClass }
+	\ProcessKeysOptions { prot / options }
+
+	\newcommand \sDatum { \printdate \l_prot_meeting_datum_tl }
+	\newcommand \sStart { \l_prot_meeting_start_tl \prot_nbsp: Uhr \xspace }
+	\newcommand \sEnde { \l_prot_meeting_ende_tl \prot_nbsp: Uhr \xspace }
+	\newcommand \sVersion { \l_prot_meeting_version_tl \xspace }
+	\newcommand \Vorlaeufiges { \cs_if_exist:NT \l_prot_meeting_version_tl { \exp_not:n { Vorläufiges~ } } }
+	\newcommand \unterschriftsdatum { \cs_if_exist:NTF \l_prot_meeting_unterschriftsdatum_tl { \l_prot_meeting_unterschriftsdatum_tl } { \today } }
+	\newcommand \sTitel { \l_prot_meeting_titel_tl }
+	\newcommand \sitzungste { \cs_if_exist:NT \l_prot_meeting_sitzung_tl { \l_prot_meeting_sitzung_tl.~ } }
+	\newcommand \legislaturste { \cs_if_exist:NT \l_prot_meeting_legislatur_tl { \l_prot_meeting_legislatur_tl.~ } }
+
+	\date { \sDatum
+		\\ \l_prot_meeting_start_tl \prot_nbsp: Uhr
+		~--~ \l_prot_meeting_ende_tl \prot_nbsp: Uhr
+		}
+	\author { \protokollfuehrung }
 %    \end{macrocode}
+% \end{key}
 % \subsection{Personentabelle einlesen und ausgeben}
 % \subsubsection{Einlesen der Personentabelle}
 % \begin{environment}{persontable}
@@ -151,7 +192,7 @@
 		\seq_map_inline:Nn \l@@_persontable_seq {
 			\seq_set_split:Nnn \l@@_personrow_seq & {##1}
 			\int_compare:nNnTF { \seq_count:N \l@@_personrow_seq } = 6 {
-				\exp_last_unbraced:Nx \prot_newperson_frontend:nnnnnn { \@@_seq_to_tl:N \l@@_personrow_seq }
+				\exp_last_unbraced:Nx \prot_newperson_frontend:nnnnnn { \prot_tl_from_seq:N \l@@_personrow_seq }
 			} {
 				\msg_error:nnxx { prot } { persontable / col-count }
 					{ \seq_use:Nn \l@@_personrow_seq { ~\&~ } }
@@ -294,7 +335,7 @@
 	\prop_new:N \g@@_names_prop
 	\str_new:N \l@@_samename_id_str
 	\cs_new_protected_nopar:Nn\prot_newperson:nnnnnn {
-		\@@_tl_if_alphabetic:nTF {#1} {
+		\prot_tl_if_alphabetic:nTF {#1} {
 			\cs_if_exist:cTF {#1} {
 				\cs_if_exist:cTF { c_prot_person_/#1/id_str }
 					{ \msg_error:nnn { prot } { person / id-exists } {#1} }
@@ -347,7 +388,7 @@
 	\cs_new_protected_nopar:Nn \@@_set_attendance: {
 		\bool_new:c { g_\l@@_person_str/there_bool }
 		\keys_set:nV { prot / attendance / use } \l@@_attendance_str
-		\@@_provide:Ncn \tl_const:cv { c_\l@@_person_str/attendance/disp_tl } { c_\l@@_person_str/attendance_str }
+		\prot_provide:Ncn \tl_const:cv { c_\l@@_person_str/attendance/disp_tl } { c_\l@@_person_str/attendance_str }
 	}
 	\keys_define:nn { prot / attendance } {
 		, value .str_set:N = \l@@_attendance_str
@@ -399,7 +440,7 @@
 		\str_new:c { g_\l@@_person_str / group_str }
 		\seq_new:c { g_\l@@_person_str / info_seq }
 		\keys_set_known:nn { prot / group } {#1}
-		\@@_provide:Ncn \cs_new_protected_nopar:cn { \l@@_person_str / aftermove:N } { }
+		\prot_provide:Ncn \cs_new_protected_nopar:cn { \l@@_person_str / aftermove:N } { }
 		\tl_if_empty:cT { g_\l@@_person_str / group_str } { \keys_set:nn { prot / group } { g } }
 	}
 	\keys_define:nn { prot / group } {
@@ -421,22 +462,6 @@
 	\cs_generate_variant:Nn \keys_define:nn { nx }
 	\seq_new:N \g_prot_group_g_seq
 
-	% Beispiel: \NewShortLongText {ma} [Mathe] {Mathematik}
-	% \ShortLongText { ma } -> Mathe ODER Mathematik -- je nach Kontext
-	\NewDocumentCommand \NewShortLongText { m o m } {
-		\tl_const:cn { c_prot_longtext->#1_tl } {#3}
-		\IfValueTF {#2}
-			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#2} }
-			{ \tl_const:cn { c_prot_shorttext->#1_tl } {#3} }
-	}
-	\bool_new:N \l_prot_shorttext_bool
-	\NewDocumentCommand \ShortLongText { m } {
-		\tl_use:c {
-			c_prot_
-			\bool_if:NTF \l_prot_shorttext_bool { short } { long } text
-			->#1_tl
-		}
-	}
 	\int_new:N \g_prot_voters_int
 	\cs_new_protected_nopar:Nn \@@_move_voter:N {
 		\bool_if:NTF {#1}
@@ -481,6 +506,7 @@
 % \subsubsection{Kleinkram}
 % \begin{macro}{attendance/special, group/special, \sitzungsfuehrung, \protokollfuehrung}
 %   TODO: Dokumentation
+%   FixMe: \protokollfuehrung muss expandierbar sein, um in \cmd\hypersetup genutzt werden zu können.
 %    \begin{macrocode}
 	\keys_define:nn { prot } {
 		, attendance/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
@@ -556,10 +582,9 @@
 	\cs_set_eq:cN { prot@makelate } \@@_makelate:n
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\peoplemove, \peopleenter, \peopleleave}
-%   TODO: Hübsche Doku
+% \begin{macro}{\peoplemove, \peopleenter, \peopleleave, ...text}
 %   \cmd\peoplemove\arg{\cs a\cs b\cs c}\arg{\cs x\cs y\cs z} lässt die Personen |a|, |b| und |c| kommen und |x|, |y|, |z| gehen.
-%   \cmd\peoplemovetext produziert einen Text im Input-Stream, der beispielsweise in einen \cmd\metapar eingebettet werden kann.
+%   \cmd\peoplemovetext produziert einen Text im Input-Stream, der beispielsweise in einen \cmd\einschub eingebettet werden kann.
 %   \cmd{\peopleenter} und \cmd{\peopleleave} lassen einfach eins der beiden Argumente leer.
 %    \begin{macrocode}
 	\cs_new_nopar:Npn \peopleenter { \prot_multimove:Nn \c_true_bool }
@@ -574,6 +599,29 @@
 	\cs_new_nopar:Nn \prot_leave_german:n { \tl_if_single:nTF {#1} { \exp_not:n {verlässt} } { \exp_not:n {verlassen} } }
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\kommt, \geht, \kommtgeht, \kommtstill, \gehtstill, \kommtgehtstill}
+%   \cmd\kommtgeht\arg{\cs a\cs b\cs c}\arg{\cs x\cs y\cs z} lässt die Personen |a|, |b| und |c| kommen und |x|, |y|, |z| gehen.
+%   und produziert einen Einschub im Input-Stream.
+%   \cmd{\kommt} und \cmd{\geht} lassen einfach eins der beiden Argumente leer.
+%   Die Varianten mit |still| am Ende produzieren keinen Text.
+%    \begin{macrocode}
+	\NewDocumentCommand \kommt { m } {
+		\peopleenter {#1}
+		\einschub { \peopleentertext {#1} }
+	}
+	\NewDocumentCommand \geht { m } {
+		\peopleleave {#1}
+		\einschub { \peopleleavetext {#1} }
+	}
+	\NewDocumentCommand \kommtgeht { m m } {
+		\peoplemove {#1} {#2}
+		\einschub { \peoplemovetext {#1} {#2} }
+	}
+	\cs_set_eq:NN \kommtstill     \peopleenter
+	\cs_set_eq:NN \gehtstill      \peopleleave
+	\cs_set_eq:NN \kommtgehtstill \peoplemove
+%    \end{macrocode}
+% \end{macro}
 % \subsection{Abstimmungen}
 % \begin{macro}{\prot_voting:n, \prot_simple_voting:n}
 %   Nimmt eine tokenlist als Argument und lässt ein Ergebnis im Input Stream.
@@ -582,10 +630,10 @@
 %   Enthält die tokenlist einen Stern und sonst nur Zahlen, so ersetze den Stern so durch eine Zahl, dass die Summe wie im vorigen Satz passt.
 %   In allen anderen Fällen gibt es einen Fehler.
 %    \begin{macrocode}
-	\NewDocumentCommand\erg { m m m } { \prot_voting:n { {#1} {#2} {#3} } }
-	\NewDocumentCommand\Erg { m m m } { \prot_simple_voting:n { {#1} {#2} {#3} } }
-	\NewDocumentCommand\ergwahl { m m } { \prot_voting:n { {#1} {#2} } }
-	\NewDocumentCommand\Ergwahl { m m } { \prot_simple_voting:n { {#1} {#2} } }
+	\NewDocumentCommand \erg { m m m } { \prot_voting:n { {#1} {#2} {#3} } }
+	\NewDocumentCommand \Erg { m m m } { \prot_simple_voting:n { {#1} {#2} {#3} } }
+	\NewDocumentCommand \ergwahl { m m } { \prot_voting:n { {#1} {#2} } }
+	\NewDocumentCommand \Ergwahl { m m } { \prot_simple_voting:n { {#1} {#2} } }
 	\int_new:N \l@@_votes_int
 	\int_new:N \l@@_votes_stars_int
 	\seq_new:N \l@@_result_seq
@@ -617,25 +665,172 @@
 			{ \msg_error:nnn { prot } { voting / super-stars } {#1} }
 	}
 	\cs_new_nopar:Nn \@@_simple_seq_voting:N { ( \seq_use:Nn #1 \c_prot_vote_sep_tl ) }
-	\cs_new_nopar:Nn \prot_simple_voting:n { ( \@@_tl_use:nn {#1} \c_prot_vote_sep_tl ) }
+	\cs_new_nopar:Nn \prot_simple_voting:n { ( \prot_tl_use:nn {#1} \c_prot_vote_sep_tl ) }
 %    \end{macrocode}
 % \end{macro}
-% \subsection{Zusätzliche Kernel-Funktionen}
+% \section{Code für weitere Gimmicks}
+% \subsection{Weitere Pakete}
+%   TODO: nur optional laden
 %    \begin{macrocode}
-	\cs_new:Nn \@@_tl_use:nn {
+	\RequirePackage{tabularx}
+	\RequirePackage[ngerman]{isodate}
+	\RequirePackage{siunitx}
+	\RequirePackage{hyperref}
+%    \end{macrocode}
+% \subsection{PDF-Metadaten}
+%   Die Makros werden in \cmd\hypersetup\ expandiert, daher erst verzögert, nach Einlesen der Personentabelle.
+%   TODO: Der \cmd\printdate-Befehl aus isodate ist nicht expandierbar, daher hier erst mal kein Datum.
+%    \begin{macrocode}
+	\AtBeginDocument {
+		\numdate
+		\hypersetup {
+			, pdftitle = \@title :\sitzungste Sitzung~am~ \l_prot_meeting_datum_tl
+			, pdfsubject = \Vorlaeufiges Sitzungsprotokoll
+			, pdfauthor = \protokollfuehrung
+		}
+		\origdate
+	}
+%    \end{macrocode}
+% \subsection{Abschnitte als Tagesordnungspunkte}
+% \begin{macro}{\section, \subsection, \subsubsection, \autoref}
+%   TODO: Option nutzen.
+%   Schreibe „TOP“ vor jeden TOP.
+%   Der erste Teil nimmt KOMA-Script an und der zweite Teil nimmt hyperref an.
+%    \begin{macrocode}
+	\cs_new_protected_nopar:Nn \prot_option_top: {
+		\renewcommand*\sectionformat{TOP~\thesection\enskip}
+		\renewcommand*\subsectionformat{TOP~\thesection\enskip}
+		\renewcommand*\subsubsectionformat{TOP~\thesection\enskip}
+		\renewcommand*\sectionautorefname{TOP}
+		\renewcommand*\subsectionautorefname{TOP}
+		\renewcommand*\subsubsectionautorefname{TOP}
+	}
+%    \end{macrocode}
+% \end{macro}
+% \subsection{Vorläufige Protokolle}
+% \begin{macro}{\linenumbers, \todo, \change, \del}
+%    \begin{macrocode}
+	\cs_if_exist:NTF \l_prot_meeting_version_tl {
+		%% vorläufig
+		\RequirePackage{xcolor} % Farbe
+		\RequirePackage{lineno} % Zeilennummern
+		\RequirePackage{soulutf8} % Durchstreichungen -- nicht so prima Paket
+
+		\NewDocumentCommand \todo { m } {
+			\PackageWarning { prot } { TODO:~##1 }
+			\hl { TODO:~##1 }
+		}
+		\NewDocumentCommand \change { m } { \textcolor{red} ##1 }
+		\NewDocumentCommand \del { m } { \textcolor{red} \st{##1} }
+
+		% line numbers
+		% enable line numbers
+		\definecolor { gray }  { gray }  { 0.5 }
+		\renewcommand\linenumberfont { \normalfont \tiny \sffamily \textcolor { gray } }
+		% disable line numbers at appendix
+		\cs_set_eq:NN \@@_versioning_appendix \appendix
+		\cs_set:Npn \appendix { \nolinenumbers \@@_versioning_appendix }
+	} {
+		%% fertig
+		\NewDocumentCommand \todo { m } {
+			\PackageError { prot } { TODO:~##1 } { Du~hast~offenbar~noch~irgendetwas~zu~tun. }
+		}
+		\NewDocumentCommand \change { m } { ##1 }
+		\NewDocumentCommand \del { m } { }
+	}
+%    \end{macrocode}
+% \end{macro}
+% \subsection{Textbausteine}
+% \begin{macro}{\einschub, \pause, \Pause}
+%   Einschübe sind bestimmt praktisch.
+%    \begin{macrocode}
+	\NewDocumentCommand \einschub { o o m } {
+		\begin{quotation} \noindent
+			\IfValueT {#1} { #1 \IfValueT {#2} { ~--~ #2 } ~Uhr:~ } #3
+		\end{quotation}
+	}
+	\NewDocumentCommand \pause { m m } { \einschub [#1] [#2] { Sitzungspause } }
+	\def \Pause #1#2#3#4-#5#6#7#8 { \einschub [ #1#2:#3#4 ] [ #5#6:#7#8 ] { Sitzungspause } }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\NewCommandWithReplacement, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
+%   TODO: Dokumentation, Tests
+%    \begin{macrocode}
+	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
+	\NewDocumentCommand \NewTextMacroWithReplacement { m +m +m } { \NewDocumentCommand #1 { } { \RenewDocumentCommand #1 { } { #3 \xspace } #2 \xspace } }
+	\NewDocumentCommand \NewTextMacroWithOneshot { m +m +m } { \NewTextMacroWithReplacement {#1} { #2 #3 } {#2} }
+	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithOneshot {#1} {#2} { \footnote {#3} } }
+	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewTextMacroWithOneshot {#1} {#2} { ~( #3 ) } }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\eur, \datum, \quot}
+%    \begin{macrocode}
+	\DeclareSIUnit { \eur } { \text { € } }
+	\NewDocumentCommand \eur { m } { \qty {#1} \eur }
+	\NewDocumentCommand \quot { m } { „#1“ }
+	% vier seltsam benannte Datumsbefehle, ich empfehle ja einen der ersten beiden
+	\def \datum #1#2#3#4#5#6 { \group_begin: \origdate \printyearon \printdate { #1#2 . #3#4 . 20#5#6 } \group_end: }
+	\def \dtm #1#2#3#4 { \group_begin: \origdate \printyearoff \printdate { #1#2 . #3#4 . 0 } \group_end: }
+	\def \dat #1#2#3#4#5#6 { \group_begin: \numdate \printyearon \printdate { #1#2 . #3#4 . 20#5#6 } \group_end: }
+	\def \dt #1#2#3#4 { \group_begin: \numdate \printyearoff \printdate { #1#2 . #3#4 . 0 } \group_end: }
+%    \end{macrocode}
+% \end{macro}
+% \subsubsection{Signatur}
+% \begin{macro}{signatur, \ProtokollSignatur, \MakeProtokollSignatur}
+%   Setze Signatur am Ende des Dokuments bzw. vor Anhang.
+%    \begin{macrocode}
+	\NewDocumentEnvironment { signatur } { o m b } {
+		\begin {figure} [b]
+			\IfNoValueTF {#1} { Kaiserslautern,~ \unterschriftsdatum } {#1}
+			\vspace {2em} \par
+			\begin {tabularx} {\linewidth} { @{} #2 @{} }
+				#3
+			\end {tabularx}
+		\end {figure}
+	} {
+	}
+	\NewDocumentCommand \ProtokollSignatur { o } {
+		\begin {signatur} [#1] { X X }
+			\protokollfuehrung & \sitzungsfuehrung \\
+			Protokoll          & Sitzungsleitung
+		\end {signatur}
+	}
+	\NewCommandWithReplacement \MakeProtokollSignatur { \ProtokollSignatur } { }
+	\cs_new_protected_nopar:Nn \prot_option_autosignatur: { \AtEndDocument { \MakeProtokollSignatur } }
+%    \end{macrocode}
+% \end{macro}
+% \section{Zusätzliche Kernel-Funktionen}
+% Ein paar Funktionen und Varianten ohne Bezug zu Protokollen.
+% \begin{macro}{\prot_tl_from_seq:N}
+%    \begin{macrocode}
+	\cs_new:Nn \@@_exp_not_braced:n { \exp_not:n { {#1} } }
+	\cs_new:Nn \prot_tl_from_seq:N { \seq_map_function:NN #1 \@@_exp_not_braced:n }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\prot_tl_if_alphabetic:nTF}
+%    \begin{macrocode}
+	\regex_const:Nn \c@@_alph_regex { \A[A-Za-z]*\Z }
+	\cs_new_nopar:Npn \prot_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\prot_provide:Ncn, \prot_provide:Nc}
+%    \begin{macrocode}
+	\cs_new_protected:Npn \prot_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
+	\cs_new_protected:Npn \prot_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\@, \nicehyphen}
+%    \begin{macrocode}
+	\cs_set_eq:NN \@@_@ \@
+	\cs_set:Npn \@ { \texorpdfstring { \@@_@ } { } }
+	\cs_new:Npn \nicehyphen { \texorpdfstring { \penalty\@M-\hskip\z@skip } { - } }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\prot_tl_use:nn, \prot_tl_use:nnnn, \prot_tl_use_german:n}
+%    \begin{macrocode}
+	\cs_new:Nn \prot_tl_use:nn {
 		\tl_head:n {#1} \exp_args:Ne \tl_map_tokens:nn { \tl_tail:n {#1} } { \use:nn {#2} }
 	}
-	\cs_new:Nn \@@_seq_to_tl:N { \seq_map_function:NN #1 \@@_exp_not_braced:n }
-	\cs_new:Nn \@@_exp_not_braced:n { \exp_not:n { {#1} } }
-	\regex_const:Nn \c@@_alph_regex { \A[A-Za-z]*\Z }
-	\cs_new_nopar:Npn \@@_tl_if_alphabetic:nTF { \regex_match:NnTF \c@@_alph_regex }
-	\cs_new_protected:Npn \@@_provide:Ncn #1#2#3 { \cs_if_exist:cF {#2} { #1 {#2} {#3} } }
-	\cs_new_protected:Npn \@@_provide:Nc #1#2 { \cs_if_exist:cF {#2} { #1 {#2} } }
-	\cs_new:Nn \@@_args_ii_ii:Nn { #1 {#2} {#2} }
-	%\cs_new_protected:Npn \@@_tl_use:nnnn #1 {
-		%\seq_set_split:Nnn \l_tmpa_seq {} {#1}
-		%\seq_use:Nnnn \l_tmpa_seq
-	%}
 	\scan_new:N \s@@_tl_mark
 	\scan_new:N \s@@_tl_stop
 	\cs_new:Npn \@@_use_none_delimit_by_s_tl_stop:w #1 \s@@_tl_stop { }
@@ -659,16 +854,17 @@
 	}
 	\cs_new:Npn \@@_tl_use_finalone:nwnnn #1#2 \s@@_tl_mark #3 #4 #5 { \exp_not:n {#1} }
 	\cs_new_nopar:Nn \prot_tl_use_german:n { \prot_tl_use:nnnn {#1} { ~und~ } { ,~ } { ~und~ } }
+%    \end{macrocode}
+% \end{macro}
+% Varianten von \LaTeX3-Kernel-Funktionen \cmd\cs_generate_variant:Nn.
+%    \begin{macrocode}
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_generate_variant:Nn \tl_const:Nn { cv }
 	\cs_generate_variant:Nn \seq_set_map:NNn { Nc }
 	\cs_generate_variant:Nn \seq_set_map_x:NNn { Nc }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
-	\cs_set_eq:NN \@@_@ \@
-	\cs_set:Npn \@ { \texorpdfstring { \@@_@ } { } }
-	\cs_new:Npn \nicehyphen { \penalty\@M-\hskip\z@skip }
 %    \end{macrocode}
-% \subsection{Fehlermeldungen}
+% \section{Fehlermeldungen}
 %    \begin{macrocode}
 	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthaelt~#2~statt~6~Spalten. } { In~jeder~Spalte~muessen~genau~5~\&-Zeichen~stehen. }
 	\msg_new:nnnn { prot } { person / no-leader } { Es~gibt~keine~Sitzungsleitung. } { In~der~Personentabelle~muss~eine~Sitzungsleitung~eingetragen~werden. }
@@ -684,10 +880,9 @@
 	\msg_new:nnnn { prot } { voting / wrong-count } { Von~#3~anwesenden~Stimmberechtigten~haben~#1=#2~abgestimmt. } { Falls~das~so~richtig~ist,~nutze~die~\exp_not:N\Erg-Funktion. }
 	\msg_new:nnnn { prot } { voting / super-stars } { Das~Abstimmungsergebnis~'#1'~enthaelt~zu~viele~Sterne. } { Es~kann~nur~einen~*S*t*a*r*~geben. }
 %    \end{macrocode}
-% \subsection{Integration Tests}
-% \subsection{And the end}
+% \section{And the end}
 %    \begin{macrocode}
-	\ProcessKeysOptions { prot / options }
+	\UseOneTimeHook { AtEndProtClass }
 %</package>
 %    \end{macrocode}
 %

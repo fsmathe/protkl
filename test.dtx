@@ -27,26 +27,23 @@
 \TEST {\sitzungsdaten} {
 %<*test>
 	\sitzungsdaten {
-		, titel = Fachschaftssitzung
 		, datum = 2022-01-31
-		, startzeit = 12:34
-		, endzeit = 23:45
+		, start = 12:34
+		, ende = 23:45
 		, forlaeufig
 	}
 	\TYPE {
-		titel = \l_prot_meeting_titel_tl \NEWLINE
 		datum = \l_prot_meeting_datum_tl \NEWLINE
-		startzeit = \l_prot_meeting_start_tl \NEWLINE
-		endzeit = \l_prot_meeting_end_tl \NEWLINE
+		start = \l_prot_meeting_start_tl \NEWLINE
+		ende = \l_prot_meeting_ende_tl \NEWLINE
 		version = \l_prot_meeting_version_tl \NEWLINE
 	}
 %</test>
 %<*expect>
 	\TYPE {
-		titel = Fachschaftssitzung \NEWLINE
 		datum = 2022-01-31 \NEWLINE
-		startzeit = 12:34 \NEWLINE
-		endzeit = 23:45 \NEWLINE
+		start = 12:34 \NEWLINE
+		ende = 23:45 \NEWLINE
 		version = 0 \NEWLINE
 	}
 %</expect>

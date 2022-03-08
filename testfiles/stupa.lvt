@@ -1,12 +1,21 @@
 \documentclass{scrartcl}
-\usepackage[
-	, style = stupa
-]{prot}
 \usepackage[ngerman]{babel}
-\title{StuPa-Protokoll}
-\author{Markus}
 \usepackage{hyperref}
 \usepackage{pdfpages}
+
+\usepackage[
+	, style = stupa
+	, legislatur = 52
+	, sitzung = 1
+	, version = 0
+	, datum = 2022-03-03
+	, start = 18:00
+	, ende = 00:00
+]{prot}
+
+\subject{\Vorlaeufiges Protokoll}
+\title{\legislaturste Studierendenparlament}
+\subtitle{\sitzungste Sitzung}
 
 \begin{persontable}
 \\     & Albert    & Augsburg       &    & stupa    & d
@@ -51,13 +60,15 @@
 \newcommand{\nix}{Es gibt nichts zu berichten.}
 \newcommand{\niemand}{Es ist niemand anwesend.}
 
-\usepackage{twemojis}
-\newcommand\paperclip{\twemoji{paperclip}}
-\newcommand\smiley{\twemoji{smiley}}
+%\usepackage{twemojis}
+%\newcommand\paperclip{\twemoji{paperclip}}
+%\newcommand\smiley{\twemoji{smiley}}
 %\usepackage{fontspec}
 %\newfontfamily\emojifont{TwemojiMozilla.ttf}
 %\newfontfamily\emojifont{NotoColorEmoji.ttf}
 %\newcommand\paperclip{{\emojifont\char"1F4CE}}
+% Zu Testzwecken reichts:
+\newcommand\paperclip{P}
 \providecommand\linenumbers{}
 
 \newcommand\unterlagen[1]{\marginline{\hyperlink{app.#1}{\paperclip\ #1}}}
@@ -81,37 +92,6 @@
 
 %\hyphenation{Pa-ral-lel-ver-an-stal-tun-g-en aus-zu-tau-schen White-board White-boards White-board-mar-ker White-board-mar-kern}
 \hyphenation{Stu-die-ren-den-par-la-ment}
-
-\NewDocumentCommand \change { m } {#1}
-
-\def\dtm#1#2#3#4 {#1#2.\,#3#4.\@}
-\def\dat#1#2#3#4 {#1#2.~Monat}
-\newcommand\datum[6]{#1#2.~Monat 2021}
-\newcommand\eur[1]{#1~€}
-\newcommand\fs{Fachschaft}
-
-\NewDocumentCommand\einschub { o o m } {\smallskip\par\noindent
-	\emph{\IfValueT{#1}{#1\IfValueT{#2}{ -- #2}~Uhr: }#3}%
-	\smallskip\par}
-\def\Pause#1#2#3#4-#5#6#7#8{\einschub[#1#2:#3#4][#5#6:#7#8]{Sitzungspause}}
-
-%%% Personen kommen und gehen
-% wrappers around \peoplemove, ..., \peoplemovetext, ...
-\newcommand\kommt[1]{
-	\peopleenter{#1}
-	\Einschub{\peopleentertext{#1}}
-}
-\newcommand\geht[1]{
-	\peopleleave{#1}
-	\Einschub{\peopleleavetext{#1}}
-}
-\newcommand\kommtgeht[2]{
-	\peoplemove{#1}{#2}
-	\Einschub{\peoplemovetext{#1}{#2}}
-}
-\let\kommtstill\peopleenter
-\let\gehtstill\peopleleave
-\let\kommtgehtstill\peoplemove
 
 
 
@@ -273,6 +253,8 @@ Es wundert nun niemanden mehr, dass die vorgeschlagenen Termine am \datum241221,
 
 \section{Verschiedenes}
 Vielen Dank euch allen, dass ihr so seid wie ihr seid und zu dieser wunderschönen Welt beitragt.
+
+Es regnet \eur{12345} vom Himmel.
 
 \appendix
 %\nolinenumbers
