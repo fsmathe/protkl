@@ -1,10 +1,9 @@
-\documentclass{fsmaprot}
+\documentclass[forlaeufig]{fsmaprot}
 \sitzungsdaten {
     , datum = 17.02.2022
     , start = 18:09
     , ende = 18:52
     , typ = fsr % one of fsr, vv, konsti, semikonsti
-    , version = forlaeufig % one of final, vorlauefig, forlauefig
 }
 
 \begin{persontable}
@@ -44,7 +43,7 @@
 
 \begin{document}%
 
-\Katharina eröffnet die Sitzung um \sStart.
+\Katharina eröffnet die \change{Sitzung} um \sStart.
 
 Die Tagesordnung lautet:
 
@@ -75,6 +74,10 @@ Es berichten %\fbr, \stupa und andere.
 \peopleleavetext { \Marie \Jakob \Zacharias }
 
 \peopleentertext { \Marie \Jakob \Zacharias }
+
+\subsection{Mehr Spaß}
+
+\subsubsection{Und jetzt -- die Abstimmung}
 
 Der Antrag \ref{app:la} wird mit \erg*00 angenommen.
 

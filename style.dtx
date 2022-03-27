@@ -11,7 +11,7 @@
 	}
 
 	\keys_define:nn { prot / attendance_list } { f .choice: }
-	\AddToHook { AtEndProtClass } [ fsma ] {
+	\AddToHook { package / prot / after } {
 		\prot_add_attendance_section:n { f / x }
 		\prot_add_attendance_section:n { f / e }
 		\prot_add_attendance_section:n { f / u }
@@ -50,7 +50,7 @@
 		, refvor .meta:n = { votergroup = refvor }
 	}
 
-	\AddToHook { AtEndProtClass } [ stupa ] {
+	\AddToHook { package / prot / after } {
 		\prot_add_attendance_section:n { stupa }
 		\prot_add_x_attendance_section:n { fs }
 		\prot_add_x_attendance_section:n { asta }

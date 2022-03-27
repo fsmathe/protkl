@@ -1,6 +1,5 @@
 \documentclass{scrartcl}
 \usepackage[ngerman]{babel}
-\usepackage{hyperref}
 \usepackage{pdfpages}
 
 \usepackage[
@@ -15,7 +14,7 @@
 
 \subject{\Vorlaeufiges Protokoll}
 \title{\legislaturste Studierendenparlament}
-\subtitle{\sitzungste Sitzung}
+\subtitle{\sitzungsteSitzung}
 
 \begin{persontable}
 \\     & Albert    & Augsburg       &    & stupa    & d
@@ -102,10 +101,13 @@
 \maketitle
 \tableofcontents
 
+\linenumbers
+
 \medskip
 \einschub{\unterlagen{1}In der Randspalte des Protokolls finden sich Verweise auf die entsprechenden Seiten der Sitzungsunterlagen.}
-\einschub{In diesem Protokoll ist das Verlassen und Betreten der Sitzung nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
-\einschub{Die Sitzung findet hybrid in Hörsaal 46-210 und über BigBlueButton statt. Abstimmungen und Wahlen erfolgen für Mitglieder des \stupa, die nicht vor Ort aber in BigBlueButton anwesend sind, per BigBlueButton-Chat.}
+\einschub{Das Verlassen und Betreten der Sitzung wird nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
+\abstimmungsformateinschub
+\einschub{Die Sitzung findet hybrid in Hörsaal 46-210 und über BigBlueButton statt. Abstimmungen und Wahlen erfolgen für Mitglieder des \stupa, die nicht vor Ort aber in BigBlueButton anwesend sind, per BigBlueButton"=Chat.}
 
 \clearpage
 \section*{Anwesenheitsliste}
@@ -213,7 +215,7 @@ Auf \Ida{s} Aufforderung geben alle, die im StuPa eine Stimme haben, deren Stimm
 
 \Ida weist darauf hin, dass die Abstimmung bei Enthaltungsmehrheit wiederholt werden müsste, was letztlich mit \erg5*3 aber nicht notwendig ist.
 
-\finanzantrag[3]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Corona.Gremien} angebracht.
+\finanzantrag[3]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Sonne.Gremien} angebracht.
 Der Antrag wird mit \erg*00 angenommen.
 
 \sectionsee[1]{Weihnachten}
@@ -238,7 +240,7 @@ Der TOP wird ohne Gegenrede vertagt.
 \paragraph{Vorsitz} \Eszett berichtet, dass das Hochschulgesetz nun unter einem wundervollen, alle Protokollschreibenden glücklich machenden, einmalig guten Ort im sogenannten Internet zu finden ist.\footnote{\url{https://www.landesrecht.rlp.de/bsrp/document/jlr-HSchulGRP2020rahmen}}
 \smallskip
 
-Außerdem erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
+Nach einem kleinen vertikalen Abstand erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
 
 
 \subsection{Fachschaften}
@@ -249,16 +251,21 @@ Außerdem erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
 Der wahre Grund, weshalb Sitzungen stattfinden ist doch immer noch, damit wir Protokollant:innen uns austoben können. Hier stehen wieder einmal die Früchte unserer Arbeit zur Abstimmung und werden mit einer überwältigenden Mehrheit von \erg{17}0* und \erg*0{-1} angenommen. Phänomenal!
 
 \sectionsee[4]{Sitzungstermine}
-Es wundert nun niemanden mehr, dass die vorgeschlagenen Termine am \datum241221, \datum311221, \datum010122 und \datum220222 werden einstimmig angenommen. Die einen wundern nach den vorherigen Abstimmungen einfach über nichts mehr und die anderen können sich nichts schöneres erträumen, als eine StuPa-Sitzung unterm Tannenbaum.
+Es wundert nun niemanden mehr, dass die vorgeschlagenen Termine am \datum241221, \datum311221, \datum010122 und \datum300222 einstimmig angenommen werden. Die einen wundern sich nach den vorherigen Abstimmungen einfach über nichts mehr und die anderen können sich nichts schöneres erträumen, als eine StuPa-Sitzung unterm Tannenbaum.
 
 \section{Verschiedenes}
 Vielen Dank euch allen, dass ihr so seid wie ihr seid und zu dieser wunderschönen Welt beitragt.
 
 Es regnet \eur{12345} vom Himmel.
 
-\appendix
-%\nolinenumbers
+\ProtokollSignatur
 
+\clearpage
+
+\appendix
+
+\section{Hallo}
+\subsection{Hi}
 %\includepdfsection[link, linkname=app]{Sitzungsunterlagen}{Sitzungsunterlagen}
 \end{document}
 % vi: tw=0

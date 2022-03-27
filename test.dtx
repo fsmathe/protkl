@@ -33,7 +33,9 @@
 		, forlaeufig
 	}
 	\TYPE {
-		datum = \l_prot_meeting_datum_tl \NEWLINE
+		jahr = \l_prot_meeting_year_tl \NEWLINE
+		monat = \l_prot_meeting_month_tl \NEWLINE
+		tag = \l_prot_meeting_day_tl \NEWLINE
 		start = \l_prot_meeting_start_tl \NEWLINE
 		ende = \l_prot_meeting_ende_tl \NEWLINE
 		version = \l_prot_meeting_version_tl \NEWLINE
@@ -41,7 +43,9 @@
 %</test>
 %<*expect>
 	\TYPE {
-		datum = 2022-01-31 \NEWLINE
+		jahr = 2022 \NEWLINE
+		monat = 1 \NEWLINE
+		tag = 31 \NEWLINE
 		start = 12:34 \NEWLINE
 		ende = 23:45 \NEWLINE
 		version = 0 \NEWLINE

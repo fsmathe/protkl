@@ -134,6 +134,32 @@
 	}
 %    \end{macrocode}
 % \end{macro}
+% \subsection{Parsen eines Datums}
+% \begin{macro}{\prot_parse_date:NNNn}
+%   \cmd\prot_parse_date:NNNn \marg{year_tl} \marg{month_tl} \marg{day_tl} \marg{date}.
+%   Parse Datum numerisch gegeben als |D.M.YYYY| oder |YYYY-M-D| und speichere in die angegebenen Token-Listen.
+%   Erlaubt Leerraum hier und da. Führende Nullen bei Tag und Monat sind optional.
+%    \begin{macrocode}
+	\regex_const:Nn \c@@_isodate_regex { \A\ * (\d{4}) \ *\-\ * 0*(\d{1,2}) \ *\-\ * 0*(\d{1,2}) \ *\Z }
+	\regex_const:Nn \c@@_classicdate_regex { \A\ * 0*(\d{1,2}) \.\ * 0*(\d{1,2}) \.\ * (\d{4}) \ *\Z }
+	\cs_new_protected_nopar:Nn \prot_parse_date:NNNn {
+		\regex_extract_once:NnNTF \c@@_isodate_regex {#4} \l_tmpa_seq {
+			\seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+			\seq_pop_left:NN \l_tmpa_seq #1
+			\seq_pop_left:NN \l_tmpa_seq #2
+			\seq_pop_left:NN \l_tmpa_seq #3
+		} {
+			\regex_extract_once:NnNTF \c@@_classicdate_regex {#4} \l_tmpa_seq {
+				\seq_pop_right:NN \l_tmpa_seq #1
+				\seq_pop_right:NN \l_tmpa_seq #2
+				\seq_pop_right:NN \l_tmpa_seq #3
+			} {
+				\msg_error:nnn { prot } { wrong-date-format } {#4}
+			}
+		}
+	}
+%    \end{macrocode}
+% \end{macro}
 % \subsection{Paketoptionen}
 % \begin{key}{prot/options}
 %   Datum, Uhrzeit etc.\@ können dem Paket (oder auch der Dokumentklasse) übergeben werden.
@@ -142,11 +168,10 @@
 %   Die |style|-Option lädt gremienspezifische Konfiguration nach.
 %   Beispieslweise mit |style=fsma|.
 %   Wird |style| mehrfach aufgerufen, so werden eben alle Konfigurationen in der angegebenen Reihenfolge geladen.
-%   Für Code, der erst später in dieser Klasse definierte Befehle nutzt, steht ein Haken\footnote{Referenz: \emph{source2e.pdf}, Abschnitt \emph{lthooks.dtx}} „AtEndProtClass“ zur Verfügung.
 %    \begin{macrocode}
 	\keys_define:nn { prot / options } {
 		, style .code:n = { \file_input:n { prot-#1.def } }
-		, datum .tl_set:N = \l_prot_meeting_datum_tl
+		, datum .code:n = { \prot_parse_date:NNNn \l_prot_meeting_year_tl \l_prot_meeting_month_tl \l_prot_meeting_day_tl {#1} }
 		, start .tl_set:N = \l_prot_meeting_start_tl
 		, ende .tl_set:N = \l_prot_meeting_ende_tl
 		, version .tl_set:N = \l_prot_meeting_version_tl
@@ -157,26 +182,37 @@
 		, titel .tl_set:N = \l_prot_meeting_titel_tl
 		, legislatur .tl_set:N = \l_prot_meeting_legislatur_tl
 		, sitzung .tl_set:N = \l_prot_meeting_sitzung_tl
-		, unterschriftsdatum .tl_set:N = \l_prot_meeting_unterschriftsdatum_tl
+		, unterschriftsdatum .code:n = { \prot_parse_date:NNNn \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {#1} }
+		% Optionen
+		, autosignatur .bool_set:N = \l_prot_option_autosignatur
 	}
 	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / options } }
 
-	\NewHook { AtEndProtClass }
+	\tl_new:N \l_prot_meeting_year_tl
+	\tl_new:N \l_prot_meeting_month_tl
+	\tl_new:N \l_prot_meeting_day_tl
+	\tl_new:N \l_prot_unterschrift_year_tl
+	\tl_new:N \l_prot_unterschrift_month_tl
+	\tl_new:N \l_prot_unterschrift_day_tl
+
 	\ProcessKeysOptions { prot / options }
 
-	\newcommand \sDatum { \printdate \l_prot_meeting_datum_tl }
+	\newcommand \sDatum { \DTMdisplaydate \l_prot_meeting_year_tl \l_prot_meeting_month_tl \l_prot_meeting_day_tl {-1} }
 	\newcommand \sStart { \l_prot_meeting_start_tl \prot_nbsp: Uhr \xspace }
 	\newcommand \sEnde { \l_prot_meeting_ende_tl \prot_nbsp: Uhr \xspace }
 	\newcommand \sVersion { \l_prot_meeting_version_tl \xspace }
-	\newcommand \Vorlaeufiges { \cs_if_exist:NT \l_prot_meeting_version_tl { \exp_not:n { Vorläufiges~ } } }
-	\newcommand \unterschriftsdatum { \cs_if_exist:NTF \l_prot_meeting_unterschriftsdatum_tl { \l_prot_meeting_unterschriftsdatum_tl } { \today } }
+	\newcommand \Vorlaeufiges { \tl_if_empty:NF \l_prot_meeting_version_tl { \exp_not:n { Vorläufiges~ } } }
+	\newcommand \unterschriftsdatum { \tl_if_empty:NTF \l_prot_unterschrift_day_tl
+			{ \today }
+			{ \DTMdisplaydate \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {-1} }
+	}
 	\newcommand \sTitel { \l_prot_meeting_titel_tl }
-	\newcommand \sitzungste { \cs_if_exist:NT \l_prot_meeting_sitzung_tl { \l_prot_meeting_sitzung_tl.~ } }
-	\newcommand \legislaturste { \cs_if_exist:NT \l_prot_meeting_legislatur_tl { \l_prot_meeting_legislatur_tl.~ } }
+	\newcommand \sitzungsteSitzung { \tl_if_empty:NF \l_prot_meeting_sitzung_tl { \l_prot_meeting_sitzung_tl.~Sitzung } }
+	\newcommand \legislaturste { \tl_if_empty:NF \l_prot_meeting_legislatur_tl { \l_prot_meeting_legislatur_tl.~ } }
 
 	\date { \sDatum
-		\\ \l_prot_meeting_start_tl \prot_nbsp: Uhr
-		~--~ \l_prot_meeting_ende_tl \prot_nbsp: Uhr
+		\\ \l_prot_meeting_start_tl \prot_nbsp: Uhr~
+		--~ \l_prot_meeting_ende_tl \prot_nbsp: Uhr
 		}
 	\author { \protokollfuehrung }
 %    \end{macrocode}
@@ -378,7 +414,6 @@
 %   \texttt{/prot/person/\meta{id}/group} die primäre Gruppe hinterlegt, wobei spätere Angaben vorherige überschreiben.
 %
 %   TODO: Implementiere mehrere Zeilen für eine Person.
-%   TODO: Momentan wird der attendance-Schlüssel gar nicht genutzt. specials ebenso.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \@@_parse_attendance:n {
 		\seq_new:c { g_\l@@_person_str/specials_seq }
@@ -504,36 +539,39 @@
 %   For tests see at the very end.
 % \end{macro}
 % \subsubsection{Kleinkram}
-% \begin{macro}{attendance/special, group/special, \sitzungsfuehrung, \protokollfuehrung}
-%   TODO: Dokumentation
-%   FixMe: \protokollfuehrung muss expandierbar sein, um in \cmd\hypersetup genutzt werden zu können.
+% \begin{key}{attendance/special, group/special}
+%   Durch den |special|-Schlüssel gesetzte Informationen werden mit \cmd\prot_specials:n ausgegeben, um beispielsweise in einer Anwesenheitsliste in Klammern aufzutauchen.
 %    \begin{macrocode}
 	\keys_define:nn { prot } {
 		, attendance/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
 		, group/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
 	}
-
+%    \end{macrocode}
+% \end{key}
+% \begin{macro}{\sitzungsfuehrung, \protokollfuehrung}
+%   Die Befehle \cmd\sitzungsfuehrung und \cmd\protokollfuehrung geben die entsprechenden Personen (ggf. kommasepariert) aus.
+%   Beachte, dass \cmd\protokollfuehrung expandierbar sein muss, um in \cmd\hypersetup genutzt werden zu können.
+%    \begin{macrocode}
 	\seq_new:N \g_prot_sitzungsfuehrung_seq
 	\seq_new:N \g_prot_protokollfuehrung_seq
 
-	\NewDocumentCommand \sitzungsfuehrung { } {
+	\NewExpandableDocumentCommand \sitzungsfuehrung { } {
 		\seq_if_empty:NTF \g_prot_sitzungsfuehrung_seq {
 			\msg_error:nn { prot } { person / no-leader }
 		} {
-			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_sitzungsfuehrung_seq { \prot_fullname:n {##1} }
-			\seq_use:Nn \l_tmpa_seq { ,~ }
+			\prot_tl_use:en { \seq_map_function:NN \g_prot_sitzungsfuehrung_seq \@@_fullname_aux:n } { ,~ }
 		}
 	}
-	\NewDocumentCommand \protokollfuehrung { } {
+	\NewExpandableDocumentCommand \protokollfuehrung { } {
 		\seq_if_empty:NTF \g_prot_protokollfuehrung_seq {
 			\msg_error:nn { prot } { person / no-record }
 		} {
-			\seq_set_map_x:NNn \l_tmpa_seq \g_prot_protokollfuehrung_seq { \prot_fullname:n {##1} }
-			\seq_use:Nn \l_tmpa_seq { ,~ }
+			\prot_tl_use:en { \seq_map_function:NN \g_prot_protokollfuehrung_seq \@@_fullname_aux:n } { ,~ }
 		}
 	}
+	\cs_new_nopar:Nn \@@_fullname_aux:n { { \prot_fullname:n {#1} } }
 %    \end{macrocode}
-%   TODO: Some tests:
+%   TODO: Some tests.
 % \end{macro}
 % \subsection{Personenbewegungen}
 % \begin{macro}{\prot_move:Nn, \@@_initialize_move:}
@@ -632,12 +670,12 @@
 %    \begin{macrocode}
 	\NewDocumentCommand \erg { m m m } { \prot_voting:n { {#1} {#2} {#3} } }
 	\NewDocumentCommand \Erg { m m m } { \prot_simple_voting:n { {#1} {#2} {#3} } }
-	\NewDocumentCommand \ergwahl { m m } { \prot_voting:n { {#1} {#2} } }
-	\NewDocumentCommand \Ergwahl { m m } { \prot_simple_voting:n { {#1} {#2} } }
+	\NewDocumentCommand \janein { m m } { \prot_voting:n { {#1} {#2} } }
+	\NewDocumentCommand \Janein { m m } { \prot_simple_voting:n { {#1} {#2} } }
 	\int_new:N \l@@_votes_int
 	\int_new:N \l@@_votes_stars_int
 	\seq_new:N \l@@_result_seq
-	\tl_const:Nn \c_prot_vote_sep_tl { \exp_not:N\, / \exp_not:N\, }
+	\tl_const:Nn \c_prot_vote_sep_tl { \exp_not:n { \, / \, } }
 	\cs_new_protected_nopar:Nn \prot_voting:n {
 		\int_zero:N \l@@_votes_int
 		\int_zero:N \l@@_votes_stars_int
@@ -673,70 +711,111 @@
 %   TODO: nur optional laden
 %    \begin{macrocode}
 	\RequirePackage{tabularx}
-	\RequirePackage[ngerman]{isodate}
+	\RequirePackage[useregional]{datetime2}
 	\RequirePackage{siunitx}
 	\RequirePackage{hyperref}
 %    \end{macrocode}
 % \subsection{PDF-Metadaten}
 %   Die Makros werden in \cmd\hypersetup\ expandiert, daher erst verzögert, nach Einlesen der Personentabelle.
-%   TODO: Der \cmd\printdate-Befehl aus isodate ist nicht expandierbar, daher hier erst mal kein Datum.
 %    \begin{macrocode}
 	\AtBeginDocument {
-		\numdate
 		\hypersetup {
-			, pdftitle = \@title :\sitzungste Sitzung~am~ \l_prot_meeting_datum_tl
+			, pdftitle = \@title \tl_if_empty:NF \l_prot_meeting_sitzung_tl { :~ \l_prot_meeting_sitzung_tl.~Sitzung } ~am~ \sDatum
 			, pdfsubject = \Vorlaeufiges Sitzungsprotokoll
 			, pdfauthor = \protokollfuehrung
 		}
-		\origdate
 	}
 %    \end{macrocode}
 % \subsection{Abschnitte als Tagesordnungspunkte}
 % \begin{macro}{\section, \subsection, \subsubsection, \autoref}
-%   TODO: Option nutzen.
 %   Schreibe „TOP“ vor jeden TOP.
 %   Der erste Teil nimmt KOMA-Script an und der zweite Teil nimmt hyperref an.
+%   Autoref schreibt heuristisch „Anhang“, wenn der Referenznamen „app:“ enthält.
+%   Vielleicht ginge dies besser.
 %    \begin{macrocode}
-	\cs_new_protected_nopar:Nn \prot_option_top: {
-		\renewcommand*\sectionformat{TOP~\thesection\enskip}
-		\renewcommand*\subsectionformat{TOP~\thesection\enskip}
-		\renewcommand*\subsubsectionformat{TOP~\thesection\enskip}
-		\renewcommand*\sectionautorefname{TOP}
-		\renewcommand*\subsectionautorefname{TOP}
-		\renewcommand*\subsubsectionautorefname{TOP}
+	\AddToHook { cmd / @seccntformat / before } { TOP~ }
+	\AddToHook { cmd / appendix / after } {
+		\RemoveFromHook { cmd / @seccntformat / before } [prot]
+	}
+	\AddToHook { begindocument } {
+		\cs_set_nopar:Npn \sectionautorefname { TOP }
+		\cs_set_nopar:Npn \subsectionautorefname { TOP }
+		\cs_set_nopar:Npn \subsubsectionautorefname { TOP }
+	}
+	\cs_set_eq:NN \@@_autoref:n \autoref
+	\cs_set:Npn \autoref #1 {
+		\str_if_in:nnTF {#1} { app: }
+			{ \hyperref [#1] { Anhang~\ref*{#1} } }
+			{ \@@_autoref:n {#1} }
+	}
+%    \end{macrocode}
+% \end{macro}
+% \subsection{Inhaltsverzeichnis}
+% \begin{macro}{\tableofcontents}
+%   Trenne Inhaltsverzeichnis in Tagesordnung und Anhang.
+%   Da typischerweise eher wenige Unter-TOPs auftauchen, verzichte lieber auf
+%   die gepunktete Linie zwischen Namen und Seitenzahl.
+%   Trickse mit Punkten nach Gliederungsnummer/-buchstabe herum, vermutlich
+%   könnte man auch einfach immer einen Punkt setzen. Wenn jedoch in manchen
+%   Protokollen (mit Anhängen) ein Punkt nach „TOP x“ erscheint und in anderen
+%   nicht, wirkt dies inkonsistent.
+%    \begin{macrocode}
+	\AddToHook { begindocument } { \cs_set_nopar:Npn \contentsname { Tagesordnung } }
+	\DeclareTOCStyleEntries [ linefill = \hfill ] { tocline } { section , subsection , subsubsection }
+	\KOMAoptions { numbers = noenddot }
+	\AddToHook { cmd / appendix / after } {
+		\cs_set_eq:NN \appendixtoc \scan_stop:
+		\addtocontents { toc } { \appendixtoc }
+		\cs_set_nopar:Npn \autodot { . }
+	}
+	\cs_new:Npn \appendixtoc {
+		\tocbasic@listhead { Anhang }
+		\cs_set_nopar:Npn \autodot { . }
+	}
+	\AddToHook { cmd / tableofcontents / after } {
+		\cs_set_eq:NN \autodot \prg_do_nothing:
+	}
+%    \end{macrocode}
+%   Unterdrücke Fußnoten im Inhaltsverzeichnis, wenn sie in Überschriften
+%   auftauchen sollten. Ob in Überschriften überhaupt Fußnoten stehen sollen,
+%   ist natürlich eine andere Frage.
+%    \begin{macrocode}
+	\AddToHook { cmd / tableofcontents / before } {
+		\cs_set_eq:NN \@@_footnote:n \footnote
+		\cs_set_eq:NN \footnote \use_none:n
+	}
+	\AddToHook { cmd / tableofcontents / after } {
+		\cs_set_eq:NN \footnote \@@_footnote:n
 	}
 %    \end{macrocode}
 % \end{macro}
 % \subsection{Vorläufige Protokolle}
 % \begin{macro}{\linenumbers, \todo, \change, \del}
 %    \begin{macrocode}
-	\cs_if_exist:NTF \l_prot_meeting_version_tl {
+	\tl_if_empty:NTF \l_prot_meeting_version_tl {
+		%% fertig
+		\NewDocumentCommand \todo { m } {
+			\PackageError { prot } { TODO:~#1 } { Du~hast~offenbar~noch~irgendetwas~zu~tun. }
+		}
+		\NewDocumentCommand \change { m } { #1 }
+		\NewDocumentCommand \del { m } { }
+		\providecommand \linenumbers { }
+		\providecommand \nolinenumbers { }
+	} {
 		%% vorläufig
-		\RequirePackage{xcolor} % Farbe
-		\RequirePackage{lineno} % Zeilennummern
+		\RequirePackage{xcolor}
 		\RequirePackage{soulutf8} % Durchstreichungen -- nicht so prima Paket
 
 		\NewDocumentCommand \todo { m } {
-			\PackageWarning { prot } { TODO:~##1 }
-			\hl { TODO:~##1 }
+			\PackageWarning { prot } { TODO:~#1 }
+			\hl { TODO:~#1 }
 		}
-		\NewDocumentCommand \change { m } { \textcolor{red} ##1 }
-		\NewDocumentCommand \del { m } { \textcolor{red} \st{##1} }
+		\NewDocumentCommand \change { } { \textcolor {red} }
+		\NewDocumentCommand \del { m } { \textcolor {red} { \st {#1} } }
 
-		% line numbers
-		% enable line numbers
+		\RequirePackage{lineno}
 		\definecolor { gray }  { gray }  { 0.5 }
-		\renewcommand\linenumberfont { \normalfont \tiny \sffamily \textcolor { gray } }
-		% disable line numbers at appendix
-		\cs_set_eq:NN \@@_versioning_appendix \appendix
-		\cs_set:Npn \appendix { \nolinenumbers \@@_versioning_appendix }
-	} {
-		%% fertig
-		\NewDocumentCommand \todo { m } {
-			\PackageError { prot } { TODO:~##1 } { Du~hast~offenbar~noch~irgendetwas~zu~tun. }
-		}
-		\NewDocumentCommand \change { m } { ##1 }
-		\NewDocumentCommand \del { m } { }
+		\renewcommand \linenumberfont { \normalfont \tiny \sffamily \textcolor { gray } }
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -751,6 +830,11 @@
 	}
 	\NewDocumentCommand \pause { m m } { \einschub [#1] [#2] { Sitzungspause } }
 	\def \Pause #1#2#3#4-#5#6#7#8 { \einschub [ #1#2:#3#4 ] [ #5#6:#7#8 ] { Sitzungspause } }
+	\NewDocumentCommand \abstimmungsformateinschub { } { \einschub {
+		Abstimmungsergebnisse~werden~als~
+		(ja \,/\hspace{.16667em} nein \,/\hspace{.16667em} Enthaltungen) ~
+		angegeben.
+	} }
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\NewCommandWithReplacement, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
@@ -769,10 +853,10 @@
 	\NewDocumentCommand \eur { m } { \qty {#1} \eur }
 	\NewDocumentCommand \quot { m } { „#1“ }
 	% vier seltsam benannte Datumsbefehle, ich empfehle ja einen der ersten beiden
-	\def \datum #1#2#3#4#5#6 { \group_begin: \origdate \printyearon \printdate { #1#2 . #3#4 . 20#5#6 } \group_end: }
-	\def \dtm #1#2#3#4 { \group_begin: \origdate \printyearoff \printdate { #1#2 . #3#4 . 0 } \group_end: }
-	\def \dat #1#2#3#4#5#6 { \group_begin: \numdate \printyearon \printdate { #1#2 . #3#4 . 20#5#6 } \group_end: }
-	\def \dt #1#2#3#4 { \group_begin: \numdate \printyearoff \printdate { #1#2 . #3#4 . 0 } \group_end: }
+	\def \datum #1#2#3#4#5#6 { \group_begin: \DTMsetstyle {german} \DTMdisplaydate { 20#5#6 } { #3#4 } { #1#2 } {-1} \group_end: }
+	\def \dtm #1#2#3#4 { \int_compare:nNnF #1=0 #1 #2 .~ \DTMgermanmonthname { #3#4 } }
+	\def \dat #1#2#3#4#5#6 { \group_begin: \DTMsetytyle { dmyyyy } \DTMsetup { datesep = .\, } \DTMdisplaydate { 20#5#6 } { #3#4 } { #1#2 } {-1} \group_end: }
+	\def \dt #1#2#3#4 { \int_compare:nNnF #1=0 #1 #2 .\, \int_compare:nNnF #3=0 #3 #4. }
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Signatur}
@@ -782,7 +866,7 @@
 	\NewDocumentEnvironment { signatur } { o m b } {
 		\begin {figure} [b]
 			\IfNoValueTF {#1} { Kaiserslautern,~ \unterschriftsdatum } {#1}
-			\vspace {2em} \par
+			\vspace { 12.5 mm } \par
 			\begin {tabularx} {\linewidth} { @{} #2 @{} }
 				#3
 			\end {tabularx}
@@ -796,7 +880,19 @@
 		\end {signatur}
 	}
 	\NewCommandWithReplacement \MakeProtokollSignatur { \ProtokollSignatur } { }
-	\cs_new_protected_nopar:Nn \prot_option_autosignatur: { \AtEndDocument { \MakeProtokollSignatur } }
+	\bool_if:NT \l_prot_option_autosignatur {
+		\AddToHook { cmd / appendix /before } { \MakeProtokollSignatur }
+		\AddToHook { enddocument } { \MakeProtokollSignatur }
+	}
+%    \end{macrocode}
+% \end{macro}
+% \subsubsection{Anhänge und Überschriften}
+% \begin{macro}{\appendix, \includepdf}
+%   Verweise auf Anhänge in Randspalte, ebenso die Anhänge selbst im Anhang nummerieren.
+%   Anhänge einbinden, runterskalieren und gegebenenfalls Titel drübersetzen oder Titel zu Inhaltsverzeichnis ergänzen.
+%   In Randspalte Buchstaben des Anhangs notieren.
+%    \begin{macrocode}
+% TODO fixme -- hier könnte deine Implementierung stehen ;)
 %    \end{macrocode}
 % \end{macro}
 % \section{Zusätzliche Kernel-Funktionen}
@@ -831,6 +927,7 @@
 	\cs_new:Nn \prot_tl_use:nn {
 		\tl_head:n {#1} \exp_args:Ne \tl_map_tokens:nn { \tl_tail:n {#1} } { \use:nn {#2} }
 	}
+	\cs_generate_variant:Nn \prot_tl_use:nn { e }
 	\scan_new:N \s@@_tl_mark
 	\scan_new:N \s@@_tl_stop
 	\cs_new:Npn \@@_use_none_delimit_by_s_tl_stop:w #1 \s@@_tl_stop { }
@@ -866,6 +963,7 @@
 %    \end{macrocode}
 % \section{Fehlermeldungen}
 %    \begin{macrocode}
+	\msg_new:nnnn { prot } { wrong-date-format } { Das~Eingabeformat~des~Datums~'#1'~ist~falsch. } { Unterstützte~Eingabeformate~sind~2022-01-31,~31.1.2022,~31.01.2022~sowie~2022-1-31. }
 	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthaelt~#2~statt~6~Spalten. } { In~jeder~Spalte~muessen~genau~5~\&-Zeichen~stehen. }
 	\msg_new:nnnn { prot } { person / no-leader } { Es~gibt~keine~Sitzungsleitung. } { In~der~Personentabelle~muss~eine~Sitzungsleitung~eingetragen~werden. }
 	\msg_new:nnnn { prot } { person / no-record } { Es~gibt~keine~Protokollfuehrung. } { In~der~Personentabelle~muss~eine~Protkollfuehrung~eingetragen~werden. }
@@ -882,7 +980,6 @@
 %    \end{macrocode}
 % \section{And the end}
 %    \begin{macrocode}
-	\UseOneTimeHook { AtEndProtClass }
 %</package>
 %    \end{macrocode}
 %
