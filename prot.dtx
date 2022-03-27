@@ -433,7 +433,14 @@
 % \end{macro}
 % \subsubsection{Einordnen in Anwesenheitsliste mittels Gruppe und Anwesenheit}
 % \begin{macro}{\@@_add_to_attendance_list:vv, \prot_add_attendance_section:n, \prot_add_x_attendance_section:n}
-%   TODO: Dokumentation
+%   Nach Parsen der Personendaten führt \cmd\prot_newperson:nnnnnn\ schließlich
+%   \cmd\@@_add_to_attendance_list:vv\marg{gruppe}\marg{anwesenheit} aus,
+%   beispielsweise |\@@_add_to_attendance_list:vv{g}{x}|.  Dies wiederum ruft
+%   Schlüssel definiert durch \cmd\prot_add_attendance_section:n\ und
+%   \cmd\prot_add_x_attendance_section:n\ auf.  Ersteres packt die Person zu
+%   der zur entsprechendne Gruppe gehörigen Sequenz (beispielsweise
+%   \cmd\g_prot_attendance_section_g_seq) hinzu und zweiteres nur, wenn die
+%   Anwesenheit |x| lautet.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
 		\keys_set:nn { prot / attendance_list } { #1 = #2 }
@@ -558,7 +565,6 @@
 	}
 	\cs_new_nopar:Nn \@@_fullname_aux:n { { \prot_fullname:n {#1} } }
 %    \end{macrocode}
-%   TODO: Some tests.
 % \end{macro}
 % \subsection{Personenbewegungen}
 % \begin{macro}{\prot_move:Nn, \@@_initialize_move:}
@@ -699,7 +705,6 @@
 	\bool_if:NF \l_prot_option_nogimmicks_bool {
 %    \end{macrocode}
 % \subsection{Weitere Pakete}
-%   TODO: nur optional laden
 %    \begin{macrocode}
 	\RequirePackage { tabularx }
 	\RequirePackage [ useregional ] { datetime2 }
@@ -833,7 +838,7 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\NewCommandWithReplacement, \NewOnetimeCommand, \DeclareDocumentCommand, \DeclareOnetimeCommand, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
-%   TODO: Dokumentation, Tests
+%   Ein paar Befehle, die sich beim ersten Aufruf selbst ersetzen.
 %    \begin{macrocode}
 	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
 	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }

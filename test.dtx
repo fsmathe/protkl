@@ -146,11 +146,13 @@
 \TEST { \@@_parse_attendance:n , \@@_set_attendance: } {
 %<*test>
 	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn {
+		\str_set:Nn \l@@_id_str {#1}
 		\str_set:Nn \l@@_person_str {prot_person_/#1}
 		\@@_parse_attendance:n {#2}
 		\TYPE { \l@@_attendance_str }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn {
+		\str_set:Nn \l@@_id_str {#1}
 		\str_set:Nn \l@@_person_str {prot_person_/#1}
 		\@@_parse_attendance:n {#2}
 		\@@_set_attendance:
@@ -176,6 +178,17 @@
 	\@@_test_attendance:nnnnn K { x, e } e { false } { e }
 	\@@_test_attendance:nnnnn L { e, x } x { true } { x }
 }
+\BEGINTEST { \protokollfuehrung , \sitzungsfuehrung }
+%<*test>
+	\cs_set:Nn \prot_fullname:n { FN ( #1 ) }
+	\TYPE { \protokollfuehrung }
+	\TYPE { \sitzungsfuehrung }
+%</test>
+%<*expect>
+	\TYPE { FN ( B ) ,~ FN ( H ) }
+	\TYPE { \msg_error:nn { prot } { person / no-leader } }
+%</expect>
+\ENDTEST
 
 \TEST { \@@_add_to_attendance_list:nn } {
 %<*test>
