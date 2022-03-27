@@ -1,6 +1,6 @@
 \documentclass{scrartcl}
 \usepackage[ngerman]{babel}
-\usepackage{pdfpages}
+\usepackage{microtype}
 
 \usepackage[
 	, style = stupa
@@ -51,51 +51,6 @@
 \\     & Ypsilon   & Ypsilon        &    & ypsilon  & x
 \\     & Zacharias & Zwickau        &    & g=Ende   & x
 \end{persontable}
-
-\newcommand{\LAK}{\renewcommand{\LAK}{LAK\xspace}LandesAStenKonferenz (LAK)\xspace}
-\newcommand\stupa{Studierendenparlament}
-\newcommand{\Vergabeausschuss}{\renewcommand{\Vergabeausschuss}{Vergabeausschuss\xspace}Vergabeausschuss\footnote{Ausschuss des Studierendenparlaments, der möglicherweise Menschen vergibt und für Liebe und Frieden betet. Vielleicht auch nicht. Tagt zum Schutze personenbezogener Daten nicht öffentlich.}\xspace}
-\newcommand{\agKLeVeR}{\renewcommand{\agKLeVeR}{AG~KLeVeR\xspace}AG~KLeVeR\footnote{Steht möglicherweise für Abkützungs-Gemeinschaft Kaiserslauterner Leben, Verplanung und Randbemerkungen und wird irgendwie besetzt.}\xspace}
-
-\newcommand{\nix}{Es gibt nichts zu berichten.}
-\newcommand{\niemand}{Es ist niemand anwesend.}
-
-%\usepackage{twemojis}
-%\newcommand\paperclip{\twemoji{paperclip}}
-%\newcommand\smiley{\twemoji{smiley}}
-%\usepackage{fontspec}
-%\newfontfamily\emojifont{TwemojiMozilla.ttf}
-%\newfontfamily\emojifont{NotoColorEmoji.ttf}
-%\newcommand\paperclip{{\emojifont\char"1F4CE}}
-% Zu Testzwecken reichts:
-\newcommand\paperclip{P}
-\providecommand\linenumbers{}
-
-\ExplSyntaxOn
-\newcommand \unterlagen [1] { \marginlink { app:ex | #1 } }
-%% Buggy: Wenn \unterlagen vor ##2 steht, interagiert die Verwendung von \...see
-%% am Seitenanfang komisch mit Fußnoten auf der Seite vornedran.
-%\cs_new:Nn \def_sectsee:n {
-%	\exp_args:Nc \NewDocumentCommand { #1see } { o m } {
-%		\IfNoValueTF {##1}
-%			{ \use:c {#1} {##2} }
-%			{ \use:c {#1} [##2] { ##2 \unterlagen {##1} } }
-%}}
-%\def_sectsee:n {section}
-%\def_sectsee:n {subsection}
-%\def_sectsee:n {paragraph}
-\NewDocumentCommand \finanzantrag { o m m } {
-	\IfNoValueTF {#1} { \paragraph } { \paragraph [#1] }
-	{ FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
-}
-\ExplSyntaxOff
-
-%\hyphenation{Pa-ral-lel-ver-an-stal-tun-g-en aus-zu-tau-schen White-board White-boards White-board-mar-ker White-board-mar-kern}
-\hyphenation{Stu-die-ren-den-par-la-ment}
-
-
-
-
 
 \begin{document}
 

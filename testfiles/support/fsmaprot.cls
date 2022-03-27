@@ -4,6 +4,7 @@
 \LoadClass { scrartcl }
 
 \RequirePackage [ ngerman ] { babel }
+\RequirePackage { microtype }
 \RequirePackage [
 	, style = fsma
 	, autosignatur

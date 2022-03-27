@@ -146,6 +146,22 @@
 	}
 %    \end{macrocode}
 % \end{macro}
+% \subsection{Befehle für Abkürzungen etc.}
+% \begin{macro}{\NewCommandWithReplacement, \NewOnetimeCommand, \DeclareDocumentCommand, \DeclareOnetimeCommand, \NewTextMacro, \NewTextMacroWithReplacement, \NewTextMacroWithParanthesis, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesisAndFootnote}
+%   Ein paar Befehle, die sich beim ersten Aufruf selbst ersetzen, sowie mit
+%   und ohne \cmd\xspace.
+%    \begin{macrocode}
+	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
+	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
+	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
+	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
+	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { #2 \xspace } }
+	\NewDocumentCommand \NewTextMacroWithReplacement { m m +m } { \newcommand #1 { \RenewDocumentCommand #1 { } { #3 \xspace } #2 \xspace } }
+	\NewDocumentCommand \NewTextMacroWithParanthesis { m m m } { \NewTextMacroWithReplacement {#1} { #3 ~ (#2) } {#2} }
+	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithReplacement {#1} { #2 \footnote {#3} } {#2} }
+	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewTextMacroWithReplacement {#1} { #3 \footnote {#4} ~ (#2) } {#2} }
+%    \end{macrocode}
+% \end{macro}
 % \subsection{Paketoptionen}
 % \begin{key}{prot/options}
 %   Datum, Uhrzeit etc.\@ können dem Paket (oder auch der Dokumentklasse) übergeben werden.
@@ -835,19 +851,6 @@
 		(ja \,/\hspace{.16667em} nein \,/\hspace{.16667em} Enthaltungen) ~
 		angegeben.
 	} }
-%    \end{macrocode}
-% \end{macro}
-% \begin{macro}{\NewCommandWithReplacement, \NewOnetimeCommand, \DeclareDocumentCommand, \DeclareOnetimeCommand, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
-%   Ein paar Befehle, die sich beim ersten Aufruf selbst ersetzen.
-%    \begin{macrocode}
-	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
-	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
-	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
-	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
-	\NewDocumentCommand \NewTextMacroWithReplacement { m +m +m } { \NewDocumentCommand #1 { } { \RenewDocumentCommand #1 { } { #3 \xspace } #2 \xspace } }
-	\NewDocumentCommand \NewTextMacroWithOneshot { m +m +m } { \NewTextMacroWithReplacement {#1} { #2 #3 } {#2} }
-	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithOneshot {#1} {#2} { \footnote {#3} } }
-	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewTextMacroWithOneshot {#1} {#2} { ~( #3 ) } }
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\eur, \datum, \quot}
