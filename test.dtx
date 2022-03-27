@@ -102,8 +102,8 @@
 \BEGINTEST { \prot_fullname:n }
 %<*test>
 	\cs_new_protected_nopar:Nn \@@_test_fullname:nnn {
-		\tl_const:cn { c_prot_person_/#1/name/first_tl } {#2}
-		\tl_const:cn { c_prot_person_/#1/name/last_tl } {#3}
+		\tl_const:cn { c_prot_person -> #1 / name / first_tl } {#2}
+		\tl_const:cn { c_prot_person -> #1 / name / last_tl } {#3}
 		\tl_log:x { \prot_fullname:n {#1} }
 	}
 %</test>
@@ -147,18 +147,18 @@
 %<*test>
 	\cs_new_protected_nopar:Nn \@@_test_attendance_i:nnn {
 		\str_set:Nn \l@@_id_str {#1}
-		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\str_set:Nn \l@@_person_str {prot_person -> #1}
 		\@@_parse_attendance:n {#2}
 		\TYPE { \l@@_attendance_str }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_attendance:nnnnn {
 		\str_set:Nn \l@@_id_str {#1}
-		\str_set:Nn \l@@_person_str {prot_person_/#1}
+		\str_set:Nn \l@@_person_str {prot_person -> #1}
 		\@@_parse_attendance:n {#2}
 		\@@_set_attendance:
-		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
-		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
-		\TYPE { disp = \tl_use:c { c_prot_person_/#1/attendance/disp_tl } }
+		\TYPE { attendance = \str_use:c { c_prot_person -> #1 / attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person -> #1 / there_bool } }
+		\TYPE { disp = \tl_use:c { c_prot_person -> #1 / attendance / disp_tl } }
 	}
 %</test>
 %<*expect>
@@ -287,14 +287,14 @@
 %<*test>
 	\cs_new_protected_nopar:Nn \@@_test_group:nnnnnnn {
 		\str_set:Nn \l@@_id_str {#1}
-		\str_set:Nn \l@@_person_str { prot_person_/#1 }
-		\cs_if_exist:cF { c_prot_person_/#1/id_str } {
-			\str_const:cn { c_prot_person_/#1/id_str } {#1}
-			\bool_new:c  { g_prot_person_/#1/there_bool }
+		\str_set:Nn \l@@_person_str { prot_person -> #1 }
+		\cs_if_exist:cF { c_prot_person -> #1 / id_str } {
+			\str_const:cn { c_prot_person -> #1 / id_str } {#1}
+			\bool_new:c  { g_prot_person -> #1 / there_bool }
 		}
-		\bool_gset:cn { g_prot_person_/#1/there_bool } { ! \str_if_eq_p:nn {#2} 0 }
+		\bool_gset:cn { g_prot_person -> #1 / there_bool } { ! \str_if_eq_p:nn {#2} 0 }
 		\@@_apply_group:n {#3}
-		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
+		\TYPE { group = \str_use:c { g_prot_person -> #1 / group_str } }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_group_#4_seq } }
 		\@@_initialize_move:
 		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
@@ -302,7 +302,7 @@
 	}
 	\cs_new_protected_nopar:Nn \@@_test_move:nNnnn {
 		\prot_move:Nn {#2} {#1}
-		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+		\TYPE { there = \bool_to_str:c { g_prot_person -> #1 / there_bool } }
 		\TYPE { ##voters = \int_use:N \g_prot_voters_int }
 		\TYPE { \@@_test_use_if_exist:Nc \@@_test_seq_use:c { g_prot_votergroup_#3_seq } }
 	}
@@ -310,11 +310,11 @@
 		\TYPE { \exp_not:n {#1} = \prop_item:Nn \g@@_names_prop {#1} }
 	}
 	\cs_new_protected_nopar:Nn \@@_test_show_person:nnnnn {
-		\TYPE { id = \str_use:c { c_prot_person_/#1/id_str } }
-		\TYPE { name = \exp_not:v { c_prot_person_/#1/name_tl } }
-		\TYPE { group = \str_use:c { g_prot_person_/#1/group_str } }
-		\TYPE { attendance = \str_use:c { c_prot_person_/#1/attendance_str } }
-		\TYPE { there = \bool_to_str:c { g_prot_person_/#1/there_bool } }
+		\TYPE { id = \str_use:c { c_prot_person -> #1 / id_str } }
+		\TYPE { name = \exp_not:v { c_prot_person -> #1 / name_tl } }
+		\TYPE { group = \str_use:c { g_prot_person -> #1 / group_str } }
+		\TYPE { attendance = \str_use:c { c_prot_person -> #1 / attendance_str } }
+		\TYPE { there = \bool_to_str:c { g_prot_person -> #1 / there_bool } }
 	}
 %</test>
 %<*expect>

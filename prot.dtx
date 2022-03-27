@@ -82,7 +82,7 @@
 %
 % \section{Implementation}
 %
-% Variablen und Konstanten für Person \meta{id} werden unter \texttt{\meta{g_/c_/}prot_person_/\meta{id}/_\meta{var}\meta{_typ/:signatur}} gespeichert.
+% Variablen und Konstanten für Person \meta{id} werden unter \cs{\meta{g_|c_|}prot_person->\meta{id}/\meta{var}\meta{_typ|:signatur}} gespeichert.
 % Dies erscheint mir ein plausibles Design zu sein, insbesondere unterstützt \LaTeX3 dies nativ mittels |:c|-Argumenten.
 %
 % \subsection{Dateiköpfe}
@@ -281,17 +281,17 @@
 %   Informationen über Person.
 %    \begin{macrocode}
 	\cs_new_nopar:Nn \prot_fullname:n {
-		\exp_not:v { c_prot_person_/#1/name/first_tl }
-		\space \exp_not:v { c_prot_person_/#1/name/last_tl }
+		\exp_not:v { c_prot_person -> #1 / name / first_tl }
+		\space \exp_not:v { c_prot_person -> #1 / name / last_tl }
 	}
-	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person_/#1/attendance_str } }
+	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person -> #1 / attendance_str } }
 	\cs_new_nopar:Nn \prot_info:n {
-		\seq_if_empty:cF { g_prot_person_/#1/info_seq }
-			{ ~ ( \seq_use:cn { g_prot_person_/#1/info_seq } { ,~ } ) }
+		\seq_if_empty:cF { g_prot_person -> #1 / info_seq }
+			{ ~ ( \seq_use:cn { g_prot_person -> #1 / info_seq } { ,~ } ) }
 	}
 	\cs_new_nopar:Nn \prot_specials:n {
-		\seq_if_empty:cF { g_prot_person_/#1/specials_seq }
-			{ ~ ( \seq_use:cn { g_prot_person_/#1/specials_seq } { ,~ } ) }
+		\seq_if_empty:cF { g_prot_person -> #1 / specials_seq }
+			{ ~ ( \seq_use:cn { g_prot_person -> #1 / specials_seq } { ,~ } ) }
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -360,7 +360,7 @@
 	\cs_new_protected_nopar:Nn\prot_newperson:nnnnnn {
 		\prot_tl_if_alphabetic:nTF {#1} {
 			\cs_if_exist:cTF {#1} {
-				\cs_if_exist:cTF { c_prot_person_/#1/id_str }
+				\cs_if_exist:cTF { c_prot_person -> #1 / id_str }
 					{ \msg_error:nnn { prot } { person / id-exists } {#1} }
 					{ \msg_error:nnn { prot } { person / id-iscsname } {#1} }
 			} {
@@ -369,19 +369,19 @@
 					{ \msg_error:nnnnV { prot } { person / name-exists } {#2} {#1} \l@@_samename_id_str }
 					{ \prop_gput:Nnn \g@@_names_prop {#2} {#1} }
 %    \end{macrocode}
-%   Danach werden unter \texttt{g_prot_person_/\meta{id}/} verschiedene Schlüssel befüllt:
-%   |name|, |name/full|, |name/first|, |name/last|, |name/sort|, |attendance|, |group|.
+%   Danach werden unter \cs{g_prot_person->\meta{id}/\meta{\dots}} verschiedene Konstanten befüllt:
+%   |name_tl|, |name/first_tl|, |name/last_tl|, |attendance_str|, |group_str|.
 %    \begin{macrocode}
-				\str_set:Nn \l@@_person_str { prot_person_/#1 }
-				\str_const:cn { c_\l@@_person_str/id_str } {#1}
-				\tl_const:cn { c_\l@@_person_str/name_tl } {#2}
-				\tl_const:cn { c_\l@@_person_str/name/first_tl } {#3}
-				\tl_const:cn { c_\l@@_person_str/name/last_tl } {#4}
+				\str_set:Nn \l@@_person_str { prot_person -> #1 }
+				\str_const:cn { c_\l@@_person_str / id_str } {#1}
+				\tl_const:cn { c_\l@@_person_str / name_tl } {#2}
+				\tl_const:cn { c_\l@@_person_str / name / first_tl } {#3}
+				\tl_const:cn { c_\l@@_person_str / name / last_tl } {#4}
 				\@@_parse_attendance:n {#6}
 				\@@_set_attendance:
 				\@@_apply_group:n {#5}
 				\@@_initialize_move:
-				\@@_add_to_attendance_list:vv { g_\l@@_person_str / group_str } { c_\l@@_person_str/attendance_str }
+				\@@_add_to_attendance_list:vv { g_\l@@_person_str / group_str } { c_\l@@_person_str / attendance_str }
 			}
 		} { \msg_error:nnn { prot } { person / malformed-id } {#1} }
 	}
@@ -398,33 +398,33 @@
 %
 %   Verschiedene Anwesenheitsmarker können als Schlüssel unter \emph{/prot/attendance/} angelegt werden.
 %   Jede Gruppe ist implementiert als Menge an Personen. Zudem ist unter
-%   \texttt{/prot/person/\meta{id}/group} die primäre Gruppe hinterlegt, wobei spätere Angaben vorherige überschreiben.
+%   \cs{g_prot_person->\meta{id}/group_str} die primäre Gruppe hinterlegt, wobei spätere Angaben vorherige überschreiben.
 %
 %   TODO: Implementiere mehrere Zeilen für eine Person.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \@@_parse_attendance:n {
-		\seq_new:c { g_\l@@_person_str/specials_seq }
+		\seq_new:c { g_\l@@_person_str / specials_seq }
 		\keys_set:nn { prot / attendance } { value =, fallback = u, #1 }
 		\str_if_empty:NT \l@@_attendance_str { \str_set_eq:NN \l@@_attendance_str \l@@_attendance_fallback_str }
 	}
 	\cs_new_protected_nopar:Nn \@@_set_attendance: {
-		\bool_new:c { g_\l@@_person_str/there_bool }
+		\bool_new:c { g_\l@@_person_str / there_bool }
 		\keys_set:nV { prot / attendance / use } \l@@_attendance_str
-		\prot_provide:Ncn \tl_const:cv { c_\l@@_person_str/attendance/disp_tl } { c_\l@@_person_str/attendance_str }
+		\prot_provide:Ncn \tl_const:cv { c_\l@@_person_str / attendance / disp_tl } { c_\l@@_person_str / attendance_str }
 	}
 	\keys_define:nn { prot / attendance } {
 		, value .str_set:N = \l@@_attendance_str
 		, fallback .str_set:N = \l@@_attendance_fallback_str
 		, attendance .code:n = { \str_const:cn { c_ \l@@_person_str / attendance_str } {#1} }
-		, attendance/disp .code:n = { \tl_const:cn { c_ \l@@_person_str / attendance/disp_tl } { \exp_not:n{#1} } }
+		, attendance / disp .code:n = { \tl_const:cn { c_ \l@@_person_str / attendance / disp_tl } { \exp_not:n{#1} } }
 		% Koennte auch direkt ein bool sein
 		, there .code:n = { \bool_gset:cn { g_ \l@@_person_str / there_bool } { \int_compare_p:nNn {#1} > 0 } }
 		, protokoll .code:n = { \seq_gput_right:NV \g_prot_protokollfuehrung_seq \l@@_id_str }
 		, sitzungsleitung .code:n = { \seq_gput_right:NV \g_prot_sitzungsfuehrung_seq \l@@_id_str }
-		, x .meta:n = { value = x }, use/x .meta:n = { attendance = x, there = 1 }
-		, e .meta:n = { value = e }, use/e .meta:n = { attendance = e, there = 0 }
-		, u .meta:n = { value = u }, use/u .meta:n = { attendance = u, there = 0 }
-		, d .meta:n = { value = d }, use/d .meta:n = { attendance = d, there = 1, attendance/disp = \emph x }
+		, x .meta:n = { value = x }, use / x .meta:n = { attendance = x, there = 1 }
+		, e .meta:n = { value = e }, use / e .meta:n = { attendance = e, there = 0 }
+		, u .meta:n = { value = u }, use / u .meta:n = { attendance = u, there = 0 }
+		, d .meta:n = { value = d }, use / d .meta:n = { attendance = d, there = 1, attendance / disp = \emph x }
 		, p .meta:n = { fallback = x, special = Protokoll, protokoll }
 		, s .meta:n = { fallback = x, special = Sitzungsleitung, sitzungsleitung }
 	}
@@ -498,7 +498,7 @@
 			{ \int_gdecr:N \g_prot_voters_int }
 	}
 	\cs_new_protected_nopar:Nn \@@_make_groupvoter:nn {
-		\cs_new_protected_nopar:cpn { prot_person_/ #1 / aftermove:N } { \@@_move_groupvoter:nnN {#1} {#2} }
+		\cs_new_protected_nopar:cpn { prot_person ->  #1 / aftermove:N } { \@@_move_groupvoter:nnN {#1} {#2} }
 	}
 	\cs_generate_variant:Nn \@@_make_groupvoter:nn { Vn }
 	\cs_new_protected_nopar:Nn \@@_move_groupvoter:nnN {
@@ -537,8 +537,8 @@
 %   Durch den |special|-Schlüssel gesetzte Informationen werden mit \cmd\prot_specials:n ausgegeben, um beispielsweise in einer Anwesenheitsliste in Klammern aufzutauchen.
 %    \begin{macrocode}
 	\keys_define:nn { prot } {
-		, attendance/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
-		, group/special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
+		, attendance / special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
+		, group / special .code:n = { \seq_gput_right:cn { g_ \l@@_person_str / specials_seq } {#1} }
 	}
 %    \end{macrocode}
 % \end{key}
@@ -573,37 +573,37 @@
 %   Bei allen späteren Bewegungen prüfe, ob dies die erste Bewegung ist und falls diese ein Kommen ist, schreibe in die |.aux|-Datei ein (nicht als erste Bewegung zählendes Gehen (siehe vorheriger Punkt)).
 %   Bei einer nicht-ersten Bewegung hingegen verifiziere, dass diese das Gegenteil der vorherigen Anwesenheit ist.
 %
-%   \cs{prot_move:Nn} setzt momentane Anwesenheit \cs{g_prot_person_/#2/there_bool} von #2=\meta{id} auf |#1|.
-%   Schaut in \cs{g_prot_person/#2/moves_tl} nach,
+%   \cs{prot_move:Nn} setzt momentane Anwesenheit \cs{g_prot_person->#2/there_bool} von #2=\meta{id} auf |#1|.
+%   Schaut in \cs{g_prot_person->#2/moves_tl} nach,
 %   ob die Person sich nicht bewegen darf (nicht da ist) (kodiert als „-“),
 %   ob sie sich noch nicht bewegt hat (kodiert als „0“) – und schreibt dann in die |.aux|-Datei – oder
 %   ob sie sich bereits bewegt hat (kodiert als „+“) und prüft dann auf Konsistenz.
-%   Nutzt |forcemove| ohne Tests und für personenabhängige Zwecke, was zusätzlich \cs{prot_person_/#2/aftermove:N} aufruft.
+%   Nutzt |forcemove| ohne Tests und für personenabhängige Zwecke, was zusätzlich \cs{prot_person->#2/aftermove:N} aufruft.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \prot_move:Nn {
-		\exp_args:Nv \str_case:nnF { g_prot_person_/#2/moves_tl } {
+		\exp_args:Nv \str_case:nnF { g_prot_person -> #2 / moves_tl } {
 			- { \msg_error:nnn { prot } { move / not-there } {#2} }
 			0 {
-				\tl_gset:cn { g_prot_person_/#2/moves_tl } {+}
+				\tl_gset:cn { g_prot_person -> #2 / moves_tl } {+}
 				\bool_if:NT #1 { \@@_addlate:n {#2} }
 				\@@_forcemove:Nn #1 {#2}
 			}
 		} {
-			\bool_xor:nnTF { \bool_if_p:c { g_prot_person_/#2/there_bool } } {#1} {
+			\bool_xor:nnTF { \bool_if_p:c { g_prot_person -> #2 / there_bool } } {#1} {
 				\@@_forcemove:Nn #1 {#2}
 			} { \exp_args:Nnx \msg_error:nnn { prot } { move / \bool_to_str:n {#1} - again } {#2} }
 		}
 	}
 	\cs_new_protected_nopar:Nn \@@_initialize_move: {
-		\tl_new:c { g_\l@@_person_str/moves_tl }
-		\bool_if:cTF { g_\l@@_person_str/there_bool } {
-			\tl_gset:cn { g_\l@@_person_str/moves_tl } 0
-			\use:c { \l@@_person_str/aftermove:N } \c_true_bool
-		} { \tl_gset:cn { g_\l@@_person_str/moves_tl } - }
+		\tl_new:c { g_\l@@_person_str / moves_tl }
+		\bool_if:cTF { g_\l@@_person_str / there_bool } {
+			\tl_gset:cn { g_\l@@_person_str / moves_tl } 0
+			\use:c { \l@@_person_str / aftermove:N } \c_true_bool
+		} { \tl_gset:cn { g_\l@@_person_str / moves_tl } - }
 	}
 	\cs_new_protected_nopar:Nn \@@_forcemove:Nn {
-		\bool_gset_eq:cN { g_prot_person_/#2/there_bool } #1
-		\use:c { prot_person_/#2/aftermove:N } #1
+		\bool_gset_eq:cN { g_prot_person -> #2 / there_bool } #1
+		\use:c { prot_person -> #2 / aftermove:N } #1
 	}
 	\cs_new_protected_nopar:Nn \@@_addlate:n {
 		\iow_now:Nn \@mainaux { \prot@makelate {#1} }
