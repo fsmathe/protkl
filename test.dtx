@@ -1,9 +1,8 @@
 %    \begin{macrocode}
 %<@@=prot>
 \input{regression-test.tex}
-\RequirePackage{prot}
 \RequirePackage{expl3}
-\sitzungsdaten { style = test }
+\RequirePackage[ style = test , nogimmicks ]{prot}
 \START
 \ExplSyntaxOn
 \keys_set:nn { sys } { enable-debug, check-declarations }
@@ -414,8 +413,8 @@
 %<*test>
 	\cs_set:Nn \prot_attendancelist_actualitem:nn { \TYPENOEXP { \item[#1] #2 } }
 	\cs_set:Nn \prot_table_row:nn { \TYPE { #1 & #2 \\ } }
+	\prot_fsma_anwesenheitsliste
 	\anwesenheitsliste
-	\anwesenheitstabelle
 %</test>
 %<*expect>
 	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.

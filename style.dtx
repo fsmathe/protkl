@@ -17,7 +17,7 @@
 		\prot_add_attendance_section:n { f / u }
 	}
 
-	\NewDocumentCommand \anwesenheitsliste { } {
+	\cs_new:Npn \anwesenheitsliste {
 		\prot_attendancelist:n {
 			\prot_attendancelist_item:nn { f / x } { Anwesende }
 			\prot_attendancelist_item:nn { f / e } { Entschuldigte }
@@ -61,7 +61,7 @@
 	}
 
 	\RequirePackage{booktabs}
-	\NewDocumentCommand \anwesenheitsliste { } {
+	\cs_new:Npn \anwesenheitsliste {
 		\par\noindent
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }

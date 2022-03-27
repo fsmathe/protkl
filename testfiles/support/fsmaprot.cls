@@ -6,7 +6,7 @@
 \RequirePackage [ ngerman ] { babel }
 \RequirePackage [
 	, style = fsma
-	, autosignatur = true
+	, autosignatur
 ] { prot }
 
 %%% Titel + Versionierung
@@ -29,7 +29,7 @@
 \titlehead {
 	Technische~Universität~Kaiserslautern
 	\\~Fachschaft~Mathematik
-	% \\ { \centering \includegraphics[scale=0.4]{Leo.png} }
+	\begin{center} \includegraphics [ height = 2 cm ]{ example-image-1x1.png } \end{center}
 }
 \AddToHook { begindocument / end } {
 	\maketitle

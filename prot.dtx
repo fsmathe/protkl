@@ -170,7 +170,8 @@
 		, sitzung .tl_set:N = \l_prot_meeting_sitzung_tl
 		, unterschriftsdatum .code:n = { \prot_parse_date:NNNn \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {#1} }
 		% Optionen
-		, autosignatur .bool_set:N = \l_prot_option_autosignatur
+		, nogimmicks .bool_set:N = \l_prot_option_nogimmicks_bool
+		, autosignatur .bool_set:N = \l_prot_option_autosignatur_bool
 	}
 	\cs_new_protected:Npn \sitzungsdaten { \keys_set:nn { prot / options } }
 
@@ -693,6 +694,10 @@
 %    \end{macrocode}
 % \end{macro}
 % \section{Code für weitere Gimmicks}
+%   Die Gimmicks sind alle optional. Ich habe mal darauf verzichtet, sie alle einzurücken.
+%    \begin{macrocode}
+	\bool_if:NF \l_prot_option_nogimmicks_bool {
+%    \end{macrocode}
 % \subsection{Weitere Pakete}
 %   TODO: nur optional laden
 %    \begin{macrocode}
@@ -873,7 +878,7 @@
 		\end {signatur}
 	}
 	\NewOnetimeCommand \MakeProtokollSignatur { \ProtokollSignatur }
-	\bool_if:NT \l_prot_option_autosignatur {
+	\bool_if:NT \l_prot_option_autosignatur_bool {
 		\AddToHook { cmd / appendix /before } { \MakeProtokollSignatur \clearpage }
 		\AddToHook { enddocument } { \MakeProtokollSignatur }
 	}
@@ -940,6 +945,10 @@
 	}
 %    \end{macrocode}
 % \end{macro}
+%   Das Ende der optionalen Gimmicks naht:
+%    \begin{macrocode}
+	}
+%    \end{macrocode}
 % \section{Zusätzliche Kernel-Funktionen}
 % Ein paar Funktionen und Varianten ohne Bezug zu Protokollen.
 % \begin{macro}{\prot_tl_from_seq:N}
