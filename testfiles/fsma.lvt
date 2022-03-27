@@ -85,6 +85,7 @@ Der Antrag \ref{app:la} wird mit \erg*00 angenommen.
 \section{Ein Antrag}\label{app:la}
 \Eszett und \Ypsilon beantragen wohldosierten Humor in Protokollen.
 
-%\includepdf{example.pdf}
+% PDF-Datei aus mwe-Paket
+\includepdfsection{app:ex}{Beispielanhang}{example-image-a4.pdf}
 
 \end{document}

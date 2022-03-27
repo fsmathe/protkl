@@ -27,6 +27,14 @@
 	}
 %</fsma>
 
+%<*test>
+	\seq_new:N \g_prot_group_refvor_seq
+	\seq_new:N \g_prot_votergroup_refvor_seq
+	\keys_define:nn { prot / group } { refvor .meta:n = { votergroup = refvor } }
+	\cs_new_eq:NN \prot_fsma_anwesenheitsliste \anwesenheitsliste
+	\cs_undefine:N \anwesenheitsliste
+%</test>
+
 %<*stupa|stud-vv>
 	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
 	% stupa: zentral gewähltes StuPa-Mitglied → stupa
@@ -36,9 +44,6 @@
 	\seq_new:N \g_prot_group_stupa_seq
 	\seq_new:N \g_prot_group_fs_seq
 	\seq_new:N \g_prot_group_asta_seq
-	% TODO: AStA -- momentan hier zu Testzwecken
-	\seq_new:N \g_prot_group_refvor_seq
-	\seq_new:N \g_prot_votergroup_refvor_seq
 
 	\keys_define:nn { prot / group } {
 		, stupa .meta:n = { group = stupa, voter }
@@ -46,8 +51,6 @@
 		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
 		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
 %<stud-vv>, gast .meta:n = { group = gast, info = {#1} }
-		% TODO: AStA -- momentan hier zu Testzwecken
-		, refvor .meta:n = { votergroup = refvor }
 	}
 
 	\AddToHook { package / prot / after } {
@@ -58,7 +61,7 @@
 	}
 
 	\RequirePackage{booktabs}
-	\NewDocumentCommand \anwesenheitstabelle { } {
+	\NewDocumentCommand \anwesenheitsliste { } {
 		\par\noindent
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }

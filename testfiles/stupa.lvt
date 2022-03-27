@@ -15,6 +15,7 @@
 \subject{\Vorlaeufiges Protokoll}
 \title{\legislaturste Studierendenparlament}
 \subtitle{\sitzungsteSitzung}
+\publishers { Technische Universität Kaiserslautern }
 
 \begin{persontable}
 \\     & Albert    & Augsburg       &    & stupa    & d
@@ -70,23 +71,23 @@
 \newcommand\paperclip{P}
 \providecommand\linenumbers{}
 
-\newcommand\unterlagen[1]{\marginline{\hyperlink{app.#1}{\paperclip\ #1}}}
 \ExplSyntaxOn
-% Buggy: Wenn \unterlagen vor ##2 steht, interagiert die Verwendung von \...see
-% am Seitenanfang komisch mit Fußnoten auf der Seite vornedran.
-\cs_new:Nn \def_sectsee:n {
-	\exp_args:Nc \NewDocumentCommand { #1see } { o m } {
-		\IfNoValueTF {##1}
-			{ \use:c {#1} {##2} }
-			{ \use:c {#1} [##2] { ##2 \unterlagen {##1} } }
-}}
-\def_sectsee:n {section}
-\def_sectsee:n {subsection}
-\def_sectsee:n {paragraph}
+\newcommand \unterlagen [1] { \marginlink { app:ex | #1 } }
+%% Buggy: Wenn \unterlagen vor ##2 steht, interagiert die Verwendung von \...see
+%% am Seitenanfang komisch mit Fußnoten auf der Seite vornedran.
+%\cs_new:Nn \def_sectsee:n {
+%	\exp_args:Nc \NewDocumentCommand { #1see } { o m } {
+%		\IfNoValueTF {##1}
+%			{ \use:c {#1} {##2} }
+%			{ \use:c {#1} [##2] { ##2 \unterlagen {##1} } }
+%}}
+%\def_sectsee:n {section}
+%\def_sectsee:n {subsection}
+%\def_sectsee:n {paragraph}
 \NewDocumentCommand \finanzantrag { o m m } {
-	\paragraphsee [#1] { FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
+	\IfNoValueTF {#1} { \paragraph } { \paragraph [#1] }
+	{ FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
 }
-\NewDocumentCommand \includepdfsection { O{} m } { TODO: Noch nicht implementiert. }
 \ExplSyntaxOff
 
 %\hyphenation{Pa-ral-lel-ver-an-stal-tun-g-en aus-zu-tau-schen White-board White-boards White-board-mar-ker White-board-mar-kern}
@@ -104,7 +105,7 @@
 \linenumbers
 
 \medskip
-\einschub{\unterlagen{1}In der Randspalte des Protokolls finden sich Verweise auf die entsprechenden Seiten der Sitzungsunterlagen.}
+\einschub{\marginlink{app:ex}In der Randspalte des Protokolls finden sich Verweise auf die entsprechenden Seiten der Sitzungsunterlagen.}
 \einschub{Das Verlassen und Betreten der Sitzung wird nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
 \abstimmungsformateinschub
 \einschub{Die Sitzung findet hybrid in Hörsaal 46-210 und über BigBlueButton statt. Abstimmungen und Wahlen erfolgen für Mitglieder des \stupa, die nicht vor Ort aber in BigBlueButton anwesend sind, per BigBlueButton"=Chat.}
@@ -112,9 +113,9 @@
 \clearpage
 \section*{Anwesenheitsliste}
 \emph{x: anwesend, e: entschuldigt, u: unentschuldigt, d: digital anwesend}
-\anwesenheitstabelle
+\anwesenheitsliste
 
-\sectionsee{Mitteilungen}
+\section{Mitteilungen}
 \Charlotte eröffnet die Sitzung um 18~Uhr und begrüßt alle Anwesenden.
 
 Da man nachher immer klüger ist, beantragt \Charlotte die Sitzung hybrid zu veranstalten. Dieser Antrag benötigt eine absolute Mehrheit und erhält sie mit \erg*00.
@@ -127,11 +128,11 @@ Da man nachher immer klüger ist, beantragt \Charlotte die Sitzung hybrid zu ver
 Unbekannte Mächte unbekannter Ordnungen zwingen \Wilhelm mitzuteilen, dass der \Vergabeausschuss getagt hat.
 Genaueres bleibt im Verborgenen.
 
-\sectionsee[1]{Festlegung der Tagesordnung}
+\section[marginlink=app:ex]{Festlegung der Tagesordnung}
 \Charlotte stellt die Tagesordnung, mit der eingeladen wurde, und die für die jeweiligen TOPe geplanten Dauern vor.
-\Xanthippe beantragt einen weiteren TOP\unterlagen2 zu Spuk an der TUK und \Eszett einen TOP zur Umgebung der Sonne, diese werden mit \erg*00 hinzugefügt.
+\Xanthippe beantragt einen weiteren TOP\marginlink{app:ex|12} zu Spuk an der TUK und \Eszett einen TOP zur Umgebung der Sonne, diese werden mit \erg*00 hinzugefügt.
 
-\sectionsee[3]{Wahlen}
+\section[marginlink=app:ex|3]{Wahlen}
 \paragraph{Wahlausschuss}
 \Ida und \Eszett kandidieren für den Wahlausschuss.
 \Katharina fragt, wer sich um die Bewerbung der Wahl kümmern will.
@@ -142,16 +143,16 @@ Voll Bewunderung über \Ida{}s Offenheit und Diplomatie bricht \Eszett eine Lanz
 \Ida und \Charlotte erklären sich bereit, ihre Wahl anzunehmen und werden hierauf mit \erg*01 gewählt.
 
 
-\sectionsee[4]{Grundsatzprogramm der Studierendenschaft}
+\section[marginlink=app:ex|4]{Grundsatzprogramm der Studierendenschaft}
 Es handelt sich hierbei um einen Hauptantrag nach §~15~GO, der bereits auf mehreren vorangegangenen Sitzungen behandelt wurde und zu dem niemand mehr was neues zu sagen hat.
 
 \subsection{Einzelberatung}
 Der Antrag wird mit \erg*00 in die Schlussberatung gegeben.
 
 \subsection{Schlussberatung}
-Das Grundsatzprogramm\unterlagen{5} wird mit \erg*00 angenommen.
+Das Grundsatzprogramm\marginlink{app:a3|1} wird mit \erg*00 angenommen.
 
-\sectionsee[2]{Umgebung der Sonne}
+\section[marginlink=app:ex|2]{Umgebung der Sonne}
 \Charlotte hat sich diesen TOP aus vielfältigen Gründen gewünscht.
 
 \einschub{Der Nützlichkeit halber sind die Beiträge inhaltlich gruppiert.}
@@ -175,7 +176,7 @@ Was soll das hier?
 
 Es wird noch ein wenig geredet.
 
-\sectionsee[2]{Spukzeiten an der TUK}
+\section[marginlink=app:ex|2]{Spukzeiten an der TUK}
 Die \agKLeVeR diskutiert momentan über die Spukzeiten im Schloss.\footnote{%
 Der organisierte Spuk der Vergangenheit -- als alles noch besser war -- war wie folgt durchgetaktet:
 
@@ -188,11 +189,11 @@ Der organisierte Spuk der Vergangenheit -- als alles noch besser war -- war wie 
 
 Dies ist alles hochinteressant.
 
-\sectionsee[11]{Einführung einer genialen Regelung für anhaltenden \AE ther}
+\section[marginlink=app:ex|11]{Einführung einer genialen Regelung für anhaltenden \AE ther}
 Es handelt sich hierbei mal wieder um einen Hauptantrag nach §~15~GO, der bereits auf vielen vorangegangenen Sitzungen behandelt wurde.
 
 \subsection{Einzelberatung}
-\Ida stellt ihre Änderungs- und Modifikationsanträge\unterlagen{14} vor.
+\Ida stellt ihre Änderungs- und Modifikationsanträge\marginlink{app:ex|10} vor.
 Diese werden als wundervoll elegant gepriesen und erhalten viele Lorbeeren.
 
 Der gesamte Antrag wird einstimmig in die Schlussberatung gegeben.
@@ -201,35 +202,35 @@ Der gesamte Antrag wird einstimmig in die Schlussberatung gegeben.
 Der Antrag wird mit \erg*01 angenommen.
 
 
-\sectionsee[32]{Finanzanträge}\label{Finanzen}
+\section[marginlink=app:ex|32]{Finanzanträge}\label{Finanzen}
 
-\finanzantrag{42/21}{Leasing Buchdrucker} \Ulrich referiert über die unumgängliche Notwendigkeit jährlich tausende an Büchern zu drucken, um unauffällig einige hundert Exemplare eines geheimen Untergrundbuches, dessen Titelbild einem in großen freundlichen Buchstaben \textsc{Don't panic!}\footnote{Die moderne Version von „Fürchtet euch nicht“, nur ausdrucksstärker und beliebter.} zuruft produzieren zu können.\footnote{Natürlich hat sich das der Protokollant nur ausgedacht und die \emph{wahren} Gründe sind ganz andere.}
+\finanzantrag[marginlink=app:a3]{42/21}{Leasing Buchdrucker} \Ulrich referiert über die unumgängliche Notwendigkeit jährlich tausende an Büchern zu drucken, um unauffällig einige hundert Exemplare eines geheimen Untergrundbuches, dessen Titelbild einem in großen freundlichen Buchstaben \textsc{Don't panic!}\footnote{Die moderne Version von „Fürchtet euch nicht“, nur ausdrucksstärker und beliebter.} zuruft produzieren zu können.\footnote{Natürlich hat sich das der Protokollant nur ausgedacht und die \emph{wahren} Gründe sind ganz andere.}
 
 
 \Pause1956-2004
 
-\finanzantrag[5]{72/21}{Förderung von Mehrheitskultur}
+\finanzantrag{72/21}{Förderung von Mehrheitskultur}
 Viele Leute argumentieren auf verschiedenen Ebenen verschiedenste Dinge.
 
 Auf \Ida{s} Aufforderung geben alle, die im StuPa eine Stimme haben, deren Stimme in der Diskussion aber noch nicht gehört wurde, einen Kommentar ab: \Albert ist dafür, \Bernhard auch, \Ae hat keine Ahnung, \Heinrich will sich enthalten, \Gustav ist eher dagegen und \Friedrich ist dagegen.
 
 \Ida weist darauf hin, dass die Abstimmung bei Enthaltungsmehrheit wiederholt werden müsste, was letztlich mit \erg5*3 aber nicht notwendig ist.
 
-\finanzantrag[3]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Sonne.Gremien} angebracht.
+\finanzantrag[marginlink=app:ex|4]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Sonne.Gremien} angebracht.
 Der Antrag wird mit \erg*00 angenommen.
 
-\sectionsee[1]{Weihnachten}
+\section[marginlink=app:ex|1]{Weihnachten}
 Alle mögen Weihnachten und glauben an das Gute.
 
 \subsection{\Eszett{s} und \Theodor{s} Wunschzettel}
 Das dürfen sie natürlich nicht weitersagen. Ist ja klar.
 
 
-\subsectionsee[2]{Wünsche für \Ae}
+\subsection[marginlink=app:ex|2]{Wünsche für \Ae}
 Möge alles gut funktionieren.
 
 
-\sectionsee[7]{Gerede}
+\section[marginlink=app:ex|7]{Gerede}
 Der TOP wird ohne Gegenrede vertagt.
 
 \section{Berichte}
@@ -242,15 +243,16 @@ Der TOP wird ohne Gegenrede vertagt.
 
 Nach einem kleinen vertikalen Abstand erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
 
-
-\subsection{Fachschaften}
+\subsection[marginref=app:ex]{Fachschaften}
 \paragraph{Architektur} \Richard berichtet viel Schönes.
 
+\subsection[marginref=Sonne.Gremien]{Protokoll}
+\Ae berichtet von \autoref{app:hallo}, \autoref{app:hi}, \autoref{app:kindisch} und \autoref{app:ex}.
 
-\sectionsee[8]{Protokolle}
+\section[marginlink=app:ex|8]{Protokolle}
 Der wahre Grund, weshalb Sitzungen stattfinden ist doch immer noch, damit wir Protokollant:innen uns austoben können. Hier stehen wieder einmal die Früchte unserer Arbeit zur Abstimmung und werden mit einer überwältigenden Mehrheit von \erg{17}0* und \erg*0{-1} angenommen. Phänomenal!
 
-\sectionsee[4]{Sitzungstermine}
+\section[marginlink=app:ex|4]{Sitzungstermine}
 Es wundert nun niemanden mehr, dass die vorgeschlagenen Termine am \datum241221, \datum311221, \datum010122 und \datum300222 einstimmig angenommen werden. Die einen wundern sich nach den vorherigen Abstimmungen einfach über nichts mehr und die anderen können sich nichts schöneres erträumen, als eine StuPa-Sitzung unterm Tannenbaum.
 
 \section{Verschiedenes}
@@ -264,8 +266,12 @@ Es regnet \eur{12345} vom Himmel.
 
 \appendix
 
-\section{Hallo}
-\subsection{Hi}
-%\includepdfsection[link, linkname=app]{Sitzungsunterlagen}{Sitzungsunterlagen}
+% PDF-Dateien aus mwe-Paket
+\section{Hallo} \label{app:hallo}
+\subsection{Hi} \label{app:hi}
+\subsubsection{Hallöchen} \label{app:kindisch}
+\includepdfsection{app:ex}{Bunte Seiten}{example-image-a4-numbered.pdf}
+\subsection{Tschüss}
+\includepdfsubsubsection{app:a3}{Große breite Seite}{example-image-a3-landscape.pdf}
 \end{document}
 % vi: tw=0

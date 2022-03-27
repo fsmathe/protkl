@@ -31,6 +31,7 @@
 	\generate{
 		\file{test.lvt}{\from{test.dtx}{test}}
 		\file{test.lve}{\from{test.dtx}{expect}}
+		\file{prot-test.def}{\from{style.dtx}{style,fsma,stupa,test}}
 	}
 	\endbatchfile
 %</install>
@@ -84,32 +85,17 @@
 % Variablen und Konstanten für Person \meta{id} werden unter \texttt{\meta{g_/c_/}prot_person_/\meta{id}/_\meta{var}\meta{_typ/:signatur}} gespeichert.
 % Dies erscheint mir ein plausibles Design zu sein, insbesondere unterstützt \LaTeX3 dies nativ mittels |:c|-Argumenten.
 %
-% Plan: Baue Prototyp, der für genau ein simples Protokoll funktioniert und ergänze dann die nötigen Features nach und nach.
-%
-% #Must-have-Features
-% ✓ Personenverwaltung
-% ✓ Nutzer-Interface
-%   ✓ Sitzungsdaten einlesen (als Paketoptionen mit l3keys)
-%   ✓ Personentabelle einlesen
-%   ✓ Sitzungsdaten anzeigen
-%   ✓ Personentabelle anzeigen
-%   ✓ \peoplemove, …
-%   ✓ \erg
-% Extra-Features
-% • Super krasse Anzeige für Abkürzungen.
-% • Optionen
-%
 % \subsection{Dateiköpfe}
 %    \begin{macrocode}
 %<@@=prot>
 %<*package>
-	\RequirePackage{expl3}
+	\RequirePackage {expl3}
 	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
 %    \end{macrocode}
 % \subsection{Benötigte Pakete}
 %    \begin{macrocode}
-	\RequirePackage{l3keys2e}
-	\RequirePackage{xspace}
+	\RequirePackage { l3keys2e }
+	\RequirePackage { xspace }
 %    \end{macrocode}
 % \subsection{Variabel lange Namen}
 % \begin{macro}{\NewShortLongText, \ShortLongText}
@@ -167,7 +153,7 @@
 %
 %   Die |style|-Option lädt gremienspezifische Konfiguration nach.
 %   Beispieslweise mit |style=fsma|.
-%   Wird |style| mehrfach aufgerufen, so werden eben alle Konfigurationen in der angegebenen Reihenfolge geladen.
+%   Laden mehrerer Styles auf eigene Gefahr.
 %    \begin{macrocode}
 	\keys_define:nn { prot / options } {
 		, style .code:n = { \file_input:n { prot-#1.def } }
@@ -617,7 +603,7 @@
 	}
 	\cs_new_protected_nopar:Nn \@@_makelate:n { \@@_forcemove:Nn \c_false_bool {#1} }
 	% Beim Einlesen der aux-Datei ist keine expl3-Syntax aktiviert, daher hier ein Alias:
-	\cs_set_eq:cN { prot@makelate } \@@_makelate:n
+	\cs_new_eq:cN { prot@makelate } \@@_makelate:n
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\peoplemove, \peopleenter, \peopleleave, ...text}
@@ -655,9 +641,9 @@
 		\peoplemove {#1} {#2}
 		\einschub { \peoplemovetext {#1} {#2} }
 	}
-	\cs_set_eq:NN \kommtstill     \peopleenter
-	\cs_set_eq:NN \gehtstill      \peopleleave
-	\cs_set_eq:NN \kommtgehtstill \peoplemove
+	\cs_new_eq:NN \kommtstill     \peopleenter
+	\cs_new_eq:NN \gehtstill      \peopleleave
+	\cs_new_eq:NN \kommtgehtstill \peoplemove
 %    \end{macrocode}
 % \end{macro}
 % \subsection{Abstimmungen}
@@ -710,10 +696,10 @@
 % \subsection{Weitere Pakete}
 %   TODO: nur optional laden
 %    \begin{macrocode}
-	\RequirePackage{tabularx}
-	\RequirePackage[useregional]{datetime2}
-	\RequirePackage{siunitx}
-	\RequirePackage{hyperref}
+	\RequirePackage { tabularx }
+	\RequirePackage [ useregional ] { datetime2 }
+	\RequirePackage { siunitx }
+	\RequirePackage { hyperref }
 %    \end{macrocode}
 % \subsection{PDF-Metadaten}
 %   Die Makros werden in \cmd\hypersetup\ expandiert, daher erst verzögert, nach Einlesen der Personentabelle.
@@ -726,12 +712,10 @@
 		}
 	}
 %    \end{macrocode}
-% \subsection{Abschnitte als Tagesordnungspunkte}
-% \begin{macro}{\section, \subsection, \subsubsection, \autoref}
+% \subsection{Abschnitte}
+% \begin{macro}{\section, \subsection, \subsubsection}
 %   Schreibe „TOP“ vor jeden TOP.
 %   Der erste Teil nimmt KOMA-Script an und der zweite Teil nimmt hyperref an.
-%   Autoref schreibt heuristisch „Anhang“, wenn der Referenznamen „app:“ enthält.
-%   Vielleicht ginge dies besser.
 %    \begin{macrocode}
 	\AddToHook { cmd / @seccntformat / before } { TOP~ }
 	\AddToHook { cmd / appendix / after } {
@@ -742,11 +726,17 @@
 		\cs_set_nopar:Npn \subsectionautorefname { TOP }
 		\cs_set_nopar:Npn \subsubsectionautorefname { TOP }
 	}
-	\cs_set_eq:NN \@@_autoref:n \autoref
-	\cs_set:Npn \autoref #1 {
-		\str_if_in:nnTF {#1} { app: }
-			{ \hyperref [#1] { Anhang~\ref*{#1} } }
-			{ \@@_autoref:n {#1} }
+%    \end{macrocode}
+%   Aktiviere Optionenliste aus KOMA-Script als optionales Argument in \cmd\secion\ et al.
+%   Füge außerdem Optionen |marginref| und |marginlink| für Randverweise
+%   mittels \cmd\marginref\ und \cmd\marginlink\ hinzu.
+%    \begin{macrocode}
+	\KOMAoptions { headings = optiontotocandhead }
+	\DefineFamilyKey [ .section ] { KOMAarg } { marginlink } {
+		\AddtoOneTimeDoHook { heading / endgroup } { \marginlink {#1} \use_none:n }
+	}
+	\DefineFamilyKey [ .section ] { KOMAarg } { marginref } {
+		\AddtoOneTimeDoHook { heading / endgroup } { \marginref {#1} \use_none:n }
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -781,7 +771,7 @@
 %   ist natürlich eine andere Frage.
 %    \begin{macrocode}
 	\AddToHook { cmd / tableofcontents / before } {
-		\cs_set_eq:NN \@@_footnote:n \footnote
+		\cs_new_eq:NN \@@_footnote:n \footnote
 		\cs_set_eq:NN \footnote \use_none:n
 	}
 	\AddToHook { cmd / tableofcontents / after } {
@@ -803,8 +793,8 @@
 		\providecommand \nolinenumbers { }
 	} {
 		%% vorläufig
-		\RequirePackage{xcolor}
-		\RequirePackage{soulutf8} % Durchstreichungen -- nicht so prima Paket
+		\RequirePackage { xcolor }
+		\RequirePackage { soulutf8 } % Durchstreichungen -- nicht so prima Paket
 
 		\NewDocumentCommand \todo { m } {
 			\PackageWarning { prot } { TODO:~#1 }
@@ -813,7 +803,7 @@
 		\NewDocumentCommand \change { } { \textcolor {red} }
 		\NewDocumentCommand \del { m } { \textcolor {red} { \st {#1} } }
 
-		\RequirePackage{lineno}
+		\RequirePackage { lineno }
 		\definecolor { gray }  { gray }  { 0.5 }
 		\renewcommand \linenumberfont { \normalfont \tiny \sffamily \textcolor { gray } }
 	}
@@ -837,10 +827,13 @@
 	} }
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\NewCommandWithReplacement, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
+% \begin{macro}{\NewCommandWithReplacement, \NewOnetimeCommand, \DeclareDocumentCommand, \DeclareOnetimeCommand, \NewTextMacroWithReplacement, \NewTextMacroWithOneshot, \NewTextMacroWithFootnote, \NewTextMacroWithParanthesis}
 %   TODO: Dokumentation, Tests
 %    \begin{macrocode}
 	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
+	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
+	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} {#4} #3 } }
+	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
 	\NewDocumentCommand \NewTextMacroWithReplacement { m +m +m } { \NewDocumentCommand #1 { } { \RenewDocumentCommand #1 { } { #3 \xspace } #2 \xspace } }
 	\NewDocumentCommand \NewTextMacroWithOneshot { m +m +m } { \NewTextMacroWithReplacement {#1} { #2 #3 } {#2} }
 	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithOneshot {#1} {#2} { \footnote {#3} } }
@@ -879,20 +872,72 @@
 			Protokoll          & Sitzungsleitung
 		\end {signatur}
 	}
-	\NewCommandWithReplacement \MakeProtokollSignatur { \ProtokollSignatur } { }
+	\NewOnetimeCommand \MakeProtokollSignatur { \ProtokollSignatur }
 	\bool_if:NT \l_prot_option_autosignatur {
-		\AddToHook { cmd / appendix /before } { \MakeProtokollSignatur }
+		\AddToHook { cmd / appendix /before } { \MakeProtokollSignatur \clearpage }
 		\AddToHook { enddocument } { \MakeProtokollSignatur }
 	}
 %    \end{macrocode}
 % \end{macro}
-% \subsubsection{Anhänge und Überschriften}
-% \begin{macro}{\appendix, \includepdf}
-%   Verweise auf Anhänge in Randspalte, ebenso die Anhänge selbst im Anhang nummerieren.
-%   Anhänge einbinden, runterskalieren und gegebenenfalls Titel drübersetzen oder Titel zu Inhaltsverzeichnis ergänzen.
-%   In Randspalte Buchstaben des Anhangs notieren.
+% \subsubsection{PDF-Anhänge}
+% \begin{macro}{\includepdfsection, \includepdfsubsection, \includepdfsubsubsection}
+%   Überschrift erscheint ganz oben links auf der Seite.
+%   Alternativ auch möglich wäre die Anhänge runterzuskalieren, die
+%   Seitenzahlen beizubehalten und den Buchstaben des Anhangs als Randnotiz
+%   anzumerken.
 %    \begin{macrocode}
-% TODO fixme -- hier könnte deine Implementierung stehen ;)
+	\RequirePackage { pdfpages }
+	\NewDocumentCommand \ProtIncludePDF { m O{} m m m } {
+		\nolinenumbers
+		\includepdf [
+			, pages = - , link , linkname = #3 , addtotoc = { 1, #1, 1, #4, #3 }
+			, picturecommand* = {
+				\put ( \dim_to_decimal:n { 1 em } , \dim_to_decimal:n { \paperheight - 2 em } ) {
+					\usekomafont { disposition } \usekomafont {#1} \ref* {#3} \autodot \  #4
+				}
+			}
+			, #2
+		] {#5}
+		\linenumbers
+	}
+	\NewDocumentCommand \includepdfsection { } { \ProtIncludePDF { section } }
+	\NewDocumentCommand \includepdfsubsection { } { \ProtIncludePDF { subsection } }
+	\NewDocumentCommand \includepdfsubsubsection { } { \ProtIncludePDF { subsubsection } }
+%    \end{macrocode}
+% \end{macro}
+% \subsubsection{Verweise}
+% \begin{macro}{\marginref, \marginlink, \autoref}
+%   Verweis auf einen Anhang als Randnotiz.
+%    \begin{macrocode}
+	\NewDocumentCommand \marginref { m } { \marginline { \ref {#1} } }
+	\cs_new_protected_nopar:Nn \prot_marginlink:n { \marginline { \hyperlink { #1 . 1 } { \ref* {#1} } } }
+	\cs_new_protected_nopar:Nn \prot_marginlink:nn { \marginline { \hyperlink { #1 . #2 } { \ref* {#1} ~ \small #2 } } }
+	\NewDocumentCommand \marginlink { > { \SplitArgument { 1 } { | } } m } {
+		\@@_marginlink_aux:nn #1
+	}
+	\cs_new_protected_nopar:Nn \@@_marginlink_aux:nn {
+		\IfNoValueTF {#2}
+			{ \prot_marginlink:n {#1} }
+			{ \prot_marginlink:nn {#1} {#2} }
+	}
+%    \end{macrocode}
+%   Autoref schreibt normalerweise nach \cmd\appendix\ automatisch
+%   \cmd\appendixautorefname statt \cmd\sectionautorefname für \cmd\section s.
+%   Für Unterabschnitte jedoch nicht.  Unterabschnitte in Anhängen würden damit
+%   weiterhin als „TOP“ tituliert, was wir nicht wollen.  Entsprechend hacken
+%   wir uns das ein wenig zusammen.  Im Endeffekt sorgen wir dafür, dass im
+%   \cmd\newlabel-Eintrag in der |.aux|-Datei |appendix.A.1| statt
+%   |subsection.A.1| steht.
+%    \begin{macrocode}
+	\AddToHook { cmd / hyper@makecurrent / after } {
+		\ifHy@localanchorname
+			\str_replace_once:Nnn \@currentHref { subsubsection } { appendix }
+			\str_replace_once:Nnn \@currentHref { subsection } { appendix }
+		\else:
+			\str_greplace_once:Nnn \@currentHref { subsubsection } { appendix }
+			\str_greplace_once:Nnn \@currentHref { subsection } { appendix }
+		\fi:
+	}
 %    \end{macrocode}
 % \end{macro}
 % \section{Zusätzliche Kernel-Funktionen}
@@ -917,7 +962,7 @@
 % \end{macro}
 % \begin{macro}{\@, \nicehyphen}
 %    \begin{macrocode}
-	\cs_set_eq:NN \@@_@ \@
+	\cs_new_eq:NN \@@_@ \@
 	\cs_set:Npn \@ { \texorpdfstring { \@@_@ } { } }
 	\cs_new:Npn \nicehyphen { \texorpdfstring { \penalty\@M-\hskip\z@skip } { - } }
 %    \end{macrocode}
