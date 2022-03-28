@@ -61,21 +61,21 @@
 % Für vorläufige Protokolle (Paket-Option) werden Zeilennummern ausgegeben.
 % Lädt \pkg{hyperref} und setzt Titel und Autorin gemäß den Angaben.
 % Angaben zu Ort und Zeit der Sitzung werden ebenfalls für Titel im Dokument und in den PDF-Informationen genutzt.
-% Angaben zu Ort und Zeit der nächsten Sitzung werden am Ende ausgegeben.
 % Am Ende des Protokolls bzw.\@ vor dem Anhang erscheint zudem eine Signatur.
-% Es kann eine Begrüßungs- und Abschiedsfloskel ausgegeben werden.
+% -- Idee: Angaben zu Ort und Zeit der nächsten Sitzung werden am Ende ausgegeben.
+% -- Idee: Es kann eine Begrüßungs- und Abschiedsfloskel ausgegeben werden.
 % \section{Personen}
-% Zu Beginn des Protokolls werden Personen mit dem Befehl \cs{neuePerson} angelegt, was typischerweise über \env{personenliste} geschieht.
-% Für jede Person legt \cs{neuePerson} basierend auf den Argumenten eine \meta{id} fest, definiert \cs{\meta{id}} als einfaches Makro, was \meta{name} zurückgibt und speichert einige Daten.
+% Zu Beginn des Protokolls werden Personen mit dem Befehl \cmd\prot_newperson:nnnnnn\ angelegt, was typischerweise mittels \cmd\prot_newperson_frontend:nnnnnn\ über \env{personenliste} geschieht.
+% Für jede Person legt \cmd\prot_newperson_frontend:nnnnnn\ basierend auf den Argumenten eine ID und den Anzeigenamen fest. Hiermit definiert \cmd\prot_newperson:nnnnnn\ schließlich \cs{\meta{id}} als einfaches Makro, was \meta{name} (und \cmd\xspace) zurückgibt und verarbeitet die restlichen Daten zu Gruppenzugehörigkeit und Anwesenheit.
 % Zu Beginn des Dokuments kann dann eine Anwesenheitsliste oder -tabelle ausgegeben werden.
-% Hiefür werden die Personen innerhalb ihrer \meta{group} sortiert und mit ggf.\@ nötiger Zusatzinformation gemeinsam ausgegeben.
 % Später kann dann bei Abstimmungsergebnissen automatisch die Gesamtstimmzahl ermittelt werden und etwa mit |\erg*00| ein einstimmiges Abstimmungsergebnis ausgegeben werden.
-% Hierfür ist es natürlich nötig, auch speziell zu notieren, wann Stimmberechtigte Personen die Sitzung betreten und verlassen.
-% \section{Ergebnisübersicht}
-% Alle Ergebnisse werden in eine ausgelagerte Datei geschrieben und können wahlweise im Protokoll selbst erscheinen oder auch in einem Übersichtsdokument oder sonstwo.
+% Hierfür ist es natürlich nötig, auch speziell zu notieren, wann stimmberechtigte Personen die Sitzung betreten und verlassen.
+% -- TODO: Sortierung der Anwesenheitsliste
+% -- TODO: Person mit mehreren Gruppen
 % \section{Textbausteine}
 % Der Freundlichkeit halber werden verschiedene Textbausteine etwa für Währungs- und Zeitangaben bereitgestellt sowie für Einschübe für Sitzungspausen oder andere Meta-Informationen.
 % Auch nützlich sind die Möglichkeiten, Befehle zu erstellen, die bei erstmaliger Verwendung eine Erklärung bereitstellen.
+% -- Idee: Alle Ergebnisse werden in eine ausgelagerte Datei geschrieben und können wahlweise im Protokoll selbst erscheinen oder auch in einem Übersichtsdokument oder sonstwo.
 % \StopEventually{\PrintIndex\PrintChanges}
 %
 % \setcounter{StandardModuleDepth}{1}
@@ -90,7 +90,7 @@
 %<@@=prot>
 %<*package>
 	\RequirePackage {expl3}
-	\ProvidesExplPackage{prot}{2021-11-26}{1.0}{A prot and Fun Package}
+	\ProvidesExplPackage { prot } { 2022-03-28 } { 1.0 } { Sitzungsprotokolle }
 %    \end{macrocode}
 % \subsection{Benötigte Pakete}
 %    \begin{macrocode}
