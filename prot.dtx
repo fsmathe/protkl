@@ -26,12 +26,9 @@
 		\file{prot-fsma.def}{\from{style.dtx}{style,fsma}}
 		\file{prot-stupa.def}{\from{style.dtx}{style,stupa}}
 		\file{prot-stud-vv.def}{\from{style.dtx}{style,stud-vv}}
-	}
-	\usedir{testfiles}
-	\generate{
 		\file{test.lvt}{\from{test.dtx}{test}}
 		\file{test.lve}{\from{test.dtx}{expect}}
-		\file{prot-test.def}{\from{style.dtx}{style,fsma,stupa,test}}
+		\file{prot-t.def}{\from{style.dtx}{style,fsma,stupa,test}}
 	}
 	\endbatchfile
 %</install>
@@ -170,6 +167,8 @@
 %   Die |style|-Option lädt gremienspezifische Konfiguration nach.
 %   Beispieslweise mit |style=fsma|.
 %   Laden mehrerer Styles auf eigene Gefahr.
+%   Styles, deren Namen aus nur einem Zeichen besteht, stehen nur zu
+%   Testzwecken zur Verfügung und werden nicht installiert.
 %    \begin{macrocode}
 	\keys_define:nn { prot / options } {
 		, style .code:n = { \file_input:n { prot-#1.def } }
@@ -256,7 +255,6 @@
 %   \cmd\prot_collationclass:n\ den Namen mehr oder weniger gut auf seine
 %   Kollationsklasse ab. Leerzeichen in den Namen werden natürlich nachrangig
 %   nach dem Leerzeichen zwischen Vor- und Nachnamen behandelt.
-%   TODO: Tests
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \prot_attendance_section_sort:n {
 		\exp_args:Nc \prot_person_seq_sort:N { g_prot_attendance_section_ #1 _seq }

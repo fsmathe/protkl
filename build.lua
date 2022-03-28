@@ -1,5 +1,5 @@
 module = "prot"
 
 forcecheckepoch = false
-installfiles = {"*.sty", "*.cls", "*.def"}
+installfiles = {"*.sty", "*.cls", "prot-??*.def"}
 unpackfiles = {"prot.dtx"}
