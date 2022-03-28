@@ -1,0 +1,71 @@
+\documentclass{scrartcl}
+\usepackage[ngerman]{babel}
+\usepackage[
+	, style = stud-vv
+	, datum = 2022-01-01
+	, start = 18:00
+	, ende  = 19:30
+	, version = 0
+]{prot}
+\subtitle{Wintersemester 2021/2022}
+
+\subject{\Vorlaeufiges Protokoll}
+\title{Vollversammlung der Studierendenschaft}
+\publishers{Technische Universität Kaiserslautern}
+
+\begin{persontable}
+\\     & Albert    & Augsburg       &    & stupa    & s
+\\ Ae  & Änderung  & Umlaut-A       &    & stupa    & p
+\\     & Bernhard  & Berlin         &    & stupa    & d
+\\ Cae & Cäsar     & Cottbus        &    & stupa    &
+\\     & Charlotte & Chemnitz       &    & fs=ma    & x
+\\     & David     & Düsseldorf     &    & fs=ph    & e
+\\     & Emil      & Essen          &    & fs=ch    & e
+\\     & Friedrich & Frankfurt      &    & fs=bio   & d
+\\     & Gustav    & Görlitz        &    & fs=info  & x
+\\     & Heinrich  & Hannover       &    & fs=mv    & d
+\\     & Ida       & Iserlohn       &    & fs=eit   & x
+\\     & Jakob     & Jena           &    & fs=sowi  & x
+\\     & Katharina & Kaiserslautern &    & fs=wiwi  & x
+\\     & Ludwig    & Leipzig        &    & fs=arc   & x
+\\     & Marie     & München        &    & fs=ru    & u
+\\     & Nathan    & Nürnberg       &    & fs=bi    & u
+\\     & Otto      & Oldenburg      &    & ref=vors & x
+\\ Oe  & Ökonom    & Umlaut-O       &    & co=vors  & x
+\\     & Paula     & Potsdam        &    & ref=fin  & x
+\\     & Quelle    & Quickborn      &    & ref=fs   & x
+\\     & Richard   & Regensburg     &    & ref=nach & u
+\\     & Samuel    & Stuttgart      &    & ref=sozi & x
+\\     & Schule    & Schwerin       &    & ref=stud & x
+\\     & Eszett    & Eszett         &    & ypsilon  & x
+\\     & Theodor   & Tübingen       &    & g=toll   & x
+\\     & Ulrich    & Unna           &    & g        & x
+\\ Ue  & Überfluss & Umlaut-U       &    &          & x
+\\     & Viktor    & Vogtland       &    &          & x
+\\     & Wilhelm   & Wuppertal      &    &          & x
+\\     & Xanthippe & Xanten         &    &          & x
+\\     & Ypsilon   & Ypsilon        &    & gast     & x
+\\     & Zacharias & Zwickau        &    & gast=Ende& x
+\end{persontable}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\linenumbers
+
+\einschub{In diesem Protokoll ist das Verlassen und Betreten der Sitzung nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
+
+\clearpage
+\section*{Anwesenheitsliste}
+\emph{x: anwesend, e: entschuldigt, u: unentschuldigt, d: digital anwesend}
+\anwesenheitsliste
+
+
+
+%:::::::::MITTEILUNGEN::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\section{Mitteilungen}
+Als Präsident des 51. Studierendenparlaments übernimmt \Albert die Sitzungsleitung, eröffnet die Sitzung um \sStart und begrüßt alle Anwesenden.
+
+\end{document}

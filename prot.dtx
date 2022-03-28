@@ -140,7 +140,7 @@
 				\seq_pop_right:NN \l_tmpa_seq #2
 				\seq_pop_right:NN \l_tmpa_seq #3
 			} {
-				\msg_error:nnn { prot } { wrong-date-format } {#4}
+				\msg_error:nnn { prot } { parse / date / wrong } {#4}
 			}
 		}
 	}
@@ -182,6 +182,7 @@
 		, vorlaeufig .meta:n =  { version = #1 }
 		, vorlaeufig .default:n = 1
 		, titel .tl_set:N = \l_prot_meeting_titel_tl
+		, untertitel .tl_set:N = \l_prot_meeting_untertitel_tl
 		, legislatur .tl_set:N = \l_prot_meeting_legislatur_tl
 		, sitzung .tl_set:N = \l_prot_meeting_sitzung_tl
 		, unterschriftsdatum .code:n = { \prot_parse_date:NNNn \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {#1} }
@@ -200,16 +201,20 @@
 
 	\ProcessKeysOptions { prot / options }
 
-	\newcommand \sDatum { \DTMdisplaydate \l_prot_meeting_year_tl \l_prot_meeting_month_tl \l_prot_meeting_day_tl {-1} }
 	\newcommand \sStart { \l_prot_meeting_start_tl \prot_nbsp: Uhr \xspace }
 	\newcommand \sEnde { \l_prot_meeting_ende_tl \prot_nbsp: Uhr \xspace }
 	\newcommand \sVersion { \l_prot_meeting_version_tl \xspace }
 	\newcommand \Vorlaeufiges { \tl_if_empty:NF \l_prot_meeting_version_tl { \exp_not:n { Vorläufiges~ } } }
+	\newcommand \sDatum { \tl_if_empty:NTF \l_prot_meeting_day_tl
+		{ \msg_error:nn { prot } { meeting / date / missing } }
+		{ \DTMdisplaydate \l_prot_meeting_year_tl \l_prot_meeting_month_tl \l_prot_meeting_day_tl {-1} }
+	}
 	\newcommand \unterschriftsdatum { \tl_if_empty:NTF \l_prot_unterschrift_day_tl
 			{ \today }
 			{ \DTMdisplaydate \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {-1} }
 	}
 	\newcommand \sTitel { \l_prot_meeting_titel_tl }
+	\newcommand \sUntertitel { \l_prot_meeting_untertitel_tl }
 	\newcommand \sitzungsteSitzung { \tl_if_empty:NF \l_prot_meeting_sitzung_tl { \l_prot_meeting_sitzung_tl.~Sitzung } }
 	\newcommand \legislaturste { \tl_if_empty:NF \l_prot_meeting_legislatur_tl { \l_prot_meeting_legislatur_tl.~ } }
 
@@ -1025,7 +1030,8 @@
 %    \end{macrocode}
 % \section{Fehlermeldungen}
 %    \begin{macrocode}
-	\msg_new:nnnn { prot } { wrong-date-format } { Das~Eingabeformat~des~Datums~'#1'~ist~falsch. } { Unterstützte~Eingabeformate~sind~2022-01-31,~31.1.2022,~31.01.2022~sowie~2022-1-31. }
+	\msg_new:nnnn { prot } { parse / date / wrong } { Das~Eingabeformat~des~Datums~'#1'~ist~falsch. } { Unterstützte~Eingabeformate~sind~2022-01-31,~31.1.2022,~31.01.2022~sowie~2022-1-31. }
+	\msg_new:nnnn { prot } { meeting / date / missing } { Kein~Sitzungsdatum~angegeben. } { Gib~bitte~"datum=2022-01-31"~oder~dergleichen~als~Paketoption~oder~in~\exp_not:N\sitzungsdaten~an. }
 	\msg_new:nnnn { prot } { persontable / col-count } { Die~Personentabellenzeile~'#1'~enthaelt~#2~statt~6~Spalten. } { In~jeder~Spalte~muessen~genau~5~\&-Zeichen~stehen. }
 	\msg_new:nnnn { prot } { person / no-leader } { Es~gibt~keine~Sitzungsleitung. } { In~der~Personentabelle~muss~eine~Sitzungsleitung~eingetragen~werden. }
 	\msg_new:nnnn { prot } { person / no-record } { Es~gibt~keine~Protokollfuehrung. } { In~der~Personentabelle~muss~eine~Protkollfuehrung~eingetragen~werden. }

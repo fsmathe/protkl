@@ -15,7 +15,7 @@
 \subject{\Vorlaeufiges Protokoll}
 \title{\legislaturste Studierendenparlament}
 \subtitle{\sitzungsteSitzung}
-\publishers { Technische Universität Kaiserslautern }
+\publishers {Technische Universität Kaiserslautern}
 
 \begin{persontable}
 \\     & Albert    & Augsburg       &    & stupa    & d
@@ -60,9 +60,13 @@
 \linenumbers
 
 \medskip
+
 \einschub{\marginlink{app:ex}In der Randspalte des Protokolls finden sich Verweise auf die entsprechenden Seiten der Sitzungsunterlagen.}
+
 \einschub{Das Verlassen und Betreten der Sitzung wird nur in Teilen bei stimmberechtigten Mitgliedern des Parlaments und den Referent:innen des AStA dokumentiert.}
+
 \abstimmungsformateinschub
+
 \einschub{Die Sitzung findet hybrid in Hörsaal 46-210 und über BigBlueButton statt. Abstimmungen und Wahlen erfolgen für Mitglieder des \stupa, die nicht vor Ort aber in BigBlueButton anwesend sind, per BigBlueButton"=Chat.}
 
 \clearpage
