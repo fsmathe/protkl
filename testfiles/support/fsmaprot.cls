@@ -1,5 +1,5 @@
 \RequirePackage {expl3}
-\ProvidesExplClass { fsmaprot } { 2022-03-28 } { 1.0 } { Fachschaftsprotokolle }
+\ProvidesExplClass {fsmaprot} {2022-03-28} {1.0} {Fachschaftsprotokolle}
 
 \LoadClass { scrartcl }
 

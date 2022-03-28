@@ -38,14 +38,14 @@
 \\     & Samuel    & Stuttgart      &    & ref=sozi & x
 \\     & Schule    & Schwerin       &    & ref=stud & x
 \\     & Eszett    & Eszett         &    & ypsilon  & x
-\\     & Theodor   & Tübingen       &    & g=toll   & x
-\\     & Ulrich    & Unna           &    & g        & x
-\\ Ue  & Überfluss & Umlaut-U       &    &          & x
-\\     & Viktor    & Vogtland       &    &          & x
 \\     & Wilhelm   & Wuppertal      &    &          & x
+\\     & Ulrich    & Unna           &    & g        & x
+\\     & Viktor    & Vogtland       &    &          & x
 \\     & Xanthippe & Xanten         &    &          & x
-\\     & Ypsilon   & Ypsilon        &    & gast     & x
+\\ Ue  & Überfluss & Umlaut-U       &    &          & x
+\\     & Theodor   & Tübingen       &    & g=toll   & x
 \\     & Zacharias & Zwickau        &    & gast=Ende& x
+\\     & Ypsilon   & Ypsilon        &    & gast     & x
 \end{persontable}
 
 \begin{document}

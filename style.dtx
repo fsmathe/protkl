@@ -18,6 +18,10 @@
 	}
 
 	\cs_new:Npn \anwesenheitsliste {
+		\prot_attendance_section_sort:n { f / x }
+		\prot_attendance_section_sort:n { f / e }
+		\prot_attendance_section_sort:n { f / u }
+		\prot_attendance_section_sort:n { g }
 		\prot_attendancelist:n {
 			\prot_attendancelist_item:nn { f / x } { Anwesende }
 			\prot_attendancelist_item:nn { f / e } { Entschuldigte }
@@ -62,6 +66,8 @@
 
 	\RequirePackage{booktabs}
 	\cs_new:Npn \anwesenheitsliste {
+		\prot_attendance_section_sort:n { g }
+%<stud-vv>\prot_attendance_section_sort:n { gast }
 		\par\noindent
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }

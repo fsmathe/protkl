@@ -90,7 +90,7 @@
 %<@@=prot>
 %<*package>
 	\RequirePackage {expl3}
-	\ProvidesExplPackage { prot } { 2022-03-28 } { 1.0 } { Sitzungsprotokolle }
+	\ProvidesExplPackage {prot} {2022-03-28} {1.0} {Sitzungsprotokolle}
 %    \end{macrocode}
 % \subsection{Benötigte Pakete}
 %    \begin{macrocode}
@@ -248,10 +248,55 @@
 	\seq_new:N \l@@_personrow_seq
 %    \end{macrocode}
 % \end{environment}
+% \subsubsection{Sortieren innerhalb der Gruppen}
+% \begin{macro}{}
+%   Die Sequenzen der Gruppen können optional vor der Ausgabe sortiert werden.
+%   Zum Sortieren nutzen wir \cmd\prot_sortname:n \marg{id}, was
+%   \meta{Nachname}~\meta{Vorname} generiert. Danach bildet
+%   \cmd\prot_collationclass:n\ den Namen mehr oder weniger gut auf seine
+%   Kollationsklasse ab. Leerzeichen in den Namen werden natürlich nachrangig
+%   nach dem Leerzeichen zwischen Vor- und Nachnamen behandelt.
+%   TODO: Tests
+%    \begin{macrocode}
+	\cs_new_protected_nopar:Nn \prot_attendance_section_sort:n {
+		\exp_args:Nc \prot_person_seq_sort:N { g_prot_attendance_section_ #1 _seq }
+	}
+	\cs_new_protected_nopar:Nn \prot_person_seq_sort:N {
+		\seq_gsort:Nn #1 {
+			\prot_set_sortname:Nn \l_tmpa_tl {##1}
+			\prot_set_sortname:Nn \l_tmpb_tl {##2}
+			\str_compare:VNVTF \l_tmpa_tl > \l_tmpb_tl
+				{ \sort_return_swapped: }
+				{ \sort_return_same: }
+		}
+	}
+	\cs_new_protected_nopar:Nn \prot_set_sortname:Nn {
+		\exp_args:NNx \prot_set_collationclass:Nn #1 {
+			\exp_not:v { c_prot_person -> #2 / name / last_tl }
+			\scan_stop: \exp_not:v { c_prot_person -> #2 / name / first_tl }
+		}
+	}
+	\cs_new_nopar:Nn \prot_set_collationclass:Nn {
+		\tl_set:Nf #1 { \text_lowercase:n { \exp_stop_f: #2 } }
+		\tl_replace_all:Nnn #1 { ä } { ae }
+		\tl_replace_all:Nnn #1 { ö } { oe }
+		\tl_replace_all:Nnn #1 { ü } { ue }
+		\tl_replace_all:Nnn #1 { ß } { ss }
+		\tl_replace_all:Nnn #1 { ~ } { ! }
+		\tl_replace_once:Nnn #1 { \scan_stop: } { ~ }
+	}
+%    \end{macrocode}
+% \end{macro}
 % \subsubsection{Ausgeben der Personentabelle}
-% \begin{macro}{\anwesenheitsliste, \anwesenheitstabelle}
-%   Gibt Anwesenheitsliste aus.
-%   Keyvalue-liste mit Schlüsseln für die Gruppen und Gruppenname als Wert.
+% \begin{macro}{\prot_attendancelist:n, \prot_attendancelist_item:nn, \prot_attendancetable:nn, \prot_attendancetable_part:nn}
+%   Gibt Anwesenheitsliste aus. Innerhalb von \cmd\prot_attendancelist:n\
+%   sollen \cmd\prot_attendancelist_item:nn\ auftauchen (prinzipiell gehen
+%   natürlich auch andere Items.  Für die jeweiligen Gruppen geben
+%   \cmd\prot_attendancelist_item:nn \marg{Sequenzname} \marg{Anzeigename}
+%   den Inhalt von \cs{g_prot_attendance_section_\meta{Sequenzname}_seq} aus
+%   und schreiben \meta{Anzeigename} vornedran. Items mit leeren Sequenzen
+%   werden übersprungen. Wenn alle Sequenzen leer sein sollten, gibt es eine
+%   schlechte Fehlermeldung.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \prot_attendancelist:n {
 		\begin{description}
@@ -265,7 +310,9 @@
 		}
 	}
 	\cs_new:Nn \prot_attendancelist_actualitem:nn { \exp_not:n { \item[#1] #2 } }
-
+%    \end{macrocode}
+%   Gibt Anwesenheitstabelle mit zwei getrennten Spalten aus. Die Gruppen werden ebenso wie oben angegeben.
+%    \begin{macrocode}
 	\bool_new:N \g@@_attendancetable_has_previous_bool
 	\dim_new:N \l@@_attendancetable_namewidth_dim
 	\cs_new_protected_nopar:Nn \prot_attendancetable:nn {
@@ -1027,6 +1074,7 @@
 	\cs_generate_variant:Nn \seq_set_map:NNn { Nc }
 	\cs_generate_variant:Nn \seq_set_map_x:NNn { Nc }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
+	\cs_generate_variant:Nn \str_compare:nNnTF { VNV }
 %    \end{macrocode}
 % \section{Fehlermeldungen}
 %    \begin{macrocode}

@@ -279,6 +279,52 @@
 	\@@_test:nn { \prot_tl_use_german:n { {Anna} {Bea} {Charlie} {Dora} } } { Anna,~Bea,~Charlie~und~Dora }
 \ENDTEST
 
+\BEGINTEST { \prot_set_sortname:Nn }
+%<*test>
+	\cs_new_protected_nopar:Nn \@@_test_sortname:nnnn {
+		\tl_const:cn { c_prot_person -> #1 / name / last_tl } {#2}
+		\tl_const:cn { c_prot_person -> #1 / name / first_tl } {#3}
+		\prot_set_sortname:Nn \l_tmpa_tl {#1}
+		\exp_args:NV \TYPE \l_tmpa_tl
+	}
+%</test>
+%<*expect>
+	\cs_new_protected_nopar:Nn \@@_test_sortname:nnnn { \TYPE {#4} }
+%</expect>
+	\@@_test_sortname:nnnn { sorta } { Duck } { Donald ~ Gustav } { duck ~ donald ! gustav }
+	\@@_test_sortname:nnnn { sortb } { Ä~Ö~Ü } { älölülß } { ae!oe!ue ~ aeloeluelss }
+\ENDTEST
+
+\BEGINTEST { \prot_person_seq_sort:n }
+	\cs_new_protected_nopar:Nn \@@_set_names:nnn {
+		\tl_const:cn { c_prot_person -> #1 / name / last_tl } {#2}
+		\tl_const:cn { c_prot_person -> #1 / name / first_tl } {#3}
+	}
+	\@@_set_names:nnn { a } { Äab } { asd }
+	\@@_set_names:nnn { b } { Bea } { wer }
+	\@@_set_names:nnn { c } { bnm } { Qwe }
+	\@@_set_names:nnn { d } { dfg } { rtz }
+	\@@_set_names:nnn { e } { efg } { tzu}
+	\@@_set_names:nnn { f } { fjk } { uio }
+	\@@_set_names:nnn { g } { ghj } { iop }
+	\@@_set_names:nnn { h } { Iß  } { akj }
+	\@@_set_names:nnn { i } { Iss } { kjh }
+	\@@_set_names:nnn { j } { Itt } { zhg }
+	\@@_set_names:nnn { k } { Oea } { nbv }
+	\@@_set_names:nnn { l } { Öbc } { vgz }
+	\@@_set_names:nnn { m } { Oec } { xcv }
+	\seq_new:N \g@@_test_person_seq
+%<*test>
+	\seq_gset_split:Nnn \g@@_test_person_seq { } { aejikblghdmcf }
+	\prot_person_seq_sort:N \g@@_test_person_seq
+	\seq_show:N \g@@_test_person_seq
+%</test>
+%<*expect>
+	\seq_gset_split:Nnn \g@@_test_person_seq { } { abcdefghijklm }
+	\seq_show:N \g@@_test_person_seq
+%</expect>
+\ENDTEST
+
 \group_begin:
 \TEST { \@@_apply_group:n, \prot_move:Nn } {
 	\setcounter{errorcontextlines}{100}
@@ -433,7 +479,7 @@
 	% Anmerkung: Personen, deren Ids nicht funktionierten, tauchen hier nicht auf und das ist in Ordnung so.
 	\TYPE {
 	\begin{description} \NEWLINE
-		\exp_not:n { \item[Gäste] Eva~Daus~(Äöü),~Rönja~Daus,~Eva~Daus~(\emph!) } \NEWLINE
+		\exp_not:n { \item[Gäste] Eva~Daus~(Äöü),~Eva~Daus~(\emph!),~Rönja~Daus } \NEWLINE
 	\end{description} \NEWLINE
 	}
 	\TYPE {
@@ -461,8 +507,8 @@
 		\multicolumn 2 l { \exp_not:n { Gäste } } \NEWLINE \\ \NEWLINE
 	\midrule \NEWLINE
 		x & \exp_not:n { Eva~Daus~(Äöü) }\\ \NEWLINE
-		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
 		x & \exp_not:n { Eva~Daus~(\emph!) } \\ \NEWLINE
+		x & \exp_not:n { Rönja~Daus } \\ \NEWLINE
 	\bottomrule \NEWLINE
 	\end{tabular}
 	}
@@ -473,3 +519,4 @@
 \ExplSyntaxOff
 \END
 %    \end{macrocode}
+% vim: sw=4 ts=4 noet fdm=indent fdi=% fdc=3

@@ -7,38 +7,38 @@
 }
 
 \begin{persontable}
-\\     & Albert    & Augsburg       &    & f & p
-\\ Ae  & Änderung  & Umlaut-A       &    & r & s
 \\     & Bernhard  & Berlin         &    & f & x
-\\ Cae & Cäsar     & Cottbus        &    & f & x
-\\     & Charlotte & Chemnitz       &    & f & x
-\\     & David     & Düsseldorf     &    & f & e
-\\     & Emil      & Essen          &    & f & e
+\\     & Jakob     & Jena           &    & f & x
+\\     & Zacharias & Zwickau        &    & f & x
+\\     & Ludwig    & Leipzig        &    & f & x
 \\     & Friedrich & Frankfurt      &    & f & x
 \\     & Gustav    & Görlitz        &    & f & x
-\\     & Heinrich  & Hannover       &    & f & x
-\\     & Ida       & Iserlohn       &    & f & x
-\\     & Jakob     & Jena           &    & f & x
-\\     & Katharina & Kaiserslautern &    & f & x
-\\     & Ludwig    & Leipzig        &    & f & x
-\\     & Marie     & München        &    & f & u
-\\     & Nathan    & Nürnberg       &    & f & u
-\\     & Otto      & Oldenburg      &    & f & x
-\\ Oe  & Ökonom    & Umlaut-O       &    & r & x
-\\     & Paula     & Potsdam        &    & f & x
-\\     & Quelle    & Quickborn      &    & g & x
-\\     & Richard   & Regensburg     &    & f & u
-\\     & Samuel    & Stuttgart      &    & f & x
-\\     & Schule    & Schwerin       &    & g & x
-\\     & Eszett    & Eszett         &    & f & x
+\\ Cae & Cäsar     & Cottbus        &    & f & x
 \\     & Theodor   & Tübingen       &    & f & x
-\\     & Ulrich    & Unna           &    & f & x
-\\ Ue  & Überfluss & Umlaut-U       &    & r & x
+\\     & Katharina & Kaiserslautern &    & f & x
+\\     & Schule    & Schwerin       &    & g & x
+\\     & David     & Düsseldorf     &    & f & e
+\\     & Charlotte & Chemnitz       &    & f & x
+\\     & Richard   & Regensburg     &    & f & u
+\\     & Otto      & Oldenburg      &    & f & x
+\\     & Emil      & Essen          &    & f & e
+\\     & Samuel    & Stuttgart      &    & f & x
 \\     & Viktor    & Vogtland       &    & f & x
-\\     & Wilhelm   & Wuppertal      &    & f & x
+\\     & Albert    & Augsburg       &    & f & p
+\\ Ue  & Überfluss & Umlaut-U       &    & r & x
+\\ Oe  & Ökonom    & Umlaut-O       &    & r & x
+\\     & Ulrich    & Unna           &    & f & x
+\\ Ae  & Änderung  & Umlaut-A       &    & r & s
+\\     & Marie     & München        &    & f & u
 \\     & Xanthippe & Xanten         &    & f & x
+\\     & Wilhelm   & Wuppertal      &    & f & x
+\\     & Paula     & Potsdam        &    & f & x
+\\     & Ida       & Iserlohn       &    & f & x
 \\     & Ypsilon   & Ypsilon        &    & f & x
-\\     & Zacharias & Zwickau        &    & f & x
+\\     & Heinrich  & Hannover       &    & f & x
+\\     & Eszett    & Eszett         &    & f & x
+\\     & Quelle    & Quickborn      &    & g & x
+\\     & Nathan    & Nürnberg       &    & f & u
 \end{persontable}
 
 \begin{document}%
