@@ -308,7 +308,7 @@
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
 		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullname:n {##1} \prot_info:n {##1} \prot_specials:n {##1} }
+			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullnickname:n {##1} \prot_info:n {##1} \prot_specials:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
@@ -348,12 +348,18 @@
 	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} \prot_info:n {#1} } }
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\prot_fullname:n, \prot_attendance:n, \prot_info:n, \prot_specials:n}
+% \begin{macro}{\prot_fullname:n, \prot_fullnickname:n, \prot_attendance:n, \prot_info:n, \prot_specials:n}
 %   Informationen über Person.
 %    \begin{macrocode}
 	\cs_new_nopar:Nn \prot_fullname:n {
 		\exp_not:v { c_prot_person -> #1 / name / first_tl }
 		\space \exp_not:v { c_prot_person -> #1 / name / last_tl }
+	}
+	\cs_new_nopar:Nn \prot_fullnickname:n {
+		\tl_use:c { c_prot_person -> #1 / name / first_tl }
+		\tl_if_empty:cF { c_prot_person -> #1 / name / nick_tl } 
+			{ ~ „ \tl_use:c { c_prot_person -> #1 / name / nick_tl } “ }
+		\space \tl_use:c { c_prot_person -> #1 / name / last_tl }
 	}
 	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person -> #1 / attendance_str } }
 	\cs_new_nopar:Nn \prot_info:n {
@@ -372,9 +378,11 @@
 %    \begin{macrocode}
 	\str_new:N \l@@_id_str
 	\tl_new:N \l@@_name_tl
+	\tl_new:N \l@@_nickname_tl
+	\exp_args_generate:n { VVV }
 	\cs_new_protected_nopar:Npn \prot_newperson_frontend:nnnnnn #1#2#3#4 {
 		\@@_set_idname_via_shorty:nnnn {#1} {#2} {#3} {#4}
-		\exp_args:NVV \prot_newperson:nnnnnn \l@@_id_str \l@@_name_tl {#2} {#3}
+		\exp_args:NVVV \prot_newperson:nnnnnnn \l@@_id_str \l@@_name_tl \l@@_nickname_tl {#2} {#3}
 	}
 %    \end{macrocode}
 % \end{macro}
@@ -384,6 +392,7 @@
 %   Dazu nutzt es \pkg{l3str} und \pkg{l3tl}.
 %    \begin{macrocode}
 	\cs_new_protected_nopar:Nn \@@_set_idname_via_shorty:nnnn {
+		\tl_set:Nn \l@@_nickname_tl {}
 		\tl_if_blank:nTF {#4} {
 			\@@_set_idname:n {#2}
 		} {
@@ -396,6 +405,7 @@
 				{!} { \@@_set_abbreviation:x { \tl_range:nne {#3} {1} { \tl_count:n {#4} } } }
 			} {
 				\@@_set_idname:n {#4}
+				\tl_set:Nn \l@@_nickname_tl {#4}
 			}
 		}
 		\tl_if_blank:nF {#1} { \str_set:Nn \l@@_id_str {#1} }
@@ -415,7 +425,7 @@
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Anlegen einer Person}
-% \begin{macro}{\prot_newperson:nnnnnn}
+% \begin{macro}{\prot_newperson:nnnnnnn}
 %   Nimmt \marg{id}, \marg{name}, \marg{first_name}, \marg{last_name}, \marg{group}, \marg{attendance}, \marg{special}, \marg{voter}.
 %   Zuvor müssen diese bereits befüllt werden.
 %   Dabei werden \marg{id} und \marg{name} von \prot_newperson_frontend:nnnnnn und \marg{group} und \marg{voter} protokollspezifisch festgelegt.
@@ -428,7 +438,7 @@
 %    \begin{macrocode}
 	\prop_new:N \g@@_names_prop
 	\str_new:N \l@@_samename_id_str
-	\cs_new_protected_nopar:Nn\prot_newperson:nnnnnn {
+	\cs_new_protected_nopar:Nn\prot_newperson:nnnnnnn {
 		\prot_tl_if_alphabetic:nTF {#1} {
 			\cs_if_exist:cTF {#1} {
 				\cs_if_exist:cTF { c_prot_person -> #1 / id_str }
@@ -446,11 +456,12 @@
 				\str_set:Nn \l@@_person_str { prot_person -> #1 }
 				\str_const:cn { c_\l@@_person_str / id_str } {#1}
 				\tl_const:cn { c_\l@@_person_str / name_tl } {#2}
-				\tl_const:cn { c_\l@@_person_str / name / first_tl } {#3}
-				\tl_const:cn { c_\l@@_person_str / name / last_tl } {#4}
-				\@@_parse_attendance:n {#6}
+				\tl_const:cn { c_\l@@_person_str / name / nick_tl } {#3}
+				\tl_const:cn { c_\l@@_person_str / name / first_tl } {#4}
+				\tl_const:cn { c_\l@@_person_str / name / last_tl } {#5}
+				\@@_parse_attendance:n {#7}
 				\@@_set_attendance:
-				\@@_apply_group:n {#5}
+				\@@_apply_group:n {#6}
 				\@@_initialize_move:
 				\@@_add_to_attendance_list:vv { g_\l@@_person_str / group_str } { c_\l@@_person_str / attendance_str }
 			}
