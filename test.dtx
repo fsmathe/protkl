@@ -295,7 +295,7 @@
 	\@@_test_sortname:nnnn { sortb } { Ä~Ö~Ü } { älölülß } { ae!oe!ue ~ aeloeluelss }
 \ENDTEST
 
-\BEGINTEST { \prot_person_seq_sort:n }
+\BEGINTEST { \prot_person_seq_sort:N }
 	\cs_new_protected_nopar:Nn \@@_set_names:nnn {
 		\tl_const:cn { c_prot_person -> #1 / name / last_tl } {#2}
 		\tl_const:cn { c_prot_person -> #1 / name / first_tl } {#3}

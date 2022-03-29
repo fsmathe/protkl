@@ -11,7 +11,7 @@
 	}
 
 	\keys_define:nn { prot / attendance_list } { f .choice: }
-	\AddToHook { package / prot / after } {
+	\AddToHook { prot / after } {
 		\prot_add_attendance_section:n { f / x }
 		\prot_add_attendance_section:n { f / e }
 		\prot_add_attendance_section:n { f / u }
@@ -39,7 +39,7 @@
 	\cs_undefine:N \anwesenheitsliste
 %</test>
 
-%<*stupa|stud-vv>
+%<*stupa|vv-stud>
 	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
 	% stupa: zentral gewähltes StuPa-Mitglied → stupa
 	% fs: beratendes StuPa-Mitglied → fs
@@ -54,20 +54,20 @@
 		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
 		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
 		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
-%<stud-vv>, gast .meta:n = { group = gast, info = {#1} }
+%<vv-stud>, gast .meta:n = { group = gast, info = {#1} }
 	}
 
-	\AddToHook { package / prot / after } {
+	\AddToHook { prot / after } {
 		\prot_add_attendance_section:n { stupa }
 		\prot_add_x_attendance_section:n { fs }
 		\prot_add_x_attendance_section:n { asta }
-	%<stud-vv>\prot_add_x_attendance_section:n { gast }
+	%<vv-stud>\prot_add_x_attendance_section:n { gast }
 	}
 
 	\RequirePackage{booktabs}
 	\cs_new:Npn \anwesenheitsliste {
 		\prot_attendance_section_sort:n { g }
-%<stud-vv>\prot_attendance_section_sort:n { gast }
+%<vv-stud>\prot_attendance_section_sort:n { gast }
 		\par\noindent
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }
@@ -77,7 +77,7 @@
 		\prot_attendancetable:nn {.4\linewidth} {
 			\prot_attendancetable_part:nn { fs } { Beratende~Mitglieder }
 %<stupa>\prot_attendancetable_part:nn { g } { Gäste }
-%<*stud-vv>
+%<*vv-stud>
 			\seq_if_empty:NF \g_prot_attendance_section_g_seq {
 				\bool_if:NT \g@@_attendancetable_has_previous_bool \midrule
 				\multicolumn 2 l { \bool_gset_true:N \g@@_attendancetable_has_previous_bool Weitere~Studierende } \\
@@ -85,17 +85,17 @@
 				& \exp_not:n { \emph { siehe~Liste~unten } } \\
 			}
 			\prot_attendancetable_part:nn { gast } { Gäste }
-%</stud-vv>
+%</vv-stud>
 		}
 		\par
-%<stud-vv>\prot_attendancelist:n { \prot_attendancelist_item:nn { g } { Weitere Studierende } }
+%<vv-stud>\prot_attendancelist:n { \prot_attendancelist_item:nn { g } { Weitere~Studierende } }
 	}
 
 	\NewDocumentCommand \finanzantrag { o m m } {
 		\IfNoValueTF {#1} { \paragraph } { \paragraph [#1] }
 		{ FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
 	}
-%</stupa|stud-vv>
+%</stupa|vv-stud>
 
 % Beispiel: \NeueFachschaft {bi} [BI] {BauIng} [Bauingenieurwesen]
 % In Anwesenheitsliste wird fs=bi als „BauIng” angezeigt oder als „BI“ wenn der Platz nicht reicht,

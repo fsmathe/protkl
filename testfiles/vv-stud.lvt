@@ -1,7 +1,7 @@
 \documentclass{scrartcl}
 \usepackage[ngerman]{babel}
 \usepackage[
-	, style = stud-vv
+	, style = vv-stud
 	, datum = 2022-01-01
 	, start = 18:00
 	, ende  = 19:30
