@@ -919,11 +919,12 @@
 	} }
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\eur, \datum, \quot}
+% \begin{macro}{\eur, \datum, \quot, \mail}
 %    \begin{macrocode}
 	\DeclareSIUnit { \eur } { \text { € } }
 	\NewDocumentCommand \eur { m } { \qty {#1} \eur }
 	\NewDocumentCommand \quot { m } { „#1“ }
+	\NewDocumentCommand \mail { m } { \texttt { \href { mailto:#1 } {#1} } }
 	% vier seltsam benannte Datumsbefehle, ich empfehle ja einen der ersten beiden
 	\def \datum #1#2#3#4#5#6 { \group_begin: \DTMsetstyle {german} \DTMdisplaydate { 20#5#6 } { #3#4 } { #1#2 } {-1} \group_end: }
 	\def \dtm #1#2#3#4 { \int_compare:nNnF #1=0 #1 #2 .~ \DTMgermanmonthname { #3#4 } }
