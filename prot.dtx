@@ -314,7 +314,10 @@
 	}
 	\cs_new:Nn \prot_attendancelist_actualitem:nn { \exp_not:n { \item[#1] #2 } }
 %    \end{macrocode}
-%   Gibt Anwesenheitstabelle mit zwei getrennten Spalten aus. Die Gruppen werden ebenso wie oben angegeben.
+%   Gibt Anwesenheitstabelle mit zwei getrennten Spalten aus. Die Gruppen
+%   werden ebenso wie oben angegeben. Das Aussehen einer Tabellenzeile wird
+%   mittels \cmd\prot_attendancetable_actualentry:n\ festgelegt und kann
+%   darüber angepasst werden.
 %    \begin{macrocode}
 	\bool_new:N \g@@_attendancetable_has_previous_bool
 	\dim_new:N \l@@_attendancetable_namewidth_dim
@@ -337,15 +340,16 @@
 			\seq_map_function:cN { g_prot_attendance_section_#1_seq } \prot_attendancetable_actualentry:n
 		}
 	}
+	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} \prot_info:n {#1} } }
 	\cs_new:Nn \prot_table_row:nn {
-		#1 &
+		#1 & \prot_use_short_long:nn { \l@@_attendancetable_namewidth_dim } {#2} \\
+	}
+	\cs_new:Nn \prot_use_short_long:nn {
 		\hbox_set:Nn \l_tmpa_box {#2}
-		\dim_compare:nNnTF { \box_wd:N \l_tmpa_box } > \l@@_attendancetable_namewidth_dim
+		\dim_compare:nNnTF { \box_wd:N \l_tmpa_box } > #1
 			{ \group_begin: \bool_set_true:N \l_prot_shorttext_bool #2 \group_end: }
 			{#2}
-		\\
 	}
-	\cs_new:Nn \prot_attendancetable_actualentry:n { \prot_table_row:nn { \prot_attendance:n {#1} } { \prot_fullname:n {#1} \prot_info:n {#1} } }
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\prot_fullname:n, \prot_fullnickname:n, \prot_attendance:n, \prot_info:n, \prot_specials:n}
@@ -513,37 +517,6 @@
 
 %    \end{macrocode}
 % \end{macro}
-% \subsubsection{Einordnen in Anwesenheitsliste mittels Gruppe und Anwesenheit}
-% \begin{macro}{\@@_add_to_attendance_list:vv, \prot_add_attendance_section:n, \prot_add_x_attendance_section:n}
-%   Nach Parsen der Personendaten führt \cmd\prot_newperson:nnnnnn\ schließlich
-%   \cmd\@@_add_to_attendance_list:vv\marg{gruppe}\marg{anwesenheit} aus,
-%   beispielsweise |\@@_add_to_attendance_list:vv{g}{x}|.  Dies wiederum ruft
-%   Schlüssel definiert durch \cmd\prot_add_attendance_section:n\ und
-%   \cmd\prot_add_x_attendance_section:n\ auf.  Ersteres packt die Person zu
-%   der zur entsprechendne Gruppe gehörigen Sequenz (beispielsweise
-%   \cmd\g_prot_attendance_section_g_seq) hinzu und zweiteres nur, wenn die
-%   Anwesenheit |x| lautet.
-%    \begin{macrocode}
-	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
-		\keys_set:nn { prot / attendance_list } { #1 = #2 }
-	}
-	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
-
-	\cs_new_protected:Nn \prot_add_attendance_section:n {
-		\seq_new:c { g_prot_attendance_section_#1_seq }
-		\keys_define:nn { prot / attendance_list } {
-			#1 .code:n = \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str
-		}
-	}
-	\cs_new_protected:Nn \prot_add_x_attendance_section:n {
-		\seq_new:c { g_prot_attendance_section_#1_seq }
-		\keys_define:nn { prot / attendance_list } {
-			#1 .code:n = \str_if_eq:nnT {##1} { x } { \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str }
-		}
-	}
-	\prot_add_x_attendance_section:n { g }
-%    \end{macrocode}
-% \end{macro}
 % \subsubsection{Parsen der Gruppenzugehörigkeit}
 % \begin{macro}{\@@_apply_group:n}
 %    \begin{macrocode}
@@ -613,6 +586,37 @@
 	\cs_generate_variant:Nn \@@_enter_groupvoter:Nn { c }
 %    \end{macrocode}
 %   For tests see at the very end.
+% \end{macro}
+% \subsubsection{Einordnen in Anwesenheitsliste mittels Gruppe und Anwesenheit}
+% \begin{macro}{\@@_add_to_attendance_list:vv, \prot_add_attendance_section:n, \prot_add_x_attendance_section:n}
+%   Nach Parsen der Personendaten führt \cmd\prot_newperson:nnnnnn\ schließlich
+%   \cmd\@@_add_to_attendance_list:vv\marg{gruppe}\marg{anwesenheit} aus,
+%   beispielsweise |\@@_add_to_attendance_list:vv{g}{x}|.  Dies wiederum ruft
+%   Schlüssel definiert durch \cmd\prot_add_attendance_section:n\ und
+%   \cmd\prot_add_x_attendance_section:n\ auf.  Ersteres packt die Person zu
+%   der zur entsprechendne Gruppe gehörigen Sequenz (beispielsweise
+%   \cmd\g_prot_attendance_section_g_seq) hinzu und zweiteres nur, wenn die
+%   Anwesenheit |x| lautet.
+%    \begin{macrocode}
+	\cs_new_protected_nopar:Nn \@@_add_to_attendance_list:nn {
+		\keys_set:nn { prot / attendance_list } { #1 = #2 }
+	}
+	\cs_generate_variant:Nn \@@_add_to_attendance_list:nn { vv }
+
+	\cs_new_protected:Nn \prot_add_attendance_section:n {
+		\seq_new:c { g_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list } {
+			#1 .code:n = \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str
+		}
+	}
+	\cs_new_protected:Nn \prot_add_x_attendance_section:n {
+		\seq_new:c { g_prot_attendance_section_#1_seq }
+		\keys_define:nn { prot / attendance_list } {
+			#1 .code:n = \str_if_eq:nnT {##1} { x } { \seq_gput_right:cV { g_prot_attendance_section_#1_seq } \l@@_id_str }
+		}
+	}
+	\prot_add_x_attendance_section:n { g }
+%    \end{macrocode}
 % \end{macro}
 % \subsubsection{Kleinkram}
 % \begin{key}{attendance/special, group/special}
@@ -930,6 +934,18 @@
 	\def \dtm #1#2#3#4 { \int_compare:nNnF #1=0 #1 #2 .~ \DTMgermanmonthname { #3#4 } }
 	\def \dat #1#2#3#4#5#6 { \group_begin: \DTMsetstyle { dmyyyy } \DTMsetup { datesep = . } \DTMdisplaydate { 20#5#6 } { #3#4 } { #1#2 } {-1} \group_end: }
 	\def \dt #1#2#3#4 { \int_compare:nNnF #1=0 #1 #2 . \int_compare:nNnF #3=0 #3 #4. }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\finanzantrag}
+%   Finanzantrag mit \cmd\finanzantrag\oarg{Optionen für \cmd\paragraph}
+%   \marg{Finanzantragsnummer} \marg{Finanzantragsname} als \cmd\paragraph
+%   darstellen.
+%    \begin{macrocode}
+	\NewDocumentCommand \finanzantrag { o m m } {
+		\IfNoValueTF {#1} { \paragraph } { \paragraph [#1] }
+		{ FA\IfValueT{#2}{~#2} \hspace{.5em} \mdseries #3 }
+	}
+
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Signatur}
