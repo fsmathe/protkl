@@ -24,6 +24,7 @@
 		\file{prot.drv}{\from{prot.dtx}{driver}}% for documentation
 		\file{prot.sty}{\from{prot.dtx}{package}}
 		\file{prot-fsma.def}{\from{style.dtx}{style,fsma}}
+		\file{prot-asta.def}{\from{style.dtx}{style,asta}}
 		\file{prot-stupa.def}{\from{style.dtx}{style,stupa}}
 		\file{prot-vv-stud.def}{\from{style.dtx}{style,vv-stud}}
 		\file{test.lvt}{\from{test.dtx}{test}}
@@ -569,12 +570,12 @@
 				\int_gdecr:N \g_prot_voters_int
 			}
 		} {
-			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
+			\msg_warning:nnn { prot } { move / wrong-groupvoter } {#2}
 		}
 	}
 	\cs_new_protected_nopar:Nn \@@_enter_groupvoter:Nn {
 		\seq_if_in:NnTF #1 {#2} {
-			\msg_error:nnn { prot } { move / wrong-groupvoter } {#2}
+			\msg_warning:nnn { prot } { move / wrong-groupvoter } {#2}
 		} {
 			\seq_if_empty:NT #1 {
 				\int_gincr:N \g_prot_voters_int
@@ -1118,7 +1119,7 @@
 	\msg_new:nnn  { prot } { person / id-exists } { Die~ID~'#1'~ist~bereits~an~jemand~anderen~vergeben. }
 	\msg_new:nnn  { prot } { person / id-iscsname } { Die~ID~'#1'~existiert~bereits~als~LaTeX-Makro. }
 	\msg_new:nnnn { prot } { person / name-exists } { Der~Name~'#1'~fuer~'#2'~ist~bereits~an~'#3'~vergeben. } { Dies~koennte~Teile~der~Bevoelkerung~verwirren. }
-	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Programmierfehler:~'#1'~bewegt~sich~illegal. } { Eigentlich~sollte~dies~vorher~abgefangen~werden. }
+	\msg_new:nnnn { prot } { move / wrong-groupvoter } { Interne~Warnung:~'#1'~bewegt~sich~illegal. } { Dies~sollte~beim~zweiten~Kompilieren~nicht~mehr~vorkommen. }
 	\msg_new:nnnn { prot } { move / not-there } { '#1'~bewegt~sich,~war~aber~gar~nicht~auf~der~Sitzung. } { Vielleicht~war~sie~doch~anwesend? }
 	\msg_new:nnnn { prot } { move / 0-again } { '#1'~geht~zwei~mal~hintereinander. } { Vielleicht~kam~sie~zwischendrin~wieder? }
 	\msg_new:nnnn { prot } { move / 1-again } { '#1'~kommt~zwei~mal~hintereinander. } { Vielleicht~ging~sie~zwischendrin~wieder? }
