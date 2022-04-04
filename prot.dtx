@@ -356,10 +356,10 @@
 		\space \exp_not:v { c_prot_person -> #1 / name / last_tl }
 	}
 	\cs_new_nopar:Nn \prot_fullnickname:n {
-		\tl_use:c { c_prot_person -> #1 / name / first_tl }
+		\exp_not:v { c_prot_person -> #1 / name / first_tl }
 		\tl_if_empty:cF { c_prot_person -> #1 / name / nick_tl } 
-			{ ~ „ \tl_use:c { c_prot_person -> #1 / name / nick_tl } “ }
-		\space \tl_use:c { c_prot_person -> #1 / name / last_tl }
+		{ ~ \exp_not:n { „ } \exp_not:v { c_prot_person -> #1 / name / nick_tl } \exp_not:n { “ } }
+		\space \exp_not:v { c_prot_person -> #1 / name / last_tl }
 	}
 	\cs_new_nopar:Nn \prot_attendance:n { \exp_not:v { c_prot_person -> #1 / attendance_str } }
 	\cs_new_nopar:Nn \prot_info:n {
