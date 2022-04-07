@@ -25,8 +25,9 @@
 		\file{prot.sty}{\from{prot.dtx}{package}}
 		\file{prot-fsma.def}{\from{style.dtx}{style,fsma}}
 		\file{prot-asta.def}{\from{style.dtx}{style,asta}}
-		\file{prot-stupa.def}{\from{style.dtx}{style,stupa}}
-		\file{prot-vv-stud.def}{\from{style.dtx}{style,vv-stud}}
+		\file{prot-stupa.def}{\from{style.dtx}{style,studischaft,stupa}}
+		\file{prot-stupa-ausschuss.def}{\from{style.dtx}{style,studischaft,ausschuss}}
+		\file{prot-vv-stud.def}{\from{style.dtx}{style,studischaft,vv}}
 		\file{test.lvt}{\from{test.dtx}{test}}
 		\file{test.lve}{\from{test.dtx}{expect}}
 		\file{prot-t.def}{\from{style.dtx}{style,fsma,stupa,test}}
@@ -183,6 +184,7 @@
 		, forlaeufig .default:n = 0
 		, vorlaeufig .meta:n =  { version = #1 }
 		, vorlaeufig .default:n = 1
+		, gremium .tl_set:N = \l_prot_meeting_gremium_tl
 		, titel .tl_set:N = \l_prot_meeting_titel_tl
 		, untertitel .tl_set:N = \l_prot_meeting_untertitel_tl
 		, legislatur .tl_set:N = \l_prot_meeting_legislatur_tl
@@ -203,8 +205,8 @@
 
 	\ProcessKeysOptions { prot / options }
 
-	\newcommand \sStart { \l_prot_meeting_start_tl \prot_nbsp: Uhr \xspace }
-	\newcommand \sEnde { \l_prot_meeting_ende_tl \prot_nbsp: Uhr \xspace }
+	\newcommand \sStart { \l_prot_meeting_start_tl \nbsp Uhr \xspace }
+	\newcommand \sEnde { \l_prot_meeting_ende_tl \nbsp Uhr \xspace }
 	\newcommand \sVersion { \l_prot_meeting_version_tl \xspace }
 	\newcommand \Vorlaeufiges { \tl_if_empty:NF \l_prot_meeting_version_tl { \exp_not:n { Vorläufiges~ } } }
 	\newcommand \sDatum { \tl_if_empty:NTF \l_prot_meeting_day_tl
@@ -215,14 +217,15 @@
 			{ \today }
 			{ \DTMdisplaydate \l_prot_unterschrift_year_tl \l_prot_unterschrift_month_tl \l_prot_unterschrift_day_tl {-1} }
 	}
+	\newcommand \sGremium { \l_prot_meeting_gremium_tl }
 	\newcommand \sTitel { \l_prot_meeting_titel_tl }
 	\newcommand \sUntertitel { \l_prot_meeting_untertitel_tl }
 	\newcommand \sitzungsteSitzung { \tl_if_empty:NF \l_prot_meeting_sitzung_tl { \l_prot_meeting_sitzung_tl.~Sitzung } }
 	\newcommand \legislaturste { \tl_if_empty:NF \l_prot_meeting_legislatur_tl { \l_prot_meeting_legislatur_tl.~ } }
 
 	\date { \sDatum
-		\\ \l_prot_meeting_start_tl \prot_nbsp: Uhr~
-		--~ \l_prot_meeting_ende_tl \prot_nbsp: Uhr
+		\\ \l_prot_meeting_start_tl \nbsp Uhr~
+		--~ \l_prot_meeting_ende_tl \nbsp Uhr
 		}
 	\author { \protokollfuehrung }
 %    \end{macrocode}
@@ -423,10 +426,9 @@
 	}
 	\cs_new_protected_nopar:Nn \@@_set_abbreviation:n {
 		\str_put_right:Nn \l@@_id_str {#1}
-		\tl_put_right:Nn \l@@_name_tl { \prot_nbsp: #1 . }
+		\tl_put_right:Nn \l@@_name_tl { \nbsp #1 . }
 	}
 	\cs_generate_variant:Nn \@@_set_abbreviation:n { x }
-	\cs_new_nopar:Nn \prot_nbsp: { \penalty10000\  }
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Anlegen einer Person}
@@ -542,7 +544,7 @@
 		, group      .value_required:n = true
 		, votergroup .value_required:n = true
 		, info       .value_required:n = true
-		, g .meta:n = { group = g, info = #1 }
+		, g .meta:n = { group = g, info = {#1} }
 	}
 	\cs_generate_variant:Nn \keys_define:nn { nx }
 	\seq_new:N \g_prot_group_g_seq
@@ -795,7 +797,7 @@
 %    \begin{macrocode}
 	\RequirePackage { tabularx }
 	\RequirePackage [ useregional ] { datetime2 }
-	\RequirePackage { siunitx }
+	\RequirePackage [ output-decimal-marker = {,} ] { siunitx }
 	\RequirePackage { hyperref }
 %    \end{macrocode}
 % \subsection{PDF-Metadaten}
@@ -927,7 +929,9 @@
 % \begin{macro}{\eur, \datum, \quot, \mail}
 %    \begin{macrocode}
 	\DeclareSIUnit { \eur } { \text { € } }
+	\DeclareSIUnit { \ct } { \text { ct } }
 	\NewDocumentCommand \eur { m } { \qty {#1} \eur }
+	\NewDocumentCommand \ct { m } { \qty {#1} \ct }
 	\NewDocumentCommand \quot { m } { „#1“ }
 	\NewDocumentCommand \mail { m } { \texttt { \href { mailto:#1 } {#1} } }
 	% vier seltsam benannte Datumsbefehle, ich empfehle ja einen der ersten beiden
@@ -1064,8 +1068,9 @@
 % \begin{macro}{\@, \nicehyphen}
 %    \begin{macrocode}
 	\cs_new_eq:NN \@@_@ \@
-	\cs_set:Npn \@ { \texorpdfstring { \@@_@ } { } }
-	\cs_new:Npn \nicehyphen { \texorpdfstring { \penalty\@M-\hskip\z@skip } { - } }
+	\cs_set_nopar:Npn \@ { \texorpdfstring { \@@_@ } { } }
+	\cs_new_protected_nopar:Npn \nicehyphen { \texorpdfstring { \nobreak-\hskip\z@skip } { - } }
+	\cs_new_protected_nopar:Npn \nbsp { \nobreak\  }
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\prot_tl_use:nn, \prot_tl_use:nnnn, \prot_tl_use_german:n}

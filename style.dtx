@@ -1,4 +1,5 @@
 \ExplSyntaxOn
+
 %<*fsma>
 	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
 	% f: Fachschaftsrat → f
@@ -29,17 +30,17 @@
 			\prot_attendancelist_item:nn { g } { Gäste }
 		}
 	}
-%</fsma>
 
+%</fsma>
 %<*test>
 	\seq_new:N \g_prot_group_refvor_seq
 	\seq_new:N \g_prot_votergroup_refvor_seq
 	\keys_define:nn { prot / group } { refvor .meta:n = { votergroup = refvor } }
 	\cs_new_eq:NN \prot_fsma_anwesenheitsliste \anwesenheitsliste
 	\cs_undefine:N \anwesenheitsliste
-%</test>
 
-%<*stupa|vv-stud>
+%</test>
+%<*studischaft>
 	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
 	% stupa: zentral gewähltes StuPa-Mitglied → stupa
 	% fs: beratendes StuPa-Mitglied → fs
@@ -50,48 +51,65 @@
 	\seq_new:N \g_prot_group_asta_seq
 
 	\keys_define:nn { prot / group } {
-		, stupa .meta:n = { group = stupa, voter }
-		, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
-		, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
-		, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
-%<vv-stud>, gast .meta:n = { group = gast, info = {#1} }
+		%<*!vv>
+			%<stupa>, stupa .meta:n = { group = stupa, voter }
+			%<!stupa>, stupa .meta:n = { group = stupa }
+			%<ausschuss>, ausschuss .meta:n = { group = ausschuss, voter }
+			, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 } }
+			, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 } }
+			, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 } }
+		%</!vv>
+		%<*vv>
+			% Vollversammlung: Alle haben Stimmrecht.
+			% fixme: Mehrfach aufgeführte Personen haben mehrfaches Stimmrecht.
+			, stupa .meta:n = { group = stupa, voter }
+			, fs .meta:n = { group = fs, info = \ShortLongText { fs=#1 }, voter }
+			, ref .meta:n = { group = asta, info = \ShortLongText { ref=#1 }, voter }
+			, co  .meta:n = { group = asta, info = Co\nicehyphen\ShortLongText { ref=#1 }, voter }
+			, g .meta:n = { group = g, info = {#1}, voter }
+			, gast .meta:n = { group = gast, info = {#1} }
+		%</vv>
 	}
 
 	\AddToHook { prot / after } {
-		\prot_add_attendance_section:n { stupa }
+		%<stupa>\prot_add_attendance_section:n { stupa }
+		%<!stupa>\prot_add_x_attendance_section:n { stupa }
+		%<ausschuss>\prot_add_attendance_section:n { ausschuss }
 		\prot_add_x_attendance_section:n { fs }
 		\prot_add_x_attendance_section:n { asta }
-	%<vv-stud>\prot_add_x_attendance_section:n { gast }
+		%<vv>\prot_add_x_attendance_section:n { gast }
 	}
 
 	\RequirePackage{booktabs}
 	\cs_new:Npn \anwesenheitsliste {
 		\prot_attendance_section_sort:n { g }
-%<vv-stud>\prot_attendance_section_sort:n { gast }
+		%<ausschuss>\prot_attendance_section_sort:n { ausschuss }
+		%<vv>\prot_attendance_section_sort:n { gast }
 		\par\noindent
 		\prot_attendancetable:nn {.4\linewidth} {
+			%<ausschuss>\prot_attendancetable_part:nn { ausschuss } { \l_prot_meeting_gremium_tl }
 			\prot_attendancetable_part:nn { stupa } { Studierendenparlament }
 			\prot_attendancetable_part:nn { asta } { Allgemeiner~Studierendenausschuss }
 		}
 		\hfill
 		\prot_attendancetable:nn {.4\linewidth} {
-			\prot_attendancetable_part:nn { fs } { Beratende~Mitglieder }
-%<stupa>\prot_attendancetable_part:nn { g } { Gäste }
-%<*vv-stud>
-			\seq_if_empty:NF \g_prot_attendance_section_g_seq {
-				\bool_if:NT \g@@_attendancetable_has_previous_bool \midrule
-				\multicolumn 2 l { \bool_gset_true:N \g@@_attendancetable_has_previous_bool Weitere~Studierende } \\
-				\midrule
-				& \exp_not:n { \emph { siehe~Liste~unten } } \\
-			}
-			\prot_attendancetable_part:nn { gast } { Gäste }
-%</vv-stud>
+			\prot_attendancetable_part:nn { fs } { Beratende~StuPa-Mitglieder }
+			%<!vv>\prot_attendancetable_part:nn { g } { Gäste }
+			%<*vv>
+				\seq_if_empty:NF \g_prot_attendance_section_g_seq {
+					\bool_if:NT \g@@_attendancetable_has_previous_bool \midrule
+					\multicolumn 2 l { \bool_gset_true:N \g@@_attendancetable_has_previous_bool Weitere~Studierende } \\
+					\midrule
+					& \exp_not:n { \emph { siehe~Liste~unten } } \\
+				}
+				\prot_attendancetable_part:nn { gast } { Gäste }
+			%</vv>
 		}
 		\par
-%<vv-stud>\prot_attendancelist:n { \prot_attendancelist_item:nn { g } { Weitere~Studierende } }
+		%<vv>\prot_attendancelist:n { \prot_attendancelist_item:nn { g } { Weitere~Studierende } }
 	}
-%</stupa|vv-stud>
 
+%</studischaft>
 %<*asta>
 	% Gruppe in Input-Tabelle → Gruppe für Anwesenheitsliste
 	% ref: AStA-Referent_in → asta
@@ -196,10 +214,13 @@
 \NewTextMacroWithParanthesis \CMS { CMS } { Campus-Management-System }
 \NewTextMacroWithParanthesis \MWG { MWG } { Ministerium~für~Wissenschaft~und~Gesundheit~des~Landes~Rheinland-Pfalz }
 \NewTextMacroWithParanthesis \MWWK { MWWK } { Ministerium~für~Wissenschaft,~Weiterbildung~und~Kultur~des~Landes~Rheinland-Pfalz }
+\NewTextMacroWithParanthesis \fzs { fzs } { freier~zusammenschluss~von~student*\nicehyphen innenschaften }
+\NewTextMacroWithParanthesis \BAS { BAS } { Bundesverband~ausländischer~Studierender }
 \NewTextMacroWithParanthesis \SMD { SMD } { Studierendenmission~Deutschland }
 \NewTextMacroWithFootnote \Vergabeausschuss { Vergabeausschuss } { Ausschuss~des~Studierendenparlaments,~der~Mittel~aus~dem~Sozialfonds~und~zwecks~Prozesskostenunterstützung~vergibt.~Tagt~zum~Schutze~personenbezogener~Daten~nicht~öffentlich. }
 \NewTextMacroWithFootnote \agKLeVeR {AG~KLeVeR} { Steht~möglicherweise~für~Kaiserslauterner~LehrVeranstaltungs-~und~Raumplanungs-Gruppe~und~wird~irgendwie~besetzt. }
 \NewTextMacroWithParanthesisAndFootnote \WiB { WiB } { \emph{ Willkommen~im~Busch } } { Erstsemesterbegrüßungsfete~des~Wintersemesters }
 \NewTextMacroWithFootnote \nextbike { \emph { nextbike } } { Fahrradverleihsystem,~mit~dem~die~Studierendenschaft~kooperiert. }
+\NewTextMacroWithParanthesis \BISON { BISON } { Bauingenieursommernacht }
 \NewTextMacroWithParanthesis \KOMMS { KOMMS } { Kompetenzzentrum~für~mathematische~Modellierung~in~MINT-Projekten~in~der~Schule }
 
