@@ -130,18 +130,18 @@
 	\@@_test_donald:nnnn {} { = } { Donald } { Donald ~ Knuth }
 	\@@_test_donald:nnnn {} { ?Duck } { Donald } { Donald ~ Duck }
 	\@@_test_donald:nnnn {} { :Don } { Donald } { Don }
-	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \prot_nbsp: K. }
-	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \prot_nbsp: Kn. }
+	\@@_test_donald:nnnn {} { ! } { DonaldK } { Donald \nbsp K. }
+	\@@_test_donald:nnnn {} { !! } { DonaldKn } { Donald \nbsp Kn. }
 	% The following is weird, but you asked for it :D
-	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \prot_nbsp: Knuth. }
+	\@@_test_donald:nnnn {} { !23456 } { DonaldKnuth } { Donald \nbsp Knuth. }
 	\@@_test_donald:nnnn {} { Don } { Don } { Don }
 	\@@_test_donald:nnnn { DK } { Don } { DK } { Don }
 	\cs_new_protected_nopar:Npn \@@_test_anna:nnnn { \@@_test_shorty:nnnnnn { Anna-Lena } { Rot ~ Grau-Schwarz } }
 	\@@_test_anna:nnnn {} {} { AnnaLena } { Anna-Lena }
-	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \prot_nbsp: Rot . }
-	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \prot_nbsp: Rot ~ G . }
-	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \prot_nbsp: Rot ~ Grau- . }
-	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \prot_nbsp: Rot ~ Grau-S . }
+	\@@_test_anna:nnnn {} { !!! } { AnnaLenaRot } { Anna-Lena \nbsp Rot . }
+	\@@_test_anna:nnnn {} { !!!! } { AnnaLenaRotG } { Anna-Lena \nbsp Rot ~ G . }
+	\@@_test_anna:nnnn {} { !otGrau- } { AnnaLenaRotGrau } { Anna-Lena \nbsp Rot ~ Grau- . }
+	\@@_test_anna:nnnn {} { !otGrau-S } { AnnaLenaRotGrauS } { Anna-Lena \nbsp Rot ~ Grau-S . }
 }
 
 \TEST { \@@_parse_attendance:n , \@@_set_attendance: } {
@@ -446,14 +446,14 @@
 	\msg_error:nnn { prot } { person / id-iscsname } { Roman }
 	\msg_error:nnn { prot } { person / id-exists } { Ada }
 	\msg_error:nnnnn { prot } { person / name-exists } { Eve } { Eva } { Eve }
-	\msg_error:nnnnn { prot } { person / name-exists } { Nathan\prot_nbsp: We. } { NathanWe } { Nat }
+	\msg_error:nnnnn { prot } { person / name-exists } { Nathan\nbsp We. } { NathanWe } { Nat }
 %</expect>
-	\@@_test_show_person:nnnnn { Nat } { Nathan\prot_nbsp: We. } { stupa } { x } { true }
-	\@@_test_show_person:nnnnn { NW  } { Nathan\prot_nbsp: Wa. } { stupa } { e } { false }
+	\@@_test_show_person:nnnnn { Nat } { Nathan\nbsp We. } { stupa } { x } { true }
+	\@@_test_show_person:nnnnn { NW  } { Nathan\nbsp Wa. } { stupa } { e } { false }
 	\@@_test_show_person:nnnnn { Ada } { Ada } { stupa } { x } { true }
 	\@@_test_show_person:nnnnn { Eve } { Eve } { g  } { x } { true }
 	\@@_test_show_person:nnnnn { Ron } { Rönja } { g  } { x } { true }
-	\@@_test_show_name:nn { Nathan\prot_nbsp: We. } { Nat }
+	\@@_test_show_name:nn { Nathan\nbsp We. } { Nat }
 	\@@_test_show_name:nn { Ada } { Ada }
 	\@@_test_show_name:nn { Eve } { Eve }
 	\@@_test_show_name:nn { Rönja } { Ron }
@@ -501,7 +501,7 @@
 	\hfill \NEWLINE
 	\begin{tabular}{} \NEWLINE
 	\toprule \NEWLINE
-		\multicolumn 2 l { \exp_not:n { Beratende~Mitglieder } } \NEWLINE \\ \NEWLINE
+		\multicolumn 2 l { \exp_not:n { Beratende~StuPa-Mitglieder } } \NEWLINE \\ \NEWLINE
 	\midrule \NEWLINE
 		x & \exp_not:n { Momo~Ende~(\ShortLongText{fs=ma}) } \\ \NEWLINE
 	\midrule \NEWLINE

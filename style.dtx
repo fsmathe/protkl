@@ -145,10 +145,10 @@
 %</asta>
 % Beispiel: \NeueFachschaft {bi} [BI] {BauIng} [Bauingenieurwesen]
 % In Anwesenheitsliste wird fs=bi als „BauIng” angezeigt oder als „BI“ wenn der Platz nicht reicht,
-% zudem gibt \fsbi im Text „BauIng“ aus und \fsbi* wiederum „Bauingenieurwesen“
+% zudem gibt \fsbi im Text „Bauingenieurwesen“ aus und \fsbi* wiederum „BauIng“
 \NewDocumentCommand \NeueFachschaft { m O{#3} m O{#3} } {
 	\NewShortLongText { fs=#1 } [#2] {#3}
-	\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} {#4} }
+	\exp_args:Nc \NewDocumentCommand { fs#1 } { s } { \IfBooleanTF {##1} {#3} { #4 \xspace } }
 }
 \NeueFachschaft { arc  } [ Arch   ] { Architektur }
 \NeueFachschaft { bi   } [ BI     ] { BauIng      } [Bauingenieurwesen]
@@ -171,7 +171,7 @@
 \providecommand \prot_referat_hook:n [1] { }
 \NewDocumentCommand \NeuesReferat { m o m } {
 	\NewShortLongText { ref=#1 } [#2] {#3}
-	\exp_args:Nc \NewDocumentCommand { ref#1 } { } {#3}
+	\exp_args:Nc \NewTextMacro { ref#1 } {#3}
 	\prot_referat_hook:n {#1}
 }
 \NeuesReferat { vors }                   { Vorsitz                  }
@@ -214,7 +214,7 @@
 \NewTextMacroWithParanthesis \CMS { CMS } { Campus-Management-System }
 \NewTextMacroWithParanthesis \MWG { MWG } { Ministerium~für~Wissenschaft~und~Gesundheit~des~Landes~Rheinland-Pfalz }
 \NewTextMacroWithParanthesis \MWWK { MWWK } { Ministerium~für~Wissenschaft,~Weiterbildung~und~Kultur~des~Landes~Rheinland-Pfalz }
-\NewTextMacroWithParanthesis \fzs { fzs } { freier~zusammenschluss~von~student*\nicehyphen innenschaften }
+\NewTextMacroWithParanthesis \fzs { fzs } { freier~zusammenschluss~von~student*\softhyphen innenschaften }
 \NewTextMacroWithParanthesis \BAS { BAS } { Bundesverband~ausländischer~Studierender }
 \NewTextMacroWithParanthesis \SMD { SMD } { Studierendenmission~Deutschland }
 \NewTextMacroWithFootnote \Vergabeausschuss { Vergabeausschuss } { Ausschuss~des~Studierendenparlaments,~der~Mittel~aus~dem~Sozialfonds~und~zwecks~Prozesskostenunterstützung~vergibt.~Tagt~zum~Schutze~personenbezogener~Daten~nicht~öffentlich. }

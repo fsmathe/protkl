@@ -1,5 +1,9 @@
 \documentclass{scrartcl}
 \usepackage[ngerman]{babel}
+\usepackage{fontspec} % Only works with XeTeX or LuaTeX
+\setmainfont[Numbers=OldStyle]{Latin Modern Roman}
+\setsansfont{Latin Modern Sans}
+\setmonofont{Latin Modern Mono}
 \usepackage{microtype}
 
 \usepackage[
