@@ -224,3 +224,19 @@
 \NewTextMacroWithParanthesis \BISON { BISON } { Bauingenieursommernacht }
 \NewTextMacroWithParanthesis \KOMMS { KOMMS } { Kompetenzzentrum~für~mathematische~Modellierung~in~MINT-Projekten~in~der~Schule }
 
+\NewTextMacro \ewochen { $\varepsilon$ Wochen }
+\NewTextMacro \Ewochen { E \kern1pt - \kern-1pt Wochen }
+\NewTextMacro \LiMeS {%
+    L\kern-.07em{\sbox\z@ M\vbox to\ht\z@{\hbox %
+    {\check@mathfonts\fontsize\sf@size\z@\math@fontsfalse\selectfont I}%
+    \vss}}\kern-.05em%
+    M\kern-.1em\lower.5ex\hbox{E}\kern-.08emS\@%
+}
+
+% Kleinschreibung für Befehle
+\cs_set_eq:NN \fsk \FSK
+\cs_set_eq:NN \fsr \FSR
+\cs_set_eq:NN \vv \VV
+\cs_set_eq:NN \go \GO
+\cs_set_eq:NN \limes \LiMeS
+\cs_set_eq:NN \komms \KOMMS
