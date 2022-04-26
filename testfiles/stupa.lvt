@@ -182,14 +182,14 @@ Auf \Ida{s} Aufforderung geben alle, die im StuPa eine Stimme haben, deren Stimm
 \finanzantrag[marginlink=app:ex|4]{71/21}{Sonnencreme} Hier ist ein Verweis auf \autoref{Sonne.Gremien} angebracht.
 Der Antrag wird mit \erg*00 angenommen.
 
-\section[marginlink=app:ex|1]{Weihnachten}
+\section[marginlink=app:ex2|1]{Weihnachten}
 Alle mögen Weihnachten und glauben an das Gute.
 
 \subsection{\Eszett{s} und \Theodor{s} Wunschzettel}
 Das dürfen sie natürlich nicht weitersagen. Ist ja klar.
 
 
-\subsection[marginlink=app:ex|2]{Wünsche für \Ae}
+\subsection[marginlink=app:ex2|2]{Wünsche für \Ae}
 Möge alles gut funktionieren.
 
 
@@ -234,6 +234,7 @@ Es regnet \eur{12345} vom Himmel.
 \subsection{Hi} \label{app:hi}
 \subsubsection{Hallöchen} \label{app:kindisch}
 \includepdfsection{app:ex}{Bunte Seiten}{example-image-a4-numbered.pdf}
+\includepdfsection[pages=2-4][2]{app:ex2}{Wenige bunte Seiten}{example-image-a4-numbered.pdf}
 \subsection{Tschüss}
 \includepdfsubsubsection{app:a3}{Große breite Seite}{example-image-a3-landscape.pdf}
 \end{document}

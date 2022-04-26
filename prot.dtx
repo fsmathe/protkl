@@ -981,29 +981,33 @@
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{PDF-Anhänge}
-% \begin{macro}{\includepdfsection, \includepdfsubsection, \includepdfsubsubsection}
+% \begin{macro}{\IncludePdfSection, \includepdfsection, \includepdfsubsection, \includepdfsubsubsection}
 %   Überschrift erscheint ganz oben links auf der Seite.
 %   Alternativ auch möglich wäre die Anhänge runterzuskalieren, die
 %   Seitenzahlen beizubehalten und den Buchstaben des Anhangs als Randnotiz
 %   anzumerken.
+%
+%   Die |pagenumber| sollte die erste eingebundene Seite sein. Bei |pages=2-|
+%   also |2|, im Normalfall aber |1|.
+%   |\IncludePdfSection{section}{sectionlevel}[options to includepdf][pagenumber]{labelname}{heading}{filename}|
 %    \begin{macrocode}
 	\RequirePackage { pdfpages }
-	\NewDocumentCommand \ProtIncludePDF { m O{} m m m } {
+	\NewDocumentCommand \IncludePdfSection { m m O{} O{1} m m m } {
 		\nolinenumbers
 		\includepdf [
-			, pages = - , link , linkname = #3 , addtotoc = { 1, #1, 1, #4, #3 }
+			, pages = - , link , linkname = #5 , addtotoc = { #4, #1, #2, #6, #5 }
 			, picturecommand* = {
 				\put ( \dim_to_decimal:n { 1 em } , \dim_to_decimal:n { \paperheight - 2 em } ) {
-					\usekomafont { disposition } \usekomafont {#1} \autoref* {#3} \autodot \  #4
+					\usekomafont { disposition } \usekomafont {#1} \autoref* {#5} \autodot \  #6
 				}
 			}
-			, #2
-		] {#5}
+			, #3
+		] {#7}
 		\linenumbers
 	}
-	\NewDocumentCommand \includepdfsection { } { \ProtIncludePDF { section } }
-	\NewDocumentCommand \includepdfsubsection { } { \ProtIncludePDF { subsection } }
-	\NewDocumentCommand \includepdfsubsubsection { } { \ProtIncludePDF { subsubsection } }
+	\NewDocumentCommand \includepdfsection { } { \IncludePdfSection { section } { 1 } }
+	\NewDocumentCommand \includepdfsubsection { } { \IncludePdfSection { subsection } { 2 } }
+	\NewDocumentCommand \includepdfsubsubsection { } { \IncludePdfSection { subsubsection } { 3 } }
 %    \end{macrocode}
 % \end{macro}
 % \subsubsection{Verweise}
