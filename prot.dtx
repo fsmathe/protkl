@@ -987,23 +987,28 @@
 %   Seitenzahlen beizubehalten und den Buchstaben des Anhangs als Randnotiz
 %   anzumerken.
 %
+%   |\IncludePdfSection{sectiontype}{sectionlevel}[options to includepdf][pagenumber]{labelname}{heading}{filename}|
 %   Die |pagenumber| sollte die erste eingebundene Seite sein. Bei |pages=2-|
 %   also |2|, im Normalfall aber |1|.
-%   |\IncludePdfSection{section}{sectionlevel}[options to includepdf][pagenumber]{labelname}{heading}{filename}|
+%   |\prot_section_topleft_picture:nnn {sectiontype} {labelname} {heading}|
+%   setzt innerhalb einer picturecommand-Option oben links auf der Seite mit
+%   1em Abstand zum Rand eine Überschrift der Ebene sectiontype, wobei die
+%   Nummerierung mittels einer Referenz auf labelname erzeugt wird.
 %    \begin{macrocode}
 	\RequirePackage { pdfpages }
 	\NewDocumentCommand \IncludePdfSection { m m O{} O{1} m m m } {
 		\nolinenumbers
 		\includepdf [
 			, pages = - , link , linkname = #5 , addtotoc = { #4, #1, #2, #6, #5 }
-			, picturecommand* = {
-				\put ( \dim_to_decimal:n { 1 em } , \dim_to_decimal:n { \paperheight - 2 em } ) {
-					\usekomafont { disposition } \usekomafont {#1} \autoref* {#5} \autodot \  #6
-				}
-			}
+			, picturecommand* = \prot_section_topleft_picture:nnn {#1} {#5} {#6}
 			, #3
 		] {#7}
 		\linenumbers
+	}
+	\cs_new_protected:Nn \prot_section_topleft_picture:nnn {
+		\put ( \dim_to_decimal:n { 1 em } , \dim_to_decimal:n { \paperheight - 2 em } ) {
+			\usekomafont { disposition } \usekomafont {#1} \autoref* {#2} \autodot \  #3
+		}
 	}
 	\NewDocumentCommand \includepdfsection { } { \IncludePdfSection { section } { 1 } }
 	\NewDocumentCommand \includepdfsubsection { } { \IncludePdfSection { subsection } { 2 } }
