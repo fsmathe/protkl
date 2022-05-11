@@ -155,7 +155,8 @@
 	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand #1 {#2} { \RenewDocumentCommand #1 {#2} { } #3 } }
 	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { #2 \xspace } }
 	\NewDocumentCommand \NewTextMacroWithReplacement { m m +m } { \newcommand #1 { \RenewDocumentCommand #1 { } { #3 \xspace } #2 \xspace } }
-	\NewDocumentCommand \NewTextMacroWithParanthesis { m m m } { \NewTextMacroWithReplacement {#1} { #3 ~ (#2) } {#2} }
+	
+	\NewDocumentCommand \NewTextMacroWithParanthesis { m m m } { \NewDocumentCommand #1 { o } { \RenewDocumentCommand #1 { o } { #2 \xspace } \IfValueTF {##1} {##1} {#3} ~ (#2) \xspace } }
 	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithReplacement {#1} { #2 \footnote {#3} } {#2} }
 	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewTextMacroWithReplacement {#1} { #3 \footnote {#4} ~ (#2) } {#2} }
 %    \end{macrocode}
