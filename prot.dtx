@@ -149,24 +149,24 @@
 %   Ein paar Befehle, die sich beim ersten Aufruf selbst ersetzen, sowie mit
 %   und ohne \cmd\xspace.
 %
-%   Die Variante mit optionalem Argument in Key-Value-Syntax erlaubt, die
-%   Grammatik anzupassen, um beispielsweise |den \asta[r=n]| korrekt schreiben
-%   zu können.  Genauer ersetzt |\asta[r=n, el][ss=fg]| im Ersetzungstext
-%   (inklusive Klammern) das erste |r| durch ein |n|, ersetzt alle |ss| durch
-%   |fg| und hängt ein |el| an.  Als Spezialfall wird |\ | in einem Schlüssel,
-%   wie ein Leerzeichen betrachtet.  Dies erlaubt mittels |\asta[][\ ={"=}]|
-%   alle Leerzeichen durch Bindestriche zu ersetzen.
+%   Die Variante mit optionalen Argumenten in Key-Value-Syntax und optionalem
+%   folgenden Bindestrich erlaubt, die Grammatik anzupassen, um beispielsweise
+%   |den \asta[r=n]| korrekt schreiben zu können.
+%   Genauer ersetzt |\asta[r=n, el][ss=fg]-| im Ersetzungstext (inklusive
+%   Klammern) das erste |r| durch ein |n|, ersetzt alle |ss| durch |fg|, hängt
+%   ein |el| an und ersetzt dank des |-| alle Leerzeichen durch Bindestriche.
+%   Das Ergebnis ist sowas wie |Allgemeinen"=Studierendenaufgufgel"=(AStA)"=|.
 %    \begin{macrocode}
-	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} {#4} #3 } }
+	\NewDocumentCommand \NewCommandWithReplacement { m O{} +m +m } { \NewDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} {#3} #4 } }
 	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
-	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} {#4} #3 } }
+	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} {#3} #4 } }
 	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
 	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { #2 \xspace } }
-	\NewDocumentCommand \NewTextMacroWithReplacement { m O{} m +m } { \NewDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { #3 \xspace } #4 \xspace } }
-	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewTextMacroWithReplacement {#1} [ O{} O{} ] {#2} { \prot_tl_replace_kv:nnn {#3} {##1} {##2} } }
+	\NewDocumentCommand \NewTextMacroWithReplacement { m O{} m +m } { \NewCommandWithReplacement {#1} [#2] { #3 \xspace } { #4 \xspace } }
+	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} t- ] { #2 \xspace } { \prot_tl_replace_kv:nnnn { #3 \xspace } {##1} {##2} {##3} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 ~ \prot_paren:n {#2} } }
 	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewTextMacroWithReplacement {#1} {#2} { #2 \footnote {#3} } }
-	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 \footnote {#4} ~ \prot_paren:n {#2} } { \space } }
+	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 \footnote {#4} ~ \prot_paren:n {#2} } }
 	\cs_new:Nn \prot_paren:n { ( #1 ) }
 %    \end{macrocode}
 % \end{macro}
@@ -1094,10 +1094,11 @@
 %   Ein |\ | im Schlüssel wird wie | | interpretiert.
 %   Dies ist insbesondere notwendig, da | | als Schlüsselname leider illegal ist.
 %    \begin{macrocode}
-	\cs_new_protected:Nn \prot_tl_replace_kv:nnn {
+	\cs_new_protected:Nn \prot_tl_replace_kv:nnnn {
 		\tl_set:Nn \l_tmpa_tl {#1}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_once:Nnn \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_once:Nnn \l_tmpa_tl } {#2}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_all:Nnn  \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_all:Nnn  \l_tmpa_tl } {#3}
+		\bool_if:nT {#4} { \tl_replace_all:Nnn \l_tmpa_tl { ~ } { \nicehyphen } \tl_replace_all:Nnn \l_tmpa_tl { \xspace } { \nicehyphen } }
 		\prot_echo:V \l_tmpa_tl
 	}
 	\cs_new:Nn \@@_use_i_ii_iiiplusii:nnn { #1 {#2} { #3 #2 } }

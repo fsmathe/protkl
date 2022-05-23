@@ -520,7 +520,7 @@
 
 \BEGINTEST { \prot_tl_replace_kv:nnnn }
 %<*test>
-	\cs_new:Nn \@@_test_tl_replace:nnnn { \prot_tl_replace_kv:nnn {#1} {#2} {#3} }
+	\cs_new:Nn \@@_test_tl_replace:nnnn { \prot_tl_replace_kv:nnnn {#1} {#2} {#3} \c_false_bool }
 %</test>
 %<*expect>
 	\cs_new:Nn \@@_test_tl_replace:nnnn { \TYPENOEXP {#4} }
@@ -530,6 +530,7 @@
 	\@@_test_tl_replace:nnnn { ab~\prot_paren:n cd~\prot_paren:n ef } { /, * } { : } { ab/*:~\prot_paren:n cd:~\prot_paren:n ef }
 	\@@_test_tl_replace:nnnn { Lustiger~alberner~T-förmiger~erstaunlicher~Xeno~\prot_paren:n{LaTeX} } { s } { {r~} = {n~} } { Lustigen~albernen~T-förmigen~erstaunlichen~Xenos~\prot_paren:n{LaTeX} }
 	\@@_test_tl_replace:nnnn { Augusta~Ada~King-Noel~\prot_paren:n{AAKN}\xspace } { \xspace = -Straße } { \  = \nicehyphen } { Augusta\nicehyphen Ada\nicehyphen King-Noel\nicehyphen\prot_paren:n{AAKN}-Straße }
+	\@@_nontest:nn { \prot_tl_replace_kv:nnnn { A~B~C~D~\prot_paren:n{ABCD}\xspace } { } { } \c_true_bool } { \TYPENOEXP { A\nicehyphen B\nicehyphen C\nicehyphen D\nicehyphen\prot_paren:n{ABCD}\nicehyphen } }
 \ENDTEST
 
 \ExplSyntaxOff
