@@ -12,6 +12,7 @@
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_n:N { \cs_set_nopar:Npn #1 ##1 { \TYPE { \exp_not:n { #1 {##1} } } } }
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nn:N { \cs_set_nopar:Npn #1 ##1##2 { \TYPE { \exp_not:n { #1 {##1} {##2} } } } }
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nnn:N { \cs_set_nopar:Npn #1 ##1##2##3 { \TYPE { \exp_not:n { #1 {##1} {##2} {##3} } } } }
+	\cs_set_eq:NN \prot_echo:n \TYPENOEXP
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
 	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
@@ -516,6 +517,20 @@
 %</expect>
 }
 \group_end:
+
+\BEGINTEST { \prot_tl_replace_kv:nnnn }
+%<*test>
+	\cs_new:Nn \@@_test_tl_replace:nnnn { \prot_tl_replace_kv:nnn {#1} {#2} {#3} }
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_tl_replace:nnnn { \TYPENOEXP {#4} }
+%</expect>
+	\@@_test_tl_replace:nnnn { abcade } { a = x, b = y, y = z } { }  { xzcade }
+	\@@_test_tl_replace:nnnn { abcade } { d = b } { a = x, b = y }  { xycxye }
+	\@@_test_tl_replace:nnnn { ab~\prot_paren:n cd~\prot_paren:n ef } { /, * } { : } { ab/*:~\prot_paren:n cd:~\prot_paren:n ef }
+	\@@_test_tl_replace:nnnn { Lustiger~alberner~T-förmiger~erstaunlicher~Xeno~\prot_paren:n{LaTeX} } { s } { {r~} = {n~} } { Lustigen~albernen~T-förmigen~erstaunlichen~Xenos~\prot_paren:n{LaTeX} }
+	\@@_test_tl_replace:nnnn { Augusta~Ada~King-Noel~\prot_paren:n{AAKN}\xspace } { \xspace = -Straße } { \  = \nicehyphen } { Augusta\nicehyphen Ada\nicehyphen King-Noel\nicehyphen\prot_paren:n{AAKN}-Straße }
+\ENDTEST
 
 \ExplSyntaxOff
 \END

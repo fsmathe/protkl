@@ -1,9 +1,6 @@
 \documentclass{scrartcl}
 \usepackage[ngerman]{babel}
-\usepackage{fontspec} % Only works with XeTeX or LuaTeX
-\setmainfont[Numbers = OldStyle, UprightFeatures = { SmallCapsFont = Latin Modern Roman Caps }]{Latin Modern Roman}
-\setsansfont{Latin Modern Sans}
-\setmonofont{Latin Modern Mono}
+\usepackage{cfr-lm} % Schriftart: Latin Modern
 \usepackage{microtype}
 
 \usepackage[
@@ -15,6 +12,7 @@
 	, start = 18:00
 	, ende = 00:00
 ]{prot}
+%\setkomafont{einschub}{\uishape} % Aufrechte Kursive
 
 \subject{\Vorlaeufiges Protokoll}
 \title{\legislaturste Studierendenparlament}
@@ -201,13 +199,15 @@ Der TOP wird ohne Gegenrede vertagt.
 \einschub{Die Berichte sind teils über den BigBlueButton-Chat erfolgt.}
 \subsection{Allgemeiner Studierenden Ausschuss (AStA)}
 
-\paragraph{Vorsitz} \Eszett berichtet, dass das Hochschulgesetz nun unter einem wundervollen, alle Protokollschreibenden glücklich machenden, einmalig guten Ort im sogenannten Internet zu finden ist.\footnote{\url{https://www.landesrecht.rlp.de/bsrp/document/jlr-HSchulGRP2020rahmen}}
+\paragraph{Vorsitz} \Eszett berichtet aus dem \asta[r = n][\  = {"=}]{}"=Geschehen, dass das Hochschulgesetz nun unter einem wundervollen, alle Protokollschreibenden glücklich machenden, einmalig guten Ort im sogenannten Internet zu finden ist.\footnote{\url{https://www.landesrecht.rlp.de/bsrp/document/jlr-HSchulGRP2020rahmen}}
 \smallskip
 
-Nach einem kleinen vertikalen Abstand erzählt er uns was über die \LAK und dann noch mehr über die \LAK.
+Nach einem kleinen vertikalen Abstand erzählt er uns was über die \LAK[ASten=Affen, en] und dann noch mehr über die \LAK[]{}en.
 
-\subsection[marginref=app:ex]{Fachschaften}
+\subsection[marginref=app:ex]{\textsc{Fach}schaften}
 \paragraph{Architektur} \Richard berichtet viel Schönes.
+
+\paragraph\fsma $\exists$ immer noch ein Haufen \KoMa[][\ ={"=}]{}"=Kartenspiele.
 
 \subsection[marginref=Sonne.Gremien]{Protokoll}
 \Ae berichtet von \autoref{app:hallo}, \autoref{app:hi}, \autoref{app:kindisch} und \autoref{app:ex}.
