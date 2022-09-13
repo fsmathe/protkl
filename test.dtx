@@ -12,7 +12,9 @@
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_n:N { \cs_set_nopar:Npn #1 ##1 { \TYPE { \exp_not:n { #1 {##1} } } } }
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nn:N { \cs_set_nopar:Npn #1 ##1##2 { \TYPE { \exp_not:n { #1 {##1} {##2} } } } }
 \cs_new_protected_nopar:Nn \@@_test_cs_set_typeself_nnn:N { \cs_set_nopar:Npn #1 ##1##2##3 { \TYPE { \exp_not:n { #1 {##1} {##2} {##3} } } } }
-	\cs_set_eq:NN \prot_echo:n \TYPENOEXP
+\cs_set_eq:NN \prot_echo:n \TYPENOEXP
+\cs_set_protected_nopar:Npn \nicehyphen { - }
+\cs_set_protected_nopar:Npn \xspace { ~ }
 %<*test>
 	\cs_new:Nn \@@_test:nn { \TYPE {#1} }
 	\cs_new:Nn \@@_tltest:nn { \TYPE {#1} }
@@ -517,6 +519,59 @@
 %</expect>
 }
 \group_end:
+
+\BEGINTEST { \Suffix, ... }
+%<*test>
+	\cs_new:Nn \@@_test_Suffix:nn { \Suffix #1 }
+	\TYPE { \@@_suffix:N \c_false_bool }
+	\TYPE { \@@_suffix:N \c_true_bool }
+%</test>
+%<*expect>
+	\cs_new:Nn \@@_test_Suffix:nn { \TYPE {#2} }
+	\TYPE { \xspace }
+	\TYPE { \nicehyphen }
+%</expect>
+	\@@_test_Suffix:nn { { a b c }   } { a b c \NEWLINE \xspace }
+	\@@_test_Suffix:nn { { a b c } - } { a b c \NEWLINE \nicehyphen }
+	\@@_test_Suffix:nn { { a~b~c }   } { a~b~c \NEWLINE \xspace }
+	\@@_test_Suffix:nn { { a~b~c } - } { a \nicehyphen b \nicehyphen c \NEWLINE \nicehyphen }
+	\@@_test_Suffix:nn { [ \prot_echo:n { x~y } ] { a~b~c }   } { a~b~c \NEWLINE x~y \NEWLINE \xspace }
+	\@@_test_Suffix:nn { [ \prot_echo:n { x~y } ] { a~b~c } - } { a \nicehyphen b \nicehyphen c \NEWLINE x~y \NEWLINE \nicehyphen }
+\ENDTEST
+
+\BEGINTEST { \NewTextMacro, ... }
+%<*test>
+	\NewTextMacro \Foo { Foo }
+	\NewTextMacroWithParanthesis \@@_stupa_i { StuPa } { Studierendenparlament }
+	\NewTextMacroWithParanthesis \@@_stupa_ii { StuPa } { Studierendenparlament }
+	\Foo
+	\Foo -
+	\@@_suffix:Nnn \c_false_bool { StuPa } {}
+	\@@_suffix:Nnn \c_true_bool { StuPa } {}
+	\SEPARATOR
+	\@@_stupa_i
+	\SEPARATOR
+	\@@_stupa_i -
+	\SEPARATOR
+	\@@_stupa_ii -
+	\SEPARATOR
+	\@@_stupa_ii
+%</test>
+%<*expect>
+	\TYPE { Foo \NEWLINE \xspace }
+	\TYPE { Foo \NEWLINE \nicehyphen }
+	\TYPE { StuPa \NEWLINE \xspace }
+	\TYPE { StuPa \NEWLINE \nicehyphen }
+	\SEPARATOR
+	\TYPENOEXP { Studierendenparlament ~ \prot_paren:n { StuPa } ^^J \xspace }
+	\SEPARATOR
+	\TYPE { StuPa \NEWLINE \nicehyphen }
+	\SEPARATOR
+	\TYPENOEXP { Studierendenparlament \nicehyphen \prot_paren:n { StuPa } ^^J \nicehyphen }
+	\SEPARATOR
+	\TYPE { StuPa \NEWLINE \xspace }
+%</expect>
+\ENDTEST
 
 \BEGINTEST { \prot_tl_replace_kv:nnnn }
 %<*test>
