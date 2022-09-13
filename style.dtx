@@ -190,13 +190,13 @@
 \NeuesReferat { verk }                   { Verkehr                  }
 \NeuesReferat { sofe }                   { Sommerfest               }
 
+\cs_set_nopar:Npn \* { * \softhyphen }
 \ExplSyntaxOff
 \newcommand \nix {Es gibt nichts zu berichten.}
 \newcommand \niemand {Es ist niemand anwesend.}
 \newcommand \fs {Fachschaft}
 \newcommand \fb {Fachbereich}
 \NewTextMacro \RB {Rechenschaftsbericht}
-\NewTextMacroWithParanthesis \stupa {StuPa} {Studierendenparlament}
 \NewTextMacro \uni {Universität}
 \NewTextMacro \senat {Senat}
 \NewTextMacro \kl {Kaiserslautern}
@@ -204,33 +204,38 @@
 \NewTextMacro \gepro {Gedächtnisprotokolle}
 \NewTextMacroWithParanthesis \VU {VU} {Vorlesungsumfrage}
 \NewTextMacroWithParanthesis \stuko {StuKo} {Studienkomission}
+\NewTextMacroWithParanthesis \stupa {StuPa} {Studierendenparlament}
 \NewTextMacroWithParanthesis \asta {AStA} {Allgemeiner Studierendenausschuss}
 \NewTextMacroWithParanthesis \FSK {\textsc{Fsk}} {Fachschaftenkonferenz}
 \NewTextMacroWithParanthesis \FSR {\textsc{Fsr}} {Fachschaftsrat}
 \NewTextMacroWithParanthesis \FBR {\textsc{Fbr}} {Fachbereichsrat}
+\NewTextMacroWithParanthesis \FSL {FSL} {Fachausschuss für Studium und Lehre}
 \NewTextMacroWithParanthesis \VV {VV} {Vollversammlung}
 \NewTextMacroWithParanthesis \GO {GO} {Geschäftsordnung}
 \NewTextMacroWithParanthesis \AR {AE} {Aufwandsentschädigung}
 \NewTextMacroWithParanthesis \LAK {LAK} {LandesAStenKonferenz}
-\NewTextMacroWithParanthesis \SSC {SSC} {Studierenden"=Service"=Center}
+\NewTextMacroWithParanthesis \SSC {SSC} {Studierenden\nicehyphen Service\nicehyphen Center}
 \NewTextMacroWithParanthesis \ZfL {ZfL} {Zentrum für Lehrerbildung}
-\NewTextMacroWithParanthesis \LBB {LBB} {Landesbetrieb Liegenschafts"= und Baubetreuung}
+\NewTextMacroWithParanthesis \LBB {LBB} {Landesbetrieb Liegenschafts\nicehyphen\ und Baubetreuung}
+\NewTextMacroWithParanthesis \RefQSL {RefQSL} {Referat Qualität in Studium und Lehre}
 \NewTextMacroWithParanthesisAndFootnote \HAv {HA~5} {Hauptabteilung~5} {Hauptabteilung der Universität, zuständig für Bau, Technik und Energie.}
-\NewTextMacroWithParanthesis \CMS {CMS} {Campus"=Management"=System}
-\NewTextMacroWithParanthesis \MWG {MWG} {Ministerium für Wissenschaft und Gesundheit des Landes Rheinland"=Pfalz}
-\NewTextMacroWithParanthesis \MWWK {MWWK} {Ministerium für Wissenschaft, Weiterbildung und Kultur des Landes Rheinland"=Pfalz}
-\NewTextMacroWithParanthesis \fzs {fzs} {freier zusammenschluss von student*\softhyphen innenschaften}
+\NewTextMacroWithParanthesisAndFootnote \Pool {Pool} {Studentischer Akkreditierungspool} {Bundesweite studentische Vertretung im hochschulichen Akkreditierungswesen, entsendet Studierende zu Akkreditierungsverfahren und bildet sie hierzu fort.}
+\NewTextMacroWithParanthesis \CMS {CMS} {Campus\nicehyphen Management\nicehyphen System}
+\NewTextMacro \RLP {Rheinland\nicehyphen Pfalz}
+\NewTextMacroWithParanthesis \MWG {MWG} {Ministerium für Wissenschaft und Gesundheit des Landes Rheinland\nicehyphen Pfalz}
+\NewTextMacroWithParanthesis \MWWK {MWWK} {Ministerium für Wissenschaft, Weiterbildung und Kultur des Landes Rheinland\nicehyphen Pfalz}
+\NewTextMacroWithParanthesis \fzs {fzs} {freier zusammenschluss von student\*innenschaften}
 \NewTextMacroWithParanthesis \BAS {BAS} {Bundesverband ausländischer Studierender}
 \NewTextMacroWithParanthesis \SMD {SMD} {Studierendenmission Deutschland}
 \NewTextMacroWithFootnote \Vergabeausschuss {Vergabeausschuss} {Ausschuss des Studierendenparlaments, der Mittel aus dem Sozialfonds und zwecks Prozesskostenunterstützung vergibt. Tagt zum Schutze personenbezogener Daten nicht öffentlich.}
-\NewTextMacroWithFootnote \agKLeVeR {AG~KLeVeR} {Steht möglicherweise für Kaiserslauterner LehrVeranstaltungs"= und Raumplanungs"=Gruppe und wird irgendwie besetzt.}
+\NewTextMacroWithFootnote \agKLeVeR {AG~KLeVeR} {Steht möglicherweise für Kaiserslauterner LehrVeranstaltungs\nicehyphen\ und Raumplanungs\nicehyphen Gruppe und wird irgendwie besetzt.}
 \NewTextMacroWithParanthesisAndFootnote \WiB {WiB} {\emph{Willkommen im Busch}} {Erstsemesterbegrüßungsfete des Wintersemesters}
 \NewTextMacroWithFootnote \nextbike {\emph {nextbike}} {Fahrradverleihsystem, mit dem die Studierendenschaft kooperiert.}
 \NewTextMacroWithFootnote \stunde {StunDe} {Monatliches vom Dekan angebotenes Treffen zwischen \textbf{St}udierenden \textbf{un}d \textbf{De}kan}
 \NewTextMacroWithParanthesis \BISON {\textsc{Bison}} {Bauingenieursommernacht}
-\NewTextMacroWithParanthesis \KOMMS {KOMMS} {Kompetenzzentrum für mathematische Modellierung in MINT"=Projekten in der Schule}
+\NewTextMacroWithParanthesis \KOMMS {KOMMS} {Kompetenzzentrum für mathematische Modellierung in MINT\nicehyphen Projekten in der Schule}
 \NewTextMacroWithParanthesis \KoMa {KoMa} {Konferenz der deutschsprachigen Mathematikfachschaften}
-\NewTextMacroWithParanthesis \SSTDM {SSTdM} {Schülerinnen"=StudieninfoTag der Mathematik}
+\NewTextMacroWithParanthesis \SSTDM {SSTdM} {Schülerinnen\nicehyphen StudieninfoTag der Mathematik}
 \NewTextMacroWithParanthesisAndFootnote \MiB {MiB} {Mathematik im Beruf} {\quot{Mathematik im Beruf} ist eine vom \textsc{FSR} organisierte Vortragsreihe, bei der Absolvent*innen von mathematiknahen Studiengängen von ihrem Berufsleben berichten.}
 
 \NewTextMacro \ewoche {$\varepsilon$ Woche}
