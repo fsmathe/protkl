@@ -843,6 +843,20 @@
 		\cs_set_nopar:Npn \subsubsectionautorefname { TOP }
 	}
 %    \end{macrocode}
+%   Erlaube \cmd\subsubparagraph s.
+%    \begin{macrocode}
+	\DeclareSectionCommand [
+		, style = section
+		, level = 6
+		, indent = \scr@parindent
+		, beforeskip = .5\baselineskip \@plus .5\baselineskip
+		, afterskip = -1em
+		, tocstyle = subsection
+		, tocindent = 13em
+		, tocnumwidth = 5.9em
+	] { subsubparagraph }
+	\setkomafont { subsubparagraph } { \mdseries }
+%    \end{macrocode}
 %   Aktiviere Optionenliste aus KOMA-Script als optionales Argument in \cmd\secion\ et al.
 %   Füge außerdem Optionen |marginref| und |marginlink| für Randverweise
 %   mittels \cmd\marginref\ und \cmd\marginlink\ hinzu.
