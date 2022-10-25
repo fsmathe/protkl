@@ -894,11 +894,9 @@
 	\DefineFamilyKey [ .section ] { KOMAarg } { from } { \tl_set:Nn \g_prot_section_from_tl {#1} }
 	\tl_put_right:Nn \l_prot_section_end_of_group_hook_tl \prot_show_section_from:
 	\cs_new:Nn \prot_show_section_from: {
-		\tl_if_empty:NF \g_prot_section_from_tl { \prot_section_from_font: \prot_section_from_text: }
+		\tl_if_empty:NF \g_prot_section_from_tl { ~ \mdseries \normalsize --~ \g_prot_section_from_tl }
 	}
 	\tl_new:N \g_prot_section_from_tl
-	\cs_new:Nn \prot_section_from_font: { \mdseries \normalsize }
-	\cs_new:Nn \prot_section_from_text: { ~--~ \g_prot_section_from_tl }
 	\AddtoDoHook { heading / endgroup } { \tl_gclear:N \g_prot_section_from_tl \use_none:n }
 %    \end{macrocode}
 % \end{macro}
