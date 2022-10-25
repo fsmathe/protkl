@@ -829,7 +829,7 @@
 	}
 %    \end{macrocode}
 % \subsection{Abschnitte}
-% \begin{macro}{\section, \subsection, \subsubsection}
+% \begin{macro}{\section, ..., \subsubparagraph}
 %   Schreibe „TOP“ vor jeden TOP.
 %   Der erste Teil nimmt KOMA-Script an und der zweite Teil nimmt hyperref an.
 %    \begin{macrocode}
@@ -857,9 +857,9 @@
 	] { subsubparagraph }
 	\setkomafont { subsubparagraph } { \mdseries }
 %    \end{macrocode}
-%   Aktiviere Optionenliste aus KOMA-Script als optionales Argument in \cmd\secion\ et al.
-%   Füge außerdem Optionen |marginref| und |marginlink| für Randverweise
-%   mittels \cmd\marginref\ und \cmd\marginlink\ hinzu.
+%   Aktiviere Optionenliste aus KOMA-Script als optionales Argument für alle
+%   Überschriftsbefehle.  Füge außerdem Optionen |marginref| und |marginlink|
+%   für Randverweise mittels \cmd\marginref\ und \cmd\marginlink\ hinzu.
 %    \begin{macrocode}
 	\KOMAoptions { headings = optiontotocandhead }
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginlink } {
@@ -868,6 +868,38 @@
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginref } {
 		\AddtoOneTimeDoHook { heading / endgroup } { \marginref {#1} \use_none:n }
 	}
+%    \end{macrocode}
+%   Ergänze einen Haken \cmd\l_prot_section_end_of_group_hook_tl\ der beim Setzen
+%   jeder Abschnittsüberschrift am Ende des gesetzten Textes aufgerufen wird.
+%   Ergänze hierfür zuerst einen privaten Haken in den Abschnittsbefehlen.
+%    \begin{macrocode}
+	\cs_set_eq:NN \@@_sect:w \@sect
+	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } }
+	\cs_set_eq:NN \@@_ssect:nnnnn \@ssect
+	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } }
+%    \end{macrocode}
+%   Nun sorge dafür, dass der private Haken beim Setzen des Textes den
+%   offiziellen Haken nutzt.
+%    \begin{macrocode}
+	\tl_new:N \l@@_section_end_of_group_tl
+	\tl_new:N \l_prot_section_end_of_group_hook_tl
+	\AddtoDoHook { heading / begingroup } {
+		\tl_set_eq:NN \l@@_section_end_of_group_tl \l_prot_section_end_of_group_hook_tl
+		\use_none:n
+	}
+	\AddtoDoHook { heading / endgroup } { \tl_clear:N \l@@_section_end_of_group_tl \use_none:n }
+%    \end{macrocode}
+%   Erlaube Option |from| für den Namen der berichtenden Person.
+%    \begin{macrocode}
+	\DefineFamilyKey [ .section ] { KOMAarg } { from } { \tl_set:Nn \g_prot_section_from_tl {#1} }
+	\tl_put_right:Nn \l_prot_section_end_of_group_hook_tl \prot_show_section_from:
+	\cs_new:Nn \prot_show_section_from: {
+		\tl_if_empty:NF \g_prot_section_from_tl { \prot_section_from_font: \prot_section_from_text: }
+	}
+	\tl_new:N \g_prot_section_from_tl
+	\cs_new:Nn \prot_section_from_font: { \mdseries \normalsize }
+	\cs_new:Nn \prot_section_from_text: { ~--~ \g_prot_section_from_tl }
+	\AddtoDoHook { heading / endgroup } { \tl_gclear:N \g_prot_section_from_tl \use_none:n }
 %    \end{macrocode}
 % \end{macro}
 % \subsection{Inhaltsverzeichnis}
