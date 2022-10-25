@@ -1082,11 +1082,23 @@
 % \end{macro}
 % \subsubsection{Verweise}
 % \begin{macro}{\marginref, \marginlink, \autoref}
-%   Verweis auf einen Anhang als Randnotiz.
+%   Verweis auf einen Anhang als Randnotiz. Hierbei verweist \cmd\marginref auf
+%   die Überschrift und \cmd\marginlink auf die Seite. Bei zweiterem kann eine
+%   Seitenzahl mit angegeben werden, ein „f“ oder „ff“ am Ende wird sinnvoll
+%   behandelt.
 %    \begin{macrocode}
 	\NewDocumentCommand \marginref { m } { \marginline { \textsf { \ref {#1} } } }
 	\cs_new_protected_nopar:Nn \prot_marginlink:n { \marginline { \hyperlink { #1 . 1 } { \textsf { \ref* {#1} } } } }
-	\cs_new_protected_nopar:Nn \prot_marginlink:nn { \marginline { \hyperlink { #1 . #2 } { \textsf{ \ref* {#1} ~ } #2 } } }
+	\cs_new_protected_nopar:Nn \prot_marginlink:nn {
+		\str_set:Nn \l_tmpa_str {#2}
+		\str_remove_all:Nn \l_tmpa_str f
+		\tl_set:Nn \l_tmpa_tl {#2}
+		\tl_if_in:NnT \l_tmpa_tl f {
+			\tl_replace_once:Nnn \l_tmpa_tl f { \, f }
+			\tl_put_right:Nn \l_tmpa_tl .
+		}
+		\marginline { \hyperlink { #1 . \l_tmpa_str } { \textsf{ \ref* {#1} ~ } \l_tmpa_tl } }
+	}
 	\NewDocumentCommand \marginlink { > { \SplitArgument { 1 } { | } } m } {
 		\@@_marginlink_aux:nn #1
 	}
