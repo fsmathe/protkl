@@ -1,0 +1,44 @@
+\babel@toc {ngerman}{}\relax 
+\contentsline {section}{\numberline {1}Mitteilungen}{3}{section.1}%
+\contentsline {section}{\numberline {2}Festlegung der Tagesordnung}{4}{section.2}%
+\contentsline {section}{\numberline {3}Wahlen}{4}{section.3}%
+\contentsline {paragraph}{\nonumberline Wahlausschuss}{4}{paragraph*.5}%
+\contentsline {section}{\numberline {4}Grundsatzprogramm der Studierendenschaft}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Einzelberatung}{4}{appendix.4.1}%
+\contentsline {subsection}{\numberline {4.2}Schlussberatung}{4}{appendix.4.2}%
+\contentsline {section}{\numberline {5}Umgebung der Sonne}{4}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Allgemeiner Austausch über Fakten, Meinungen und fromme Wünsche}{5}{appendix.5.1}%
+\contentsline {paragraph}{\nonumberline Die drei Gs}{5}{paragraph*.7}%
+\contentsline {paragraph}{\nonumberline Erweiterte G-Arithmetik}{5}{paragraph*.9}%
+\contentsline {paragraph}{\nonumberline Hybride Hydras}{5}{paragraph*.11}%
+\contentsline {subsection}{\numberline {5.2}Studentische Gremien}{5}{appendix.5.2}%
+\contentsline {section}{\numberline {6}Spukzeiten an der TUK}{5}{section.6}%
+\contentsline {section}{\numberline {7}Einführung einer genialen Regelung für anhaltenden \AE ther}{5}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Einzelberatung}{5}{appendix.7.1}%
+\contentsline {subsection}{\numberline {7.2}Schlussberatung}{6}{appendix.7.2}%
+\contentsline {section}{\numberline {8}Finanzanträge}{6}{section.8}%
+\contentsline {paragraph}{\nonumberline FA 42/21\hspace {.5em}\mdseries Leasing Buchdrucker}{6}{paragraph*.13}%
+\contentsline {paragraph}{\nonumberline FA 72/21\hspace {.5em}\mdseries Förderung von Mehrheitskultur}{6}{paragraph*.15}%
+\contentsline {paragraph}{\nonumberline FA 71/21\hspace {.5em}\mdseries Sonnencreme}{6}{paragraph*.17}%
+\contentsline {section}{\numberline {9}Weihnachten}{6}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Eszett\spacefactor \@m {}\xspace {s} und Theodor\spacefactor \@m {}\xspace {s} Wunschzettel}{6}{appendix.9.1}%
+\contentsline {subsection}{\numberline {9.2}Wünsche für Änderung\spacefactor \@m {}\xspace }{6}{appendix.9.2}%
+\contentsline {section}{\numberline {10}Gerede}{6}{section.10}%
+\contentsline {section}{\numberline {11}Berichte}{7}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Allgemeiner Studierenden Ausschuss (AStA)}{7}{appendix.11.1}%
+\contentsline {paragraph}{\nonumberline Vorsitz}{7}{paragraph*.19}%
+\contentsline {subsection}{\numberline {11.2}Fachschaften}{7}{appendix.11.2}%
+\contentsline {paragraph}{\nonumberline Architektur}{7}{paragraph*.21}%
+\contentsline {subsection}{\numberline {11.3}Protokoll}{7}{appendix.11.3}%
+\contentsline {section}{\numberline {12}Protokolle}{7}{section.12}%
+\contentsline {section}{\numberline {13}Sitzungstermine}{7}{section.13}%
+\contentsline {section}{\numberline {14}Verschiedenes}{7}{section.14}%
+\appendixtoc 
+\contentsline {section}{\numberline {A}Hallo}{9}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Hi}{9}{appendix.A.1}%
+\contentsline {subsubsection}{\numberline {A.1.1}Hallöchen}{9}{appendix.A.1.1}%
+\contentsline {section}{\numberline {B}\ignorespaces Bunte Seiten}{10}{appendix.B}%
+\contentsline {section}{\numberline {C}\ignorespaces Wenige bunte Seiten}{22}{appendix.C}%
+\contentsline {subsection}{\numberline {C.1}Tschüss}{25}{appendix.C.1}%
+\contentsline {subsubsection}{\numberline {C.1.1}\ignorespaces Große breite Seite}{26}{appendix.C.1.1}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
