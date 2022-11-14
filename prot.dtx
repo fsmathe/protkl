@@ -857,47 +857,50 @@
 	] { subsubparagraph }
 	\setkomafont { subsubparagraph } { \mdseries }
 %    \end{macrocode}
+%   Ergänze einen Haken \cmd\l_prot_section_end_of_group_onetimehook_tl\ der
+%   beim Setzen der nächsten Abschnittsüberschrift am Ende des gesetzten Textes
+%   aufgerufen wird. Ergänze hierfür zuerst einen privaten Haken in den
+%   Abschnittsbefehlen und einen zum Aufräumen außerhalb.
+%    \begin{macrocode}
+	\tl_new:N \l@@_section_end_of_group_tl
+	\tl_new:N \l@@_section_end_tl
+	\cs_set_eq:NN \@@_sect:w \@sect
+	\cs_set_eq:NN \@@_ssect:nnnnn \@ssect
+	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
+	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
+%    \end{macrocode}
+%   Nun sorge dafür, dass der private Haken lokal während des Setzens des
+%   Textes den offiziellen Haken nutzt. Für das Schreiben der Überschrift
+%   in die Auslagerdateien bleibt der private Haken leer.
+%    \begin{macrocode}
+	\tl_new:N \l_prot_section_end_of_group_onetimehook_tl
+	\AddtoDoHook { heading / begingroup } {
+		\tl_set_eq:NN \l@@_section_end_of_group_tl \l_prot_section_end_of_group_onetimehook_tl
+		\use_none:n
+	}
+%    \end{macrocode}
+%   Leere den Einmalhaken.
+%    \begin{macrocode}
+	\tl_put_right:Nn \l@@_section_end_tl {
+		\tl_clear:N \l_prot_section_end_of_group_onetimehook_tl
+	}
+%    \end{macrocode}
 %   Aktiviere Optionenliste aus KOMA-Script als optionales Argument für alle
-%   Überschriftsbefehle.  Füge außerdem Optionen |marginref| und |marginlink|
-%   für Randverweise mittels \cmd\marginref\ und \cmd\marginlink\ hinzu.
+%   Überschriftsbefehle. Füge außerdem Optionen |marginref| und |marginlink|
+%   für Randverweise mittels \cmd\marginref\ und \cmd\marginlink\ hinzu. Sowie
+%   |from| für den Namen der berichtenden Person.
 %    \begin{macrocode}
 	\KOMAoptions { headings = optiontotocandhead }
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginlink } {
-		\AddtoOneTimeDoHook { heading / endgroup } { \marginlink {#1} \use_none:n }
+		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginlink {#1} }
 	}
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginref } {
-		\AddtoOneTimeDoHook { heading / endgroup } { \marginref {#1} \use_none:n }
+		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginref {#1} }
 	}
-%    \end{macrocode}
-%   Ergänze einen Haken \cmd\l_prot_section_end_of_group_hook_tl\ der beim Setzen
-%   jeder Abschnittsüberschrift am Ende des gesetzten Textes aufgerufen wird.
-%   Ergänze hierfür zuerst einen privaten Haken in den Abschnittsbefehlen.
-%    \begin{macrocode}
-	\cs_set_eq:NN \@@_sect:w \@sect
-	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } }
-	\cs_set_eq:NN \@@_ssect:nnnnn \@ssect
-	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } }
-%    \end{macrocode}
-%   Nun sorge dafür, dass der private Haken beim Setzen des Textes den
-%   offiziellen Haken nutzt.
-%    \begin{macrocode}
-	\tl_new:N \l@@_section_end_of_group_tl
-	\tl_new:N \l_prot_section_end_of_group_hook_tl
-	\AddtoDoHook { heading / begingroup } {
-		\tl_set_eq:NN \l@@_section_end_of_group_tl \l_prot_section_end_of_group_hook_tl
-		\use_none:n
+	\DefineFamilyKey [ .section ] { KOMAarg } { from } {
+		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \prot_from:n {#1} }
 	}
-	\AddtoDoHook { heading / endgroup } { \tl_clear:N \l@@_section_end_of_group_tl \use_none:n }
-%    \end{macrocode}
-%   Erlaube Option |from| für den Namen der berichtenden Person.
-%    \begin{macrocode}
-	\DefineFamilyKey [ .section ] { KOMAarg } { from } { \tl_set:Nn \g_prot_section_from_tl {#1} }
-	\tl_put_right:Nn \l_prot_section_end_of_group_hook_tl \prot_show_section_from:
-	\cs_new:Nn \prot_show_section_from: {
-		\tl_if_empty:NF \g_prot_section_from_tl { ~ \mdseries \normalsize --~ \g_prot_section_from_tl }
-	}
-	\tl_new:N \g_prot_section_from_tl
-	\AddtoDoHook { heading / endgroup } { \tl_gclear:N \g_prot_section_from_tl \use_none:n }
+	\cs_new:Nn \prot_from:n { ~ \mdseries \normalsize --~ #1 }
 %    \end{macrocode}
 % \end{macro}
 % \subsection{Inhaltsverzeichnis}
