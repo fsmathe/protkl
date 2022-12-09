@@ -523,13 +523,9 @@
 \BEGINTEST { \Suffix, ... }
 %<*test>
 	\cs_new:Nn \@@_test_Suffix:nn { \Suffix #1 }
-	\TYPE { \@@_suffix:N \c_false_bool }
-	\TYPE { \@@_suffix:N \c_true_bool }
 %</test>
 %<*expect>
 	\cs_new:Nn \@@_test_Suffix:nn { \TYPE {#2} }
-	\TYPE { \xspace }
-	\TYPE { \nicehyphen }
 %</expect>
 	\@@_test_Suffix:nn { { a b c }   } { a b c \NEWLINE \xspace }
 	\@@_test_Suffix:nn { { a b c } - } { a b c \NEWLINE \nicehyphen }
@@ -544,32 +540,37 @@
 	\NewTextMacro \Foo { Foo }
 	\NewTextMacroWithParanthesis \@@_stupa_i { StuPa } { Studierendenparlament }
 	\NewTextMacroWithParanthesis \@@_stupa_ii { StuPa } { Studierendenparlament }
+	\NewTextMacroWithParanthesis \@@_stupa_iii { StuPa } { Studierendenparlament }
 	\Foo
 	\Foo -
-	\@@_suffix:Nnn \c_false_bool { StuPa } {}
-	\@@_suffix:Nnn \c_true_bool { StuPa } {}
+	\@@_suffix:NNnn \c_false_bool \c_false_bool { StuPa } {}
+	\@@_suffix:NNnn \c_true_bool \c_false_bool { StuPa } {}
+	\@@_suffix:NNnn \c_true_bool \c_true_bool { StuPa } {}
 	\SEPARATOR
 	\@@_stupa_i
-	\SEPARATOR
-	\@@_stupa_i -
+	\@@_stupa_i
 	\SEPARATOR
 	\@@_stupa_ii -
+	\@@_stupa_ii -
 	\SEPARATOR
-	\@@_stupa_ii
+	\@@_stupa_iii --
+	\@@_stupa_iii --
 %</test>
 %<*expect>
 	\TYPE { Foo \NEWLINE \xspace }
 	\TYPE { Foo \NEWLINE \nicehyphen }
 	\TYPE { StuPa \NEWLINE \xspace }
 	\TYPE { StuPa \NEWLINE \nicehyphen }
+	\TYPE { StuPa } \TYPE { ~ -- }
 	\SEPARATOR
 	\TYPENOEXP { Studierendenparlament ~ \prot_paren:n { StuPa } ^^J \xspace }
-	\SEPARATOR
-	\TYPE { StuPa \NEWLINE \nicehyphen }
+	\TYPE { StuPa \NEWLINE \xspace }
 	\SEPARATOR
 	\TYPENOEXP { Studierendenparlament \nicehyphen \prot_paren:n { StuPa } ^^J \nicehyphen }
+	\TYPE { StuPa \NEWLINE \nicehyphen }
 	\SEPARATOR
-	\TYPE { StuPa \NEWLINE \xspace }
+	\TYPENOEXP { Studierendenparlament ~ \prot_paren:n { StuPa } ^^J ~ -- }
+	\TYPE { StuPa } \TYPE { ~ -- }
 %</expect>
 \ENDTEST
 
