@@ -79,7 +79,7 @@ Die Anwesenden loben \Marie für tolle Dinge. Da sie nicht in der Anwesenheitsli
 \Alberta stellt die Tagesordnung, mit der eingeladen wurde, und die für die jeweiligen TOPe geplanten Dauern vor.
 \Xanthippe beantragt einen weiteren TOP\marginlink{app:ex|12} zu Spuk an der TUK und \Eszett einen TOP zur Umgebung der Sonne, diese werden mit \erg*00 hinzugefügt.
 
-\section[marginlink=app:ex|3]{Anträge}
+\section[marginlink=app:ex|3, from=Ich]{Anträge}
 Abstimmungsergebnis: \erg*00
 \geht\Jakob
 neu \erg*00
@@ -89,6 +89,9 @@ jetzt \erg*00
 nun \erg*00
 \geht{\Cae\Ae}
 dann \erg*00
+
+\paragraph[from=\Charlotte]{Mehr} Jetzt geht es ab.
+\paragraph{Mehr} Jetzt geht es ab.
 
 \section[marginlink=app:ex|8]{Protokolle}
 Der wahre Grund, weshalb Sitzungen stattfinden ist doch immer noch, damit wir Protokollant:innen uns austoben können. Hier stehen wieder einmal die Früchte unserer Arbeit zur Abstimmung und werden mit einer überwältigenden Mehrheit von \erg{17}0* und \erg*0{-1} angenommen. Phänomenal!

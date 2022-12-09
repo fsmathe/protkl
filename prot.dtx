@@ -862,32 +862,28 @@
 	] { subsubparagraph }
 	\setkomafont { subsubparagraph } { \mdseries }
 %    \end{macrocode}
-%   Ergänze einen Haken \cmd\l_prot_section_end_of_group_onetimehook_tl\ der
+%   Ergänze einen Haken \cmd\g_prot_section_end_of_group_onetimehook_tl\ der
 %   beim Setzen der nächsten Abschnittsüberschrift am Ende des gesetzten Textes
 %   aufgerufen wird. Ergänze hierfür zuerst einen privaten Haken in den
 %   Abschnittsbefehlen und einen zum Aufräumen außerhalb.
 %    \begin{macrocode}
 	\tl_new:N \l@@_section_end_of_group_tl
-	\tl_new:N \l@@_section_end_tl
 	\cs_set_eq:NN \@@_sect:w \@sect
 	\cs_set_eq:NN \@@_ssect:nnnnn \@ssect
-	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
-	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
+	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } }
+	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } }
 %    \end{macrocode}
 %   Nun sorge dafür, dass der private Haken lokal während des Setzens des
-%   Textes den offiziellen Haken nutzt. Für das Schreiben der Überschrift
-%   in die Auslagerdateien bleibt der private Haken leer.
+%   Textes den offiziellen Haken nutzt und leert. Für das Schreiben der
+%   Überschrift in die Auslagerdateien bleibt der private Haken leer.
 %    \begin{macrocode}
-	\tl_new:N \l_prot_section_end_of_group_onetimehook_tl
+	\tl_new:N \g_prot_section_end_of_group_onetimehook_tl
 	\AddtoDoHook { heading / begingroup } {
-		\tl_set_eq:NN \l@@_section_end_of_group_tl \l_prot_section_end_of_group_onetimehook_tl
+		\tl_set:Nn \l@@_section_end_of_group_tl {
+			\g_prot_section_end_of_group_onetimehook_tl
+			\tl_gclear:N \g_prot_section_end_of_group_onetimehook_tl
+		}
 		\use_none:n
-	}
-%    \end{macrocode}
-%   Leere den Einmalhaken.
-%    \begin{macrocode}
-	\tl_put_right:Nn \l@@_section_end_tl {
-		\tl_clear:N \l_prot_section_end_of_group_onetimehook_tl
 	}
 %    \end{macrocode}
 %   Aktiviere Optionenliste aus KOMA-Script als optionales Argument für alle
@@ -897,13 +893,13 @@
 %    \begin{macrocode}
 	\KOMAoptions { headings = optiontotocandhead }
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginlink } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginlink {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \marginlink {#1} }
 	}
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginref } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginref {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \marginref {#1} }
 	}
 	\DefineFamilyKey [ .section ] { KOMAarg } { from } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \prot_from:n {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \prot_from:n {#1} }
 	}
 	\cs_new:Nn \prot_from:n { ~ \mdseries \normalsize --~ #1 }
 %    \end{macrocode}
