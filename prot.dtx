@@ -168,12 +168,17 @@
 	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
 	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { \Suffix {#2} } }
 	\NewDocumentCommand \NewTextMacroWithReplacement { m O{} +m +m } { \NewCommandWithReplacement {#1} [#2] { \Suffix {#3} } { \Suffix {#4} } }
-	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} t- ] { \@@_suffix:Nnn {####3} {#2} {} } { \prot_tl_replace_kv:nnnn {#3} {##1} {##2} {##3} \@@_suffix:N {##3} } }
+	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} !t- !t- ] { \@@_suffix:NNnn {####3} {####4} {#2} {} } { \prot_tl_replace_kv:nnnn {#3} {##1} {##2} { ##3 && !##4 } \@@_suffix:NN {##3} {##4} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 ~ \prot_paren:n {#2} } }
 	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewCommandWithReplacement {#1} { \Suffix {#2} } { \Suffix [ \footnote {#3} ] {#2} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 \footnote {#4} ~ \prot_paren:n {#2} } }
-	\NewDocumentCommand \Suffix { O{} m t- } { \@@_suffix:Nnn {#3} {#2} {#1} }
-	\cs_new_nopar:Nn \@@_suffix:Nnn { \bool_if:NTF #1 \prot_tl_space_to_hyphen:n \prot_echo:n {#2} #3 \@@_suffix:N #1 }
+	\NewDocumentCommand \Suffix { O{} m !t- !t- } { \@@_suffix:NNnn {#3} {#4} {#2} {#1} }
+	\cs_new_nopar:Nn \@@_suffix:NNnn { \bool_if:nTF { #1 && !#2 } \prot_tl_space_to_hyphen:n \prot_echo:n {#3} #4 \@@_suffix:NN #1 #2 }
+	\cs_new_nopar:Nn \@@_suffix:NN {
+		\bool_if:NTF #2
+			{ \prot_echo:n { ~ -- } }
+			{ \bool_if:NTF #1 { \prot_echo:n \nicehyphen } { \prot_echo:n \xspace } }
+	}
 	\cs_new:Nn \prot_paren:n { ( #1 ) }
 %    \end{macrocode}
 % \end{macro}
@@ -1159,12 +1164,13 @@
 %   Arbeite alles von links nach rechts ab.
 %   Ein |\ | im Schlüssel wird wie | | interpretiert.
 %   Dies ist insbesondere notwendig, da | | als Schlüsselname leider illegal ist.
+%   Falls |#4|, ersetze alle Leerzeichen durch Bindestriche.
 %    \begin{macrocode}
 	\cs_new_protected:Nn \prot_tl_replace_kv:nnnn {
 		\tl_set:Nn \l_tmpa_tl {#1}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_once:Nnn \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_once:Nnn \l_tmpa_tl } {#2}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_all:Nnn  \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_all:Nnn  \l_tmpa_tl } {#3}
-		\bool_if:NT {#4} { \prot_tl_space_to_hyphen:N \l_tmpa_tl }
+		\bool_if:nT {#4} { \prot_tl_space_to_hyphen:N \l_tmpa_tl }
 		\prot_echo:V \l_tmpa_tl
 	}
 	\cs_new:Nn \@@_use_i_ii_iiiplusii:nnn { #1 {#2} { #3 #2 } }
@@ -1175,12 +1181,9 @@
 	}
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\@@_suffix:N, \prot_tl_space_to_hyphen:N}
+% \begin{macro}{\prot_tl_space_to_hyphen:N}
 % Makros, um Wörter, auf die womöglich ein Bindestrich folgt, korrekt zu schreiben.
 %    \begin{macrocode}
-	\cs_new_nopar:Nn \@@_suffix:N {
-		\bool_if:NTF #1 { \prot_echo:n \nicehyphen } { \prot_echo:n \xspace }
-	}
 	\cs_new_protected_nopar:Nn \prot_tl_space_to_hyphen:N {
 		\tl_replace_all:Nnn #1 { ~ } { \nicehyphen }
 		\tl_replace_all:Nnn #1 { \nbsp } { \nicehyphen }
