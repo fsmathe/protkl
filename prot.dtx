@@ -168,12 +168,17 @@
 	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
 	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { \Suffix {#2} } }
 	\NewDocumentCommand \NewTextMacroWithReplacement { m O{} +m +m } { \NewCommandWithReplacement {#1} [#2] { \Suffix {#3} } { \Suffix {#4} } }
-	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} t- ] { \@@_suffix:Nnn {####3} {#2} {} } { \prot_tl_replace_kv:nnnn {#3} {##1} {##2} {##3} \@@_suffix:N {##3} } }
+	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} !t- !t- ] { \@@_suffix:NNnn {####3} {####4} {#2} {} } { \prot_tl_replace_kv:nnnn {#3} {##1} {##2} { ##3 && !##4 } \@@_suffix:NN {##3} {##4} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 ~ \prot_paren:n {#2} } }
 	\NewDocumentCommand \NewTextMacroWithFootnote { m m +m } { \NewCommandWithReplacement {#1} { \Suffix {#2} } { \Suffix [ \footnote {#3} ] {#2} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesisAndFootnote { m m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 \footnote {#4} ~ \prot_paren:n {#2} } }
-	\NewDocumentCommand \Suffix { O{} m t- } { \@@_suffix:Nnn {#3} {#2} {#1} }
-	\cs_new_nopar:Nn \@@_suffix:Nnn { \bool_if:NTF #1 \prot_tl_space_to_hyphen:n \prot_echo:n {#2} #3 \@@_suffix:N #1 }
+	\NewDocumentCommand \Suffix { O{} m !t- !t- } { \@@_suffix:NNnn {#3} {#4} {#2} {#1} }
+	\cs_new_nopar:Nn \@@_suffix:NNnn { \bool_if:nTF { #1 && !#2 } \prot_tl_space_to_hyphen:n \prot_echo:n {#3} #4 \@@_suffix:NN #1 #2 }
+	\cs_new_nopar:Nn \@@_suffix:NN {
+		\bool_if:NTF #2
+			{ \prot_echo:n { ~ -- } }
+			{ \bool_if:NTF #1 { \prot_echo:n \nicehyphen } { \prot_echo:n \xspace } }
+	}
 	\cs_new:Nn \prot_paren:n { ( #1 ) }
 %    \end{macrocode}
 % \end{macro}
@@ -857,32 +862,28 @@
 	] { subsubparagraph }
 	\setkomafont { subsubparagraph } { \mdseries }
 %    \end{macrocode}
-%   Ergänze einen Haken \cmd\l_prot_section_end_of_group_onetimehook_tl\ der
+%   Ergänze einen Haken \cmd\g_prot_section_end_of_group_onetimehook_tl\ der
 %   beim Setzen der nächsten Abschnittsüberschrift am Ende des gesetzten Textes
 %   aufgerufen wird. Ergänze hierfür zuerst einen privaten Haken in den
 %   Abschnittsbefehlen und einen zum Aufräumen außerhalb.
 %    \begin{macrocode}
 	\tl_new:N \l@@_section_end_of_group_tl
-	\tl_new:N \l@@_section_end_tl
 	\cs_set_eq:NN \@@_sect:w \@sect
 	\cs_set_eq:NN \@@_ssect:nnnnn \@ssect
-	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
-	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } \l@@_section_end_tl }
+	\cs_set_nopar:Npn \@sect #1 #2 #3 #4 #5 #6 [ #7 ] #8 { \@@_sect:w {#1} {#2} {#3} {#4} {#5} {#6} [ {#7} ] { #8 \l@@_section_end_of_group_tl } }
+	\cs_set_nopar:Npn \@ssect #1 #2 #3 #4 #5 { \@@_ssect:nnnnn {#1} {#2} {#3} {#4} { #5 \l@@_section_end_of_group_tl } }
 %    \end{macrocode}
 %   Nun sorge dafür, dass der private Haken lokal während des Setzens des
-%   Textes den offiziellen Haken nutzt. Für das Schreiben der Überschrift
-%   in die Auslagerdateien bleibt der private Haken leer.
+%   Textes den offiziellen Haken nutzt und leert. Für das Schreiben der
+%   Überschrift in die Auslagerdateien bleibt der private Haken leer.
 %    \begin{macrocode}
-	\tl_new:N \l_prot_section_end_of_group_onetimehook_tl
+	\tl_new:N \g_prot_section_end_of_group_onetimehook_tl
 	\AddtoDoHook { heading / begingroup } {
-		\tl_set_eq:NN \l@@_section_end_of_group_tl \l_prot_section_end_of_group_onetimehook_tl
+		\tl_set:Nn \l@@_section_end_of_group_tl {
+			\g_prot_section_end_of_group_onetimehook_tl
+			\tl_gclear:N \g_prot_section_end_of_group_onetimehook_tl
+		}
 		\use_none:n
-	}
-%    \end{macrocode}
-%   Leere den Einmalhaken.
-%    \begin{macrocode}
-	\tl_put_right:Nn \l@@_section_end_tl {
-		\tl_clear:N \l_prot_section_end_of_group_onetimehook_tl
 	}
 %    \end{macrocode}
 %   Aktiviere Optionenliste aus KOMA-Script als optionales Argument für alle
@@ -892,13 +893,13 @@
 %    \begin{macrocode}
 	\KOMAoptions { headings = optiontotocandhead }
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginlink } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginlink {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \marginlink {#1} }
 	}
 	\DefineFamilyKey [ .section ] { KOMAarg } { marginref } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \marginref {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \marginref {#1} }
 	}
 	\DefineFamilyKey [ .section ] { KOMAarg } { from } {
-		\tl_put_right:Nn \l_prot_section_end_of_group_onetimehook_tl { \prot_from:n {#1} }
+		\tl_gput_right:Nn \g_prot_section_end_of_group_onetimehook_tl { \prot_from:n {#1} }
 	}
 	\cs_new:Nn \prot_from:n { ~ \mdseries \normalsize --~ #1 }
 %    \end{macrocode}
@@ -1159,12 +1160,13 @@
 %   Arbeite alles von links nach rechts ab.
 %   Ein |\ | im Schlüssel wird wie | | interpretiert.
 %   Dies ist insbesondere notwendig, da | | als Schlüsselname leider illegal ist.
+%   Falls |#4|, ersetze alle Leerzeichen durch Bindestriche.
 %    \begin{macrocode}
 	\cs_new_protected:Nn \prot_tl_replace_kv:nnnn {
 		\tl_set:Nn \l_tmpa_tl {#1}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_once:Nnn \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_once:Nnn \l_tmpa_tl } {#2}
 		\keyval_parse:nnn { \@@_use_i_ii_iiiplusii:nnn { \tl_replace_all:Nnn  \l_tmpa_tl } { ~ \prot_paren:n } } { \@@_tl_replace_aux:NNnn \tl_replace_all:Nnn  \l_tmpa_tl } {#3}
-		\bool_if:NT {#4} { \prot_tl_space_to_hyphen:N \l_tmpa_tl }
+		\bool_if:nT {#4} { \prot_tl_space_to_hyphen:N \l_tmpa_tl }
 		\prot_echo:V \l_tmpa_tl
 	}
 	\cs_new:Nn \@@_use_i_ii_iiiplusii:nnn { #1 {#2} { #3 #2 } }
@@ -1175,12 +1177,9 @@
 	}
 %    \end{macrocode}
 % \end{macro}
-% \begin{macro}{\@@_suffix:N, \prot_tl_space_to_hyphen:N}
+% \begin{macro}{\prot_tl_space_to_hyphen:N}
 % Makros, um Wörter, auf die womöglich ein Bindestrich folgt, korrekt zu schreiben.
 %    \begin{macrocode}
-	\cs_new_nopar:Nn \@@_suffix:N {
-		\bool_if:NTF #1 { \prot_echo:n \nicehyphen } { \prot_echo:n \xspace }
-	}
 	\cs_new_protected_nopar:Nn \prot_tl_space_to_hyphen:N {
 		\tl_replace_all:Nnn #1 { ~ } { \nicehyphen }
 		\tl_replace_all:Nnn #1 { \nbsp } { \nicehyphen }
