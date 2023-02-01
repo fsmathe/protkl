@@ -259,10 +259,13 @@
 \newcommand \boldepsilon {\texorpdfstring{\boldmath{$\varepsilon$}}{ε}} % fettgedrucktes ε für Überschriften
 
 \ExplSyntaxOn
-\NewTextMacro \LiMeS {
+\NewDocumentCommand \LIMES { } {
 	L \kern-.07em
 	{ \sbox \z@ M \vbox to \ht \z@ { \hbox { \check@mathfonts\fontsize\sf@size\z@\math@fontsfalse\selectfont I } \vss } }
 	\kern-.05em M
 	\kern-.1em \lower .5ex \hbox { E }
 	\kern-.08em S \@
+}
+\newcommand \LiMeS {
+	\texorpdfstring \LIMES { LiMeS } \xspace
 }

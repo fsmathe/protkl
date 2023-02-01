@@ -166,7 +166,7 @@
 	\NewDocumentCommand \NewOnetimeCommand { m O{} +m } { \NewDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
 	\NewDocumentCommand \DeclareCommandWithReplacement { m O{} +m +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} {#3} #4 } }
 	\NewDocumentCommand \DeclareOnetimeCommand { m O{} +m } { \DeclareDocumentCommand {#1} {#2} { \RenewDocumentCommand {#1} {#2} { } #3 } }
-	\NewDocumentCommand \NewTextMacro { m m } { \newcommand #1 { \Suffix {#2} } }
+	\NewDocumentCommand \NewTextMacro { m m } { \NewDocumentCommand {#1} { } { \Suffix {#2} } }
 	\NewDocumentCommand \NewTextMacroWithReplacement { m O{} +m +m } { \NewCommandWithReplacement {#1} [#2] { \Suffix {#3} } { \Suffix {#4} } }
 	\NewDocumentCommand \NewModifiableTextMacroWithReplacement { m m +m } { \NewCommandWithReplacement {#1} [ O{} O{} !t- !t- ] { \@@_suffix:NNnn {####3} {####4} {#2} {} } { \prot_tl_replace_kv:nnnn {#3} {##1} {##2} { ##3 && !##4 } \@@_suffix:NN {##3} {##4} } }
 	\NewDocumentCommand \NewTextMacroWithParanthesis { m m +m } { \NewModifiableTextMacroWithReplacement {#1} {#2} { #3 ~ \prot_paren:n {#2} } }
