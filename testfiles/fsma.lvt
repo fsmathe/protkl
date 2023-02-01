@@ -75,7 +75,7 @@ Es berichten %\fbr, \stupa und andere.
 
 \peopleentertext { \Marie \Jakob \Zacharias }
 
-\subsection{Mehr Spaß}
+\subsection{\LiMeS-Druck}
 
 \subsubsection{Und jetzt -- die Abstimmung}
 
@@ -84,6 +84,8 @@ Der Antrag \ref{app:la} wird mit \erg*00 angenommen.
 \appendix
 \section{Ein Antrag}\label{app:la}
 \Eszett und \Ypsilon beantragen wohldosierten Humor in Protokollen.
+
+\subsection{Auszug aus dem \LiMeS}
 
 % PDF-Datei aus mwe-Paket
 \includepdfsection{app:ex}{Beispielanhang}{example-image-a4.pdf}
