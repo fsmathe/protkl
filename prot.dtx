@@ -848,6 +848,26 @@
 		\cs_set_nopar:Npn \subsubsectionautorefname { TOP }
 	}
 %    \end{macrocode}
+%   Autoref schreibt normalerweise nach \cmd\appendix\ automatisch
+%   \cmd\appendixautorefname statt \cmd\sectionautorefname für \cmd\section s.
+%   Für Unterabschnitte jedoch nicht.  Unterabschnitte in Anhängen würden damit
+%   weiterhin als „TOP“ tituliert, was wir nicht wollen.  Entsprechend hacken
+%   wir uns das ein wenig zusammen.  Im Endeffekt sorgen wir dafür, dass im
+%   \cmd\newlabel-Eintrag in der |.aux|-Datei |appendix.A.1| statt
+%   |subsection.A.1| steht.
+%    \begin{macrocode}
+	\AddToHook { cmd / appendix / after } {
+		\AddToHook { cmd / hyper@makecurrent / after } {
+			\ifHy@localanchorname
+				\str_replace_once:Nnn \@currentHref { subsubsection } { appendix }
+				\str_replace_once:Nnn \@currentHref { subsection } { appendix }
+			\else:
+				\str_greplace_once:Nnn \@currentHref { subsubsection } { appendix }
+				\str_greplace_once:Nnn \@currentHref { subsection } { appendix }
+			\fi:
+		}
+	}
+%    \end{macrocode}
 %   Erlaube \cmd\subsubparagraph s.
 %    \begin{macrocode}
 	\DeclareSectionCommand [
@@ -1108,24 +1128,6 @@
 		\IfNoValueTF {#2}
 			{ \prot_marginlink:n {#1} }
 			{ \prot_marginlink:nn {#1} {#2} }
-	}
-%    \end{macrocode}
-%   Autoref schreibt normalerweise nach \cmd\appendix\ automatisch
-%   \cmd\appendixautorefname statt \cmd\sectionautorefname für \cmd\section s.
-%   Für Unterabschnitte jedoch nicht.  Unterabschnitte in Anhängen würden damit
-%   weiterhin als „TOP“ tituliert, was wir nicht wollen.  Entsprechend hacken
-%   wir uns das ein wenig zusammen.  Im Endeffekt sorgen wir dafür, dass im
-%   \cmd\newlabel-Eintrag in der |.aux|-Datei |appendix.A.1| statt
-%   |subsection.A.1| steht.
-%    \begin{macrocode}
-	\AddToHook { cmd / hyper@makecurrent / after } {
-		\ifHy@localanchorname
-			\str_replace_once:Nnn \@currentHref { subsubsection } { appendix }
-			\str_replace_once:Nnn \@currentHref { subsection } { appendix }
-		\else:
-			\str_greplace_once:Nnn \@currentHref { subsubsection } { appendix }
-			\str_greplace_once:Nnn \@currentHref { subsection } { appendix }
-		\fi:
 	}
 %    \end{macrocode}
 % \end{macro}
