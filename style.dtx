@@ -251,12 +251,15 @@
 \NewTextMacroWithFootnote \ITWM {ITWM} {Fraunhofer-Institut für Techno- und Wirtschaftsmathematik}
 \NewTextMacroWithFootnote \leo {\emph{Leo}} {Leo ist unser Fachschaftsmaskottchen. Ihr findet ihn oben ($\uparrow$) auf dem Protokoll.}
 
-\NewTextMacro \ewoche {\texorpdfstring{$\varepsilon$}{ε}Woche}
-\NewTextMacro \ewochen {\ewoche{}n}
+\newcommand \ewoche {\texorpdfstring{$\varepsilon$}{ε}Woche\xspace}
+\newcommand \ewochen {\ewoche{n}}
+
 \NewTextMacro \Ewoche {E\kern.1em-\kern-.1emWoche}
 \NewTextMacro \Ewochen {\Ewoche{}n}
 \NewTextMacro \kom {\textsc{Kom}-Raum}
 \newcommand \boldepsilon {\texorpdfstring{\boldmath{$\varepsilon$}}{ε}} % fettgedrucktes ε für Überschriften
+\NewTextMacro \bold
+
 
 \ExplSyntaxOn
 \NewDocumentCommand \LIMES { } {
