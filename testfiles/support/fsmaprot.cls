@@ -15,7 +15,7 @@
 
 \keys_define:nn { prot / options } {
 	, typ .choice:
-	, typ / fsr .meta:n = { titel = Fachschaftsratsitzung }
+	, typ / fsr .meta:n = { titel = Fachschaftsratssitzung }
 	, typ / vv .meta:n = { titel = Vollversammlung }
 	, typ / konsti .meta:n = { titel = Konstituierende~Sitzung }
 	, typ / semikonsti .meta:n = { titel = Semikonstituierende~Sitzung }
