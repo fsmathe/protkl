@@ -301,17 +301,18 @@
 	}
 	\cs_new_protected_nopar:Nn \prot_set_sortname:Nn {
 		\exp_args:NNx \prot_set_collationclass:Nn #1 {
-			\exp_not:v { c_prot_person -> #2 / name / last_tl }
+			\scan_stop: \exp_not:v { c_prot_person -> #2 / name / last_tl }
 			\scan_stop: \exp_not:v { c_prot_person -> #2 / name / first_tl }
 		}
 	}
 	\cs_new_nopar:Nn \prot_set_collationclass:Nn {
-		\tl_set:Nf #1 { \text_lowercase:n { \exp_stop_f: #2 } }
+		\tl_set:Nf #1 { \text_lowercase:n { #2 } }
 		\tl_replace_all:Nnn #1 { ä } { ae }
 		\tl_replace_all:Nnn #1 { ö } { oe }
 		\tl_replace_all:Nnn #1 { ü } { ue }
 		\tl_replace_all:Nnn #1 { ß } { ss }
 		\tl_replace_all:Nnn #1 { ~ } { ! }
+		\tl_replace_once:Nnn #1 { \scan_stop: } { }
 		\tl_replace_once:Nnn #1 { \scan_stop: } { ~ }
 	}
 %    \end{macrocode}
@@ -334,7 +335,7 @@
 	}
 	\cs_new_protected_nopar:Nn \prot_attendancelist_item:nn {
 		\seq_if_empty:cF { g_prot_attendance_section_#1_seq } {
-			\seq_set_map_x:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullnickname:n {##1} \prot_info:n {##1} \prot_specials:n {##1} }
+			\seq_set_map_e:Ncn \l_tmpa_seq { g_prot_attendance_section_#1_seq } { \prot_fullnickname:n {##1} \prot_info:n {##1} \prot_specials:n {##1} }
 			\exp_args:Nnx \prot_attendancelist_actualitem:nn {#2} { \seq_use:Nn \l_tmpa_seq { ,~ } }
 		}
 	}
@@ -1245,7 +1246,7 @@
 	\cs_generate_variant:Nn \tl_range:nnn { nne }
 	\cs_generate_variant:Nn \tl_const:Nn { cv }
 	\cs_generate_variant:Nn \seq_set_map:NNn { Nc }
-	\cs_generate_variant:Nn \seq_set_map_x:NNn { Nc }
+	\cs_generate_variant:Nn \seq_set_map_e:NNn { Nc }
 	\cs_generate_variant:Nn \msg_error:nnnnn { nnnnV }
 	\cs_generate_variant:Nn \str_compare:nNnTF { VNV }
 %    \end{macrocode}
