@@ -8,3 +8,7 @@ Verständlichkeit,
 Wartbarkeit,
 Konfigurierbarkeit und
 Erweiterbarkeit.
+
+## Installation
+
+Zur Installation lade dieses Repository herunter und führe `l3build install` im heruntergeladenen Verzeichnis aus.
